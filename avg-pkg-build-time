@@ -17,9 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: avg-pkg-build-time,v 1.13 2000/10/19 08:48:11 rnhodek Exp $
+# $Id: avg-pkg-build-time,v 1.1.1.1 2004/09/17 13:17:41 frankie Exp $
 #
 # $Log: avg-pkg-build-time,v $
+# Revision 1.1.1.1  2004/09/17 13:17:41  frankie
+# Imported sources
+#
 # Revision 1.13  2000/10/19 08:48:11  rnhodek
 # Check if /etc/sbuild.conf exists before including it.
 #

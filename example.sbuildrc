@@ -2,7 +2,7 @@
 # example for ~/.sbuildrc
 # commented out stuff are defaults
 #
-# $Id: example.sbuildrc,v 1.2 2000/03/09 13:13:16 rnhodek Exp $
+# $Id: example.sbuildrc,v 1.2 2005/03/30 23:29:12 mbanck Exp $
 #
 
 # Directory for writing build logs to
@@ -12,9 +12,15 @@
 #$mailto = "roman";
 $mailto = "";
 
-# Maintainer name to use in .changes files (mandatory, no default!)
+# Name to use as override in .changes files for the Maintainer: field.
 #$maintainer_name="Roman Hodek <Roman.Hodek\@informatik.uni-erlangen.de>";
-$maintainer_name="";
+
+# Name to use as override in .changes file for the Changed-By: field.
+#$uploader_name="Francesco Paolo Lovergine <frankie@debian.org>";
+
+# Keyid to use in .changes for the current upload.
+# It overrides both $maintainer_name and $uploader_name
+#$key_id="Francesco Paolo Lovergine <frankie@debian.org>";
 
 # When to purge the build directory afterwards; possible values are "never",
 # "successful", and "always"
@@ -33,4 +39,7 @@ $maintainer_name="";
 #    chess => 600,
 #    cint => 300
 #);
+
+# Perl requires this, at the end of the file, please don't remove.
+#1;
 

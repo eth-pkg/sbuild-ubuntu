@@ -46,5 +46,7 @@ CVS:
   [empty password]
   cvs -d :pserver:anon@cvs.linux-m68k.org:/CVS checkout wanna-build
 
-This sbuild package is maintained by Rick Younie <younie@debian.org>.
+This sbuild package was maintained by Rick Younie <younie@debian.org>.
+
+Francesco P. Lovergine <frankie@debian.org> is the current maintainer.
 

@@ -23,16 +23,19 @@
 sbuild \- build debian packages from source
 .SH SYNOPSIS
 .B sbuild
-[\-a/\-\-add-depends=<dependency-line>] [\-A/\-\-arch\-all]
-[\-b/\-\-batch] [\-d/\-\-dist=<distribution>] [\-D/\-\-debug]
-[\-f/\-\-force-depends=<dependency-line>]
-[\-m/\-\-maintainer=<maintainer>] [\-\-purge=<mode>]
-[\-s/\-\-source] [\-v/\-\-verbose]
-[\-\-make\-binNMU=<entry>]
-[\-\-nolog]
-package-to-build [ ... ]
+[ \-a/\-\-add-depends=<dependency-line> ] [ \-A/\-\-arch\-all ]
+[ \-b/\-\-batch] [\-d/\-\-dist=<distribution> ] [ \-D/\-\-debug ]
+[ \-f/\-\-force-depends=<dependency-line> ]
+[ \-m/\-\-maintainer=<maintainer> ]
+[ \-e/\-\-uploader=<uploader> ]
+[ \-e/\-\-keyid=<key> ]
+[ \-\-purge=<mode>] [\-s/\-\-source ] [ \-v/\-\-verbose ]
+[ \-\-make\-binNMU=<entry> ]
+[ \-\-nolog ]
+package-to-build_x.y-z(.dsc) [ ... ]
 .SH VERSION
-This man page documents sbuild from 2001-11-17.
+This man page documents current stock sbuild. There is a major fork in
+wanna-build sources also available which is adapted to buildd daemon needs.
 .SH DESCRIPTION
 \fBsbuild\fR rebuilds Debian binary packages from the corresponding Debian
 source.  It is similar to dbuild and debbuild, but, unlike them, it
@@ -49,6 +52,9 @@ sbuildrc is available in
 .PP
 Optionally, source dependencies are read from /var/lib/sbuild/source-dependencies-*; see that
 file for more information on source-dependencies.  Also see README.Debian.
+.PP
+You can build either using a local package with its .dsc file or a remote one by
+specifying an explicit dpkg version.
 .PP
 Note: \fBsbuild\fR must be run in the directory (~/build/ by
 default) with the chroot-{stable,testing,unstable} symlink to the
@@ -85,6 +91,13 @@ Enable debug output.
 .TP
 .IR \-m , "--maintainer=<maintainer>"
 Passed to dpkg-genchanges and is used to set the Maintainer: field in the .changes file(s).
+.TP
+.IR \-e , "--uploader=<maintainer>"
+Passed to dpkg-genchanges and is used to set the Changed-by: field in the .changes file(s).
+.TP
+.IR \-k , "--keyid=<maintainer>"
+Passed to dpkg-genchanges and is used to set the key to sign the .changes file(s).
+Default is not using any key.
 .TP
 .IR \-n , "--nolog"
 Do not create a package log file in the $log_dir directory and no

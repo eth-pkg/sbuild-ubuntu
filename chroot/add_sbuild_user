@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash 
 #
 # add (already existing) user to sudoers and create passwd/group
 # entries and a work directory for the user in the chroot
@@ -91,13 +91,13 @@ chroot work directory:
 Copy the example sbuildrc file to your home directory and set
 the variables for your system.
 
-  cp /usr/share/doc/sbuild/example.sbuildrc ~/.sbuildrc
+  cp /usr/share/doc/sbuild/examples/example.sbuildrc ~/.sbuildrc
 
 Now try a build:
 
-  /usr/lib/sbuild/chrapt $CHROOT apt-get update
-  /usr/lib/sbuild/chrapt $CHROOT apt-get upgrade
-     - or "/usr/lib/sbuild/chrapt $CHROOT apt-get -f install"
+  /usr/share/sbuild/chrapt $CHROOT apt-get update
+  /usr/share/sbuild/chrapt $CHROOT apt-get upgrade
+     - or "/usr/share/sbuild/chrapt $CHROOT apt-get -f install"
        first if the chroot is broken
   cd ~/build && sbuild -v -d $DIST -p successful ed_0.2-19
 

@@ -1,6 +1,4 @@
 #!/usr/bin/make -f
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
@@ -43,21 +41,23 @@ install: build
 	# Add here commands to install the package into debian/sbuild.
 	$(INSTALL) -m 755 sbuild update-sourcedeps avg-pkg-build-time \
 		$(DESTDIR)/usr/bin/
+	ln -s /usr/bin/avg-pkg-build-time $(DESTDIR)/usr/bin/avg-pkg-build-space
 	$(INSTALL) -m 644 sbuild.conf sbuild.conf.local $(DESTDIR)/etc/
 
 	cp -a configs example.sbuildrc $(DESTDIR)/usr/share/doc/sbuild/examples/.
-	cp bin/* chroot/* $(DESTDIR)/usr/lib/sbuild/
-	mv $(DESTDIR)/usr/lib/sbuild/README-buildd.chroot \
+	find bin -type f -maxdepth 1 -exec cp {} $(DESTDIR)/usr/share/sbuild/ \;
+	find chroot -type f -maxdepth 1 -exec cp {} $(DESTDIR)/usr/share/sbuild/ \;
+	mv $(DESTDIR)/usr/share/sbuild/README-buildd.chroot \
 		$(DESTDIR)/usr/share/doc/sbuild/
 
 # Build architecture-independent files here.
 binary-indep: build install
 	dh_testdir
 	dh_testroot
-	dh_installdocs
-	dh_installmanpages
+	dh_installdocs debian/cvslogs.old
+	dh_installman
 	dh_installchangelogs 
-	dh_compress -Xbuildd.chroot -XREADME-buildd.chroot
+	dh_compress -Xbuildd.chroot -XREADME-buildd.chroot -XREADME-buildd.chroot.pre-sarge -Xbuildd.chroot.pre-sarge
 	dh_fixperms
 	dh_installdeb
 	dh_perl

@@ -1,3 +1,120 @@
+sbuild (0.35) unstable; urgency=low
+
+  Michael Banck:
+
+  * bin/abort-current-build: Remove the `-B' from the grep line as
+    `sbuild -s' does not pass that option to dpkg-configure and abort-
+    current-build fails in that case.
+  * sbuild: Set the locale to `POSIX' to make debconf and debhelper calls in
+    the chroot not spew out locale warnings all the time.
+    (closes: #287672)
+  * sbuild: Removed check for specific distributions. Instead, fail if
+    build/chroot-$dist is not there.
+  * sbuild: Only override Distribution in .changes if specified as option on
+    the command-line.
+    (closes: #300145)
+  * sbuild: Specify full path for Dir::Etc::main and Dir::Etc::parts.
+  * example.sbuildrc: Clarify that $maintainer_name is not mandatory and
+    overrides Maintainer: field, whereas $uploader_name overrides
+    the Changed-By: field in changes.
+  * Applied patch by Santiago Vila:
+    - Moves scripts from /usr/lib/sbuild to /usr/share/sbuild and modifies
+      all callers accordingly.
+    - Add -n option to tail to comply with POSIX.
+    - Call /usr/sbin/sendmail instead of /usr/lib/sendmail.
+    (closes: #292717)
+  * sbuild: Tolerate '0' as version number, thanks Santiago Vila.
+    (closes: #300205)
+
+ -- Michael Banck <mbanck@debian.org>  Fri,  1 Apr 2005 21:23:30 +0200
+
+sbuild (0.34) unstable; urgency=high
+
+  Francesco Paolo Lovergine:
+
+  * Removed searchscripts recommendation in debian/control. That was requested
+    by ppack now removed in archive.
+    (closes: #272318)
+  * checkchroot now uses grep-dctrl, thanks Clint Adams.
+    Introduced dependency from grep-dctrl due to checkchroot.
+    (closes: #260881,#265994)
+  * Updated ref-* files for unstable and testing as well as the related README file.
+  * This is the first revision CVS-enabled.
+
+ -- Francesco Paolo Lovergine <frankie@debian.org>  Sat, 25 Sep 2004 17:42:57 +0200
+
+sbuild (0.33) unstable; urgency=low
+
+  * Man page sbuild.1 revised.
+
+ -- Francesco Paolo Lovergine <frankie@debian.org>  Thu, 16 Sep 2004 16:42:18 +0200
+
+sbuild (0.32) unstable; urgency=low
+
+  * Added ~ as a legal character for debian version (post-sarge).
+  * A few minor changes in README.chroot-buildd and man page.
+  * Added -k and -e options as overriding for -m default in package signing.
+    Man page changed to reflect new features.
+    (closes: #260870)
+  * Removed the CVS log variable in sbuild in order to import a new sane
+    tree onto Alioth repo. Old logs are now stored in a new cvslogs.old file.
+  * Minor revisions to ducumentation files.
+  * Added Michael Banck as Uploader.
+
+ -- Francesco Paolo Lovergine <frankie@debian.org>  Thu, 16 Sep 2004 16:14:27 +0200
+
+sbuild (0.31) unstable; urgency=low
+
+  * Patch for #239339 revised:
+  	Escaping to manage correctly possible nested RE. 
+        (closes: #268712)
+  	Doing removes only in chroot environment.
+        (closes: #264834).
+  * Changed a bit man page to clarify better synopsis.
+    (closes: #265998)
+
+ -- Francesco Paolo Lovergine <frankie@debian.org>  Sat, 28 Aug 2004 21:27:12 +0200
+
+sbuild (0.30) unstable; urgency=high
+
+  The "later better than never" release.
+
+  Thanks Michael Banck, Martin Michlmayr and other submitters for useful patches.
+
+  * example.sbuildrc now return 1 to satisfy perl require syntax.
+    (closes: #228410)
+  * Now copies the orig.tar.gz into $(CHROOT)/build/<user>/ for non-native packages.
+    (closes: #239339)
+  * Corrected abort-current-build to manage correctly ps output.
+    (closes: #249995)
+  * Now should manage packages which provides the same pkgs of other yet installed ones.
+    (closes: #259315)
+  * build.chroot rewritten to use dbootstrap straight on.
+    (closes: #235726,#228412,#228412)
+  * Using dh_installman instead of obsolete dh_installmanpages. Added
+    debian/manpages for that.
+  * Alternatives modified for current ones in testing/sid.
+    (closes: #228792)
+
+ -- Francesco Paolo Lovergine <frankie@debian.org>  Tue,  3 Aug 2004 18:21:22 +0200
+
+sbuild (0.29) unstable; urgency=low
+
+  * Now depends on exim4
+    (closes: #228591)
+  * Non "noninteractive" is in lowercase currently.
+    (closes: #228800)
+  * Added /usr/bin/avg-pkg-build-space as symlink to /usr/bin/avg-pkg-build-time
+    (closes: #228445)
+  * add_sbuild_user corrected to show the true path of example.sbuildrc
+    (closes: #228411)
+  * removing obsolete packages in sid, and updated required ones
+    (closes: #220932)
+  * README.buildd-chroot updated
+    (closes: #220933)
+
+ -- Francesco Paolo Lovergine <frankie@debian.org>  Fri, 23 Jan 2004 20:09:56 +0100
+
 sbuild (0.28) unstable; urgency=low
 
   * Using latest instead of lastest.
@@ -203,4 +320,3 @@ sbuild (0.2) unstable; urgency=low
   * Initial package
 
  -- Rick Younie <younie@debian.org>  Thu,  8 Nov 2001 00:18:34 -0800
-

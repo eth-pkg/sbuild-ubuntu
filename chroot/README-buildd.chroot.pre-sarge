@@ -1,33 +1,28 @@
 
-buildd.chroot (Sarge Edition)
-=============================
-
-This script crates the chroot environment for sbuild. It's written
-on the basis of current debootstrap --variant=buildd option by
-adding the few other files needed for a working environment.
-The pre-sarge script is broken in sarge, please ignore it.
+        ---------------------------------------
+buildd.chroot
+=============
+  - a debootstrap script by Ryan Murray, modified for the user
+    sbuild package.  The latest version for the buildd folk is
+    available at http://buildd.debian.org/buildd.chroot
 
 Usage:
 
-  sudo buildd.chroot <dist> <chroot> <mirror>
+  sudo debootstrap <dist> <chroot> <mirror> buildd.chroot
   eg,
-  sudo /usr/share/sbuild/buildd.chroot sid /usr/local/chroot/unstable \
-      http://http.us.debian.org/debian 
+  sudo debootstrap unstable /usr/local/chroot/unstable \
+      http://http.us.debian.org/debian /usr/lib/sbuild/buildd.chroot
 
-where <dist> is one of the *.buildd name you can find in 
-/usr/lib/debootstrap/scripts. Currently only woody, sarge and sid are 
-supported.
-
-Ignore errors about pseudo-fs not mounted, if any.
+where <dist> is stable, testing or unstable.
 
         ---------------------------------------
-add_sbuild_user (buildd.chroot prompts you when finished)
-==============================================================
+add_sbuild_user (buildd.chroot prompts you when it's finished)
+===============
 Usage:
 
   add_sbuild_user </path/to/chroot> <dist> <user>
   eg,
-  sudo /usr/share/sbuild/add_sbuild_user /usr/local/chroot/unstable unstable rick
+  sudo /usr/lib/sbuild/add_sbuild_user /usr/local/chroot/unstable unstable rick
 
  1. adds <user> to the sbuild group that was created during the install
  2. prompts you to add <user> to sudoers, using visudo
@@ -40,22 +35,17 @@ Usage:
 You may want to take care of 2. before running this script.
 
         ---------------------------------------
-Build-essential and friends
-===========================
+add build-essential and friends
+===============================
 
- buildd.chroot installs build-essentials so your working
- environment should already be ok. You will need only to add
- a few more packages in the chroot, using e.g.
-
- chrapt -t apt-get install sudo fakeroot ssmtp
- 
- /usr/share/sbuild/checkchroot -u
+ 1. cp /usr/share/doc/sbuild/examples/configs/ref-* /usr/local/chroot
+     - this copies over the ref files listing build-essential
+       and essential packages
+ 2. /usr/lib/sbuild/checkchroot -u
      - shows what needs to be added to or deleted from the unstable
-       chroot.  You can use "chrapt (-u|-s|-t|-o) apt-get install" to add
+       chroot.  You can use "chrapt -u apt-get install" to add
        packages (--purge remove to delete them) or "gochroot -u"
        to enter the chroot and work inside it.
- 
- With the new flavor of buildd.chroot is basically obsolete.
 
         ---------------------------------------
 possible problems
@@ -69,7 +59,7 @@ You may need to use the latest debootstrap.
 You'll have to log in again for you to be in group sbuild.
 
 debconf needs to be set noninteractive:
-$ /usr/share/sbuild/gochroot -u ( or "sudo chroot /your/chroot bin/sh" )
+$ /usr/lib/sbuild/gochroot -u ( or "sudo chroot /your/chroot bin/sh" )
 $ dpkg-reconfigure -plow debconf
     1. Dialog  2. Readline  3. Gnome  4. Editor  5. Noninteractive
   What interface should be used for configuring packages? [1] 5
