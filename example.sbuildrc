@@ -1,0 +1,36 @@
+#
+# example for ~/.sbuildrc
+# commented out stuff are defaults
+#
+# $Id: example.sbuildrc,v 1.2 2000/03/09 13:13:16 rnhodek Exp $
+#
+
+# Directory for writing build logs to
+#$log_dir = "$HOME/logs";
+
+# Mail address where logs are sent to (mandatory, no default!)
+#$mailto = "roman";
+$mailto = "";
+
+# Maintainer name to use in .changes files (mandatory, no default!)
+#$maintainer_name="Roman Hodek <Roman.Hodek\@informatik.uni-erlangen.de>";
+$maintainer_name="";
+
+# When to purge the build directory afterwards; possible values are "never",
+# "successful", and "always"
+#$purge_build_directory="successful";
+
+# Hack a "frozen" into the Distribution: line if compiling for frozen
+#$hack_changes_for_frozen = 0;
+
+# After that time (in minutes) of inactivity a build is terminated. Activity
+# is measured by output to the log file.
+#$stalled_pkg_timeout = 90;
+
+# Some packages may exceed the general timeout (e.g. redirecting output to
+# a file) and need a different timeout. Below are some examples.
+#%individual_stalled_pkg_timeout = (
+#    chess => 600,
+#    cint => 300
+#);
+
