@@ -1,15 +1,15 @@
 Source: sbuild
 Section: devel
 Priority: extra
-Maintainer: Francesco Paolo Lovergine <frankie@debian.org>
-Uploaders: Roger Leigh <rleigh@debian.org>, Michael Banck <mbanck@debian.org>
+Maintainer: Debian buildd-tools Developers <buildd-tools-devel@lists.alioth.debian.org>
+Uploaders: Michael Banck <mbanck@debian.org>, Roger Leigh <rleigh@debian.org>, Francesco Paolo Lovergine <frankie@debian.org>
 Build-Depends-Indep: debhelper (>> 4.0.0)
 Standards-Version: 3.6.2
 
 Package: sbuild
 Architecture: all
-Depends: ${perl:Depends}, adduser, apt, exim4 | mail-transport-agent, sudo, dpkg-dev, grep-dctrl
-Recommends: fakeroot, debootstrap
+Depends: ${perl:Depends}, perl-modules, adduser, apt, exim4 | mail-transport-agent, sudo, dpkg-dev, grep-dctrl
+Recommends: fakeroot, debootstrap, schroot (>= 0.2.7)
 Suggests: wget, deborphan
 Description: Tool for building Debian binary packages from Debian sources
  sbuild is part of a suite of programs -- consisting of
@@ -24,4 +24,4 @@ Description: Tool for building Debian binary packages from Debian sources
  versions.  And by keeping only essential and build-essential
  in the chroots, you can find the correct build dependencies for
  a package.
- 
+

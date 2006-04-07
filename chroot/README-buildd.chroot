@@ -2,7 +2,7 @@
 buildd.chroot (Sarge Edition)
 =============================
 
-This script crates the chroot environment for sbuild. It's written
+This script creates the chroot environment for sbuild. It's written
 on the basis of current debootstrap --variant=buildd option by
 adding the few other files needed for a working environment.
 The pre-sarge script is broken in sarge, please ignore it.
@@ -81,11 +81,3 @@ md5sum mismatch when building a source package (sbuild --source):
   - the original tarball has to be in the work directory,
     $CHROOT/build/<user>, for a sourceful build or a new
     orig.tar.gz will be created with an incorrect md5sum.
-
-
-
-
-
-
-
-# vim:et

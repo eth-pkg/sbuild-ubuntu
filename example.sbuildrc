@@ -2,8 +2,12 @@
 # example for ~/.sbuildrc
 # commented out stuff are defaults
 #
-# $Id: example.sbuildrc,v 1.2 2005/03/30 23:29:12 mbanck Exp $
+# $Id: example.sbuildrc 512 2006-03-29 13:26:59Z rleigh $
 #
+
+# Directory for chroot symlinks and sbuild logs.  Defaults to the
+# current directory if unspecified.
+#$build_dir="$HOME/build";
 
 # Directory for writing build logs to
 #$log_dir = "$HOME/logs";
@@ -12,22 +16,20 @@
 #$mailto = "roman";
 $mailto = "";
 
-# Name to use as override in .changes files for the Maintainer: field.
-#$maintainer_name="Roman Hodek <Roman.Hodek\@informatik.uni-erlangen.de>";
+# Name to use as override in .changes files for the Maintainer: field
+# (mandatory, no default!).
+#$maintainer_name='Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>';
 
 # Name to use as override in .changes file for the Changed-By: field.
-#$uploader_name="Francesco Paolo Lovergine <frankie@debian.org>";
+#$uploader_name='Francesco Paolo Lovergine <frankie@debian.org>';
 
 # Keyid to use in .changes for the current upload.
 # It overrides both $maintainer_name and $uploader_name
-#$key_id="Francesco Paolo Lovergine <frankie@debian.org>";
+#$key_id='Francesco Paolo Lovergine <frankie@debian.org>';
 
 # When to purge the build directory afterwards; possible values are "never",
 # "successful", and "always"
 #$purge_build_directory="successful";
-
-# Hack a "frozen" into the Distribution: line if compiling for frozen
-#$hack_changes_for_frozen = 0;
 
 # After that time (in minutes) of inactivity a build is terminated. Activity
 # is measured by output to the log file.
@@ -40,6 +42,12 @@ $mailto = "";
 #    cint => 300
 #);
 
-# Perl requires this, at the end of the file, please don't remove.
-#1;
+# By default, the -s option only includes the .orig.tar.gz when needed
+# (i.e. when the Debian revision is 0 or 1).  By setting this option
+# to 1, the .orig.tar.gz will always be included when -s is used.
+# This is equivalent to --force-orig-source.
+#$force_orig_source = 0;
+
+# don't remove this, Perl needs it:
+1;
 

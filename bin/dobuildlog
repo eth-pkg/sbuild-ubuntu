@@ -1,7 +1,7 @@
 #!/bin/bash -e
 #
 # vim:ts=4:noet:wrap:sts=4:sw=4:
-# $Id: dobuildlog,v 1.1.1.1 2004/09/17 13:17:41 frankie Exp $
+# $Id: dobuildlog 3 2004-09-17 13:17:40Z frankie $
 # Rick Younie <rick@def.debian.net>
 #
 # craft a bug report or fail/success reply to a buildd log mail

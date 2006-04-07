@@ -1,30 +1,98 @@
-#!/bin/bash -e
+#!/usr/bin/perl -w
+# check the package list in a chroot against a reference list.
+#
+# Copyright (C) 2006 Roger Leigh <rleigh@debian.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-# check the package list in a chroot against a reference.
+use strict;
+use warnings;
+use locale;
+use POSIX qw(locale_h);
+use Sbuild::Utility qw(setup cleanup);
 
-if [ $(id -u) != 0 ]; then
-	echo "You must be root to run this script, sorry."
-	exit 1
-fi
+package main;
 
-USAGE_STRING="${0##*/} <chroot>"
-. /usr/share/sbuild/common_functions
-parse_arg $1
+sub usage {
+	print STDERR "Usage: $0 <chroot>\n";
+	exit 1;
+}
 
-tfile=$(tempfile)
+usage() if (@ARGV != 1);
 
-# NOTE: v. 1.10.x "dpkg --root" is broken, so use grep-status
-#COLUMNS=200 dpkg 2>/dev/null --list | grep ^ii | awk '{print $2}' >$tfile
+setlocale(LC_COLLATE, "POSIX");
+$ENV{'LC_COLLATE'} = "POSIX";
 
-grep-status -F Status -s Package ' installed' $CHROOT/var/lib/dpkg/status | awk '{print $2}' | sort >$tfile
+!setup($ARGV[0]) or die "Chroot setup failed";
+my $chroot_dir = $$Sbuild::Chroot::current{'Location'};
+my (@status, @ref, @install, @remove);
 
-echo "DELETE             ADD"
-echo "============================"
-diff -u $tfile $CHROOT/../ref-$DIST |
-	tail -n +3 |
-	grep ^[+-] |
-	sed -e 's/^-//' -e "s/^+/                   /" |
-	sort
+if (! open STATUS, "grep-status -F Status -s Package ' installed' '$chroot_dir/var/lib/dpkg/status' | awk '{print \$2}' |" ) {
+	print STDERR "Can't read dpkg status file in chroot: $!\n";
+	main::shutdown();
+}
+while (<STATUS>) {
+	chomp;
+	push @status, $_;
+}
+if (! close STATUS) {
+	print STDERR "Error reading dpkg status file in chroot: $!\n";
+	main::shutdown();
+}
 
-rm -f $tfile
+my $dist = Sbuild::Utility::get_dist($ARGV[0]);
 
+if (! open REF, "< $chroot_dir/../ref-$dist") {
+	print STDERR "Can't read reference status file $chroot_dir/../ref-$dist: $!\n";
+	main::shutdown();
+}
+while (<REF>) {
+	chomp;
+	push @ref, $_;
+}
+if (! close REF) {
+	print STDERR "Error reading reference status file: $!\n";
+	main::shutdown();
+}
+
+@status = sort @status;
+@ref = sort @ref;
+
+print "DELETE             ADD\n";
+print "======================================\n";
+my $i = 0;
+my $j = 0;
+
+while ($i < scalar @status || $j < scalar @ref) {
+
+	my $c = $status[$i] cmp $ref[$j];
+	if ($c < 0) {
+		# In status, not reference; remove.
+		print "$status[$i]\n";
+		$i++;
+	} elsif ($c > 0) {
+		# In reference, not status; install.
+		print "                   $ref[$j]\n";
+		$j++;
+	} else {
+		# Identical; skip.
+		$i++; $j++;
+	}
+}
+
+#ystem ("diff -u '$F1' '$F2' | tail -n +3 | grep ^[+-] | sed -e 's/^-//' -e 's/^+/                   /' | sort");
+
+cleanup();
+exit 0;

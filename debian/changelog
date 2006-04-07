@@ -1,3 +1,510 @@
+sbuild (0.44) unstable; urgency=low
+
+  * avg-pkg-build-time: Use Sbuild::Conf.
+  * bin/checkchroot: Convert to Perl, using Sbuild::Utility.
+  * bin/chrapt: Convert to Perl, using Sbuild::Utility.
+  * bin/chr-hold: Convert to Perl, using Sbuild::Utility.
+  * bin/chr-unhold: Convert to Perl, using Sbuild::Utility.
+  * bin/gochroot: Convert to Perl, using Sbuild::Utility.
+  * bin/updatechroot:
+    - Convert to Perl, using Sbuild::Utility.
+    - chrapt is no longer used (Closes: #355035).
+    - Sbuild::Chroot is used for chroot access:
+      + Suite names are no longer hardcoded (Closes: #355037).
+      + APT Options are set correctly (Closes: #355038).
+  * bin/upgradechroot: Convert to Perl, using Sbuild::Utility.
+  * bin/common_functions: Remove; this is no longer used.
+  * sbuild:
+    - Treat schroot chroots with a "-sbuild" suffix in the same way as
+      chroots without a suffix (Closes: #360124).
+    - Use the new modules Sbuild::Chroot, Sbuild::Conf and Sbuild::Log.
+      The functions moved into the modules have been removed.
+    - Import needed module functions into the local namespace, to avoid
+      long namespace prefixes on functions.
+    - Remove $main::chroot_apt_options.
+    - Move $main::debug to Sbuild::Conf.
+    - Import Sbuild::Conf into package "conf".  This allows the package
+      name used by upstream to be used for backward compatibility.
+    - Use $conf::HOME instead of $main::HOME.
+    - Move $main::username to Sbuild::Conf.
+    - Set $main::chroot_dir, $main::chroot_build_dir,
+      $main::srcdep_lock_dir and $main::ilock_file from the current
+      chroot $Sbuild::Chroot::current.  $main::srcdep_lock_dir replaces
+      $conf::srcdep_lock_dir (which is still used to set when the chroot
+      is set up).
+    - Pass $main::distribution to open_log and open_pkg_log.
+    - Remove $main::cwd, $main::nolog and $main::verbose, now provided by
+      Sbuild::Conf.  They are imported from Sbuild::Conf for backward
+      compatibility.
+    - Remove unused $main::HOSTNAME.
+    - Add build statistics to close_pkg_log.
+    - Die if no maintainer_name, uploader_name or key_id is specified.
+    - Set and unset $main::binNMU_name in the main loop, rather than when
+      opening and closing the package log.  In consequence, open_pkg_log
+      now needs the package name only, and close_pkg_log does not need
+      the package name passing.
+    - build:
+      + Set $firstline to "" to quell a warning.
+      + Use debian_files_list to check for missing or extra packages, and
+        warn appropriately.
+      + Delete erroneous _all.deb files (Closes: #357042).
+    - Don't use File::Temp (only needed by modules).
+    - Remove build directory check.
+    - Use File::Basename::basename instead of Sbuild::basename.
+    - Don't import internal Sbuild::Chroot functions.
+    - Split verify_dsc_md5sums into two parts: dsc_md5sums and
+      verify_md5sums.
+    - debian_files_list: New function to parse debian/files.
+  * Sbuild/Chroot.pm:
+    - New perl module for chroot operations.  It contains the functions
+      begin_session, end_session, log_command, get_command_internal,
+      get_command, run_command, exec_command, get_apt_command_internal,
+      get_apt_command and run_apt_command.
+    - Don't export init and log_command.
+    - Don't hardcode a list of chroots; use a glob to search for chroot-*
+      instead.  This allows any distribution name to be specified with -d.
+    - Add an "APT Options" attribute to the chroot hash, to replace
+      $main::chroot_apt_options.
+    - Use STDERR instead of PLOG (which may not be available).
+    - Replace $main::debug with $Sbuild::Conf::debug.
+    - Replace $main::username with $Sbuild::Conf::username.
+    - begin_session takes the distribution as its first argument, rather
+      than using $main::distribution.
+    - Don't use $main::chroot_dir.  Add the build paths as 'Build Location',
+      'Srcdep Lock Dir' and 'Install Lock' to the chroot metadata.
+    - Use File::Temp.
+    - Don't export "internal" functions.
+    - _setup_options: Set "APT Options" for schroot chroots.
+    - log_command: Don't substitute CHROOT_APT_OPTIONS when no APT options
+      are in use.
+  * Sbuild/Conf.pm:
+    - New perl module for configuration variables.  It reads the system
+      and user configuration.
+    - Add $debug.
+    - Add $username.
+    - Add $cwd, $nolog and $verbose.  They exported and used by the other
+      modules in place of the variables in the main package.
+    - Add and export $avg_time_db, $avg_space_db, $maintainer_name,
+      $uploader_name and $key_id.
+    - Add build directory check (moved from sbuild).
+  * Sbuild/Log.pm:
+    - New perl module for logging.  It contains the functions open_log,
+      close_log, open_pkg_log, close_pkg_log, add_time_entry,
+      add_space_entry, send_mail and log_symlink.
+    - $main::main_logfile and $main::pkg_logfile are package variables.
+    - Removed use of $main::distribution.  The distribution name must be
+      passed to open_log or open_pkg_log.
+    - Don't use $main::HOSTNAME or $main::arch.  Get the values directly.
+    - open_pkg_log: Save the package name for future use; the binNMU name
+      (if any) is passed, so this no longer needs computing.
+    - close_pkg_log:
+      + Obtain $main::pkg_status, $main::pkg_start_time,
+        $main::pkg_end_time and $main::this_space from the function
+        arguments.
+      + Don't pass the package name, which was saved in open_pkg_log.
+    - add_space_entry: Use $space rather than $t, and don't use
+      $main::this_space.
+    - Use File::Temp.
+    - Use File::Basename::basename instead of Sbuild::basename.
+  * Sbuild/Utility.pm: New perl module for utility programs.  This is a
+    perl replacement for bin/common_functions.
+  * bin/checkchroot:
+    - Quote all variables.
+    - Sort ref-chroot file before diffing (Closes: 360058).
+  * avg-pkg-build-time.1.in, sbuild.1.in, sbuild-setup.7.in,
+    update-sourcedeps.1.in, Sbuild/Log.pm.in: Rename and embed version and
+    date tags for substitution.
+  * COPYING: New file (GPL licence text).
+  * debian/control: Update uploaders.
+  * debian/copyright:
+    - Update with new subversion repository locations for upstream and
+      Debian.
+    - Add Roger Leigh as a copyright holder.
+    - Add a reference to /usr/share/common-licenses/GPL.
+  * debian/dirs: Add usr/share/perl5/Sbuild.
+  * debian/rules:
+    - Install Sbuild/Chroot.pm, Sbuild/Conf.pm, Sbuild/Log.pm and
+      Sbuild/Utility.pm into /usr/share/perl5/Sbuild.
+    - Generate all manual pages and Log.pm in the build rule, and remove
+      them in the clean rule.
+
+ -- Roger Leigh <rleigh@debian.org>  Fri,  7 Apr 2006 09:47:00 +0100
+
+sbuild (0.43) unstable; urgency=low
+
+  * sbuild:
+    - verify_dsc_md5sums(): New function to verify the MD5SUM of files in a
+      .dsc file.
+    - Add $conf::md5sum for security.
+    - fetch_source_files():
+      + Use verify_dsc_md5sums to check for incomplete downloads, and
+        redownload sources if needed; also verify again after download
+        (Closes: #270439).
+      + Remove redundant braces and reindent.
+    - build(), shutdown(): Quote kill command correctly (Closes: #356686).
+    - When using schroot, look for a distribution named
+      "$distribution-sbuild" in preference to "$distribution".
+    - open_log(), open_pkg_log():
+      + Use fork() rather than tee to multiplex log output.
+      + Don't buffer log output (Closes: #358717).
+    - close_log(), close_pkg_log(): Close all dup'd log streams, and don't
+      kill the child log processes, which avoids dataloss in the pipeline.
+    - log_symlink(): New function to create a symbolic link to the current
+      package log.  This replaces the use of /bin/ln, which has races if
+      concurrent builds use it.
+    - open_log(), close_log():
+      + Save a references to the initial STDOUT and STDERR, and restore
+        them when the log is closed.
+      + Create the build log using File::Temp, in the form
+        build-distribution-date.XXXXXX.log.  This prevents races during
+        logfile creation when running concurrent builds.  If the file
+        is empty, it is unlinked on close, irrespective of whether
+        verbose mode is used or not.
+    - open_pkg_log(): Use the saved STDOUT for verbose logging.  This
+      prevents the package log being also directed to the build log.
+    - setup_options(): Remove unused call to tmpnam().
+    - check_dependencies(): Print kernel information along with the
+      toolchain package versions, in the same style as reportbug.
+    - build(): Check for _all.udeb files which are built when they
+      shouldn't (merge from upstream SVN cset 98).
+    - Strip "./" from $pkg, so the name used for source dependencies is
+      correct (Closes: #359747).
+    - Add --force-orig-source option to force the inclusion of the
+      .orig.tar.gz (Closes: #318030).
+    - Add $conf::force_orig_source to allow --force-orig-source to be
+      specified in a .sbuildrc.
+  * sbuild.1:
+    + Document schroot chroot naming.
+    + Document --force-orig-source option.
+    + Correctly escape hyphens in option and file names.
+  * sbuild-setup.7: Use debootstrap rather than cdebootstrap.
+  * bin/common_functions: Allow any chroot name to be specified
+    (Closes: #356785).
+  * bin/README.bins: Document changed chroot syntax.
+  * bin/checkchroot: Set LC_COLLATE=POSIX to prevent collation issues
+    (mismatches with the reference file; Closes: #294883).
+  * bin/common_functions, bin/README.bins: Remove ~/build/ from the
+    chroot path, to match sbuild behaviour of searching in the
+    current directory (Closes: #355034).
+  * chroot/README-buildd.chroot: Fix typo.
+  * chroot/buildd.chroot: Use debootstrap rather than cdebootstrap
+    (Closes: #358668).
+  * debian/control: Recommend debootstrap rather than cdebootstrap.
+  * example.sbuildrc: Add example $force_orig_source, with documentation.
+
+ -- Roger Leigh <rleigh@debian.org>  Wed, 29 Mar 2006 14:58:32 +0100
+
+sbuild (0.42) unstable; urgency=low
+
+  * sbuild:
+    - get_apt_command_internal(): Always add $main::chroot_apt_options.
+    - log_command(): Add an additional priority argument.  If nonzero,
+      the message is always logged, otherwise is only logged if debug is
+      enabled.
+    - get_command_internal(): When running schroot, preserve the user
+      environment, needed for APT_CONFIG, DEBIAN_FRONTEND, etc..
+    - get_command(), run_command(), exec_command(), get_apt_command(),
+      run_apt_command():
+      + chdir to $main::cwd to make sure the directory location also exists
+        inside the chroot.
+      + Add an additional priority argument to control the urgency of the
+        log message, and pass this to log_command().
+    - get_virtuals(): Remove usage of $main::chroot_apt_options, which is
+      added automatically by get_apt_command().
+    - get_command(), run_command() and exec_command() only log the full
+      command when debugging is enabled, otherwise only the short form is
+      logged (Closes: #355043).
+    - setup_options():
+      + Ensure APT_CONFIG is set to the correct path depending upon the
+        chroot_mode.  $chroot_aptconf is the absolute path to the file from
+        the host system, while $aptconf is the absolute path when apt is
+        run.
+      + Only set $main::chroot_apt_options when chroot_mode is "split".
+      + Always regenerate apt.conf, because when chroot_mode is changed, it
+        will break APT unless rewritten.
+      + Don't set "Dir" in $chroot_aptconf when in chroot_mode is "schroot"
+        (because apt is run inside the chroot).
+    - Remove setpgrp() calls, so that all child processes run in the same
+      process group as the parent.
+    - Add a $conf::sbuild_mode, used to switch behaviour between user and
+      buildd defaults.  The default is "buildd".  This allows package build
+      errors to be reported (Closes: #170742).
+    - Add a --quiet option, the opposite action to --verbose.
+    - open_pkg_log():
+      + Use correct Sbuild:: namespace for binNMU_version (Closes: #355861).
+      + Create current-distribution symlink in addition to current.
+    - Set the in the environment SHELL=/bin/sh, in case the user
+      invoking sbuild uses a shell not available inside the chroot.
+    - Remove unused variables @dist_parts and $main::nomail.
+    - Use correct use syntax for File::Temp and Cwd, and initialise a
+      number of variables which would otherwise be undefined, in order
+      to remove run-time warnings.
+    - Add a number of checks for undefined variables to remove run-time
+      warnings.
+    - Add -w to the shebang line, so sbuild always runs with warnings
+      enabled.
+    - All exec commands other than writing logfiles now use exec_command,
+      so they get logged.
+    - Require /usr/share/sbuild/sbuild.conf and optionally require
+      /etc/sbuild/sbuild.conf.
+    - Use named signals, rather than numbers, for portability.
+    - close_log(), close_pkg_log: If verbose is enabled, flush the log and
+      wait a second before killing tee, to prevent data loss in the pipeline.
+    - $main::verbose is set by default if running on a tty (Closes: #355802).
+    - LOG and PLOG are set to autoflush using IO::Handle.
+    - $conf::build_dir defaults to $main::cwd if undefined.  It is used as
+      the directory containing the build chroots, build logs, and current
+      symlinks (Closes: #183022).
+    - Always print toolchain packages.  This is done by always calling
+      merge_pkg_build_deps(), and running all the way through
+      install_deps(), even when the package does not supply any build
+      dependencies or conflicts (Closes: #355040).
+    - install_deps():
+      + If there are no package dependencies, create an
+        empty anonymous array reference to hold the (nonexistent)
+        dependencies, required by filter_dependencies.
+      + Make sure %entries is initialised.
+    - fetch_source_files(): Check that the dsc specified is valid.
+  * sbuild.conf: Don't require local config file.
+  * sbuild.conf.local: Add $sbuild_mode, defaulting to "buildd".
+  * example.sbuildrc: Add $build_dir example.
+  * sbuild.1: Document --quiet.
+  * sbuild-setup.5:
+    - Split chroot setup and user setup into two sections.
+    - Document sudoers env_keep setup (Closes: #355072, #355604).
+  * Sbuild.pm: Remove unused module 'IO'.
+  * chroot/add_sbuild_user: Add sudoers env_keep example.
+  * debian/README.Debian: Document existence of sbuild-setup(7).
+  * debian/control:
+    - Depend on perl-modules (for File::Temp).
+    - Recommend schroot 0.2.7 or later (for preserving the environment).
+  * debian/dirs: Add etc/sbuild.
+  * debian/rules:
+    - Remove "make clean" in clean target; there is no Makefile, so this is
+      redundant.
+    - Install sbuild.conf as /usr/share/sbuild/sbuild.conf and
+      sbuild.conf.local as /etc/sbuild/sbuild.conf.
+  * debian/preinst:
+    - New conffile.
+    - Remove /etc/sbuild.conf.local if not locally modified.
+  * debian/postinst:
+    - Move /etc/sbuild.conf.local to /etc/sbuild/sbuild.conf if needed.
+    - Reindent.
+  * debian/postrm:
+    - Unlink /etc/sbuild.conf if present.
+    - Unlink files under /var/lib/sbuild.
+    - Reindent.
+
+ -- Roger Leigh <rleigh@debian.org>  Mon, 13 Mar 2006 00:14:00 +0000
+
+sbuild (0.41) unstable; urgency=low
+
+  * sbuild:
+    - setup_options(): Set $main::chroot_apt_options in the same
+      manner as upstream.
+    - setup_options(): Correct usage of a scalar reference rather than
+      the scalar $main::chroot_dir (Closes: #354520).
+
+ -- Roger Leigh <rleigh@debian.org>  Mon, 27 Feb 2006 19:07:59 +0000
+
+sbuild (0.40) unstable; urgency=low
+
+  * sbuild:
+    - Fix typos in debug statement ($main::distribution rather than
+      $main::distribtion, and $main::schroot_session rather than
+      $main::scroot_session).  Thanks to Adeodato Simó for this fix
+      (Closes: #354456).
+    - get_schroot_info(): Parse schroot "--info" Path (chroot location)
+      output.
+    - get_schroot_info(): Parse schroot "--info" Type (chroot type)
+      output, and if "plain", always set $main::dist_sessioncaps to 0
+      ("plain" chroots may say they are session-managed, but do not
+      support full session management, so they always need cleaning).
+  * debian/control:
+    - Recommend schroot (>= 0.2.5), for its "Path" information in --info
+      output, used for determining the chroot location.
+
+ -- Roger Leigh <rleigh@debian.org>  Sun, 26 Feb 2006 22:19:04 +0000
+
+sbuild (0.39) unstable; urgency=low
+
+  * sbuild:
+    - fetch_source_files(): Merge from upstream SVN (cset 94); Strip trailing
+      whitespace from each line in $dscfile/debian/.sbuild-build-deps
+      early on, making all subsequent regexes simpler.
+    - Update copyright notice (add myself as a copyright holder).
+    - Add %main::sessioncaps to store whether or not a chroot is
+      session-capable.  Check the schroot "Session Managed" attribute to
+      determine session capability.
+    - If a chroot is session-capable, skip running uninstall_deps() (thanks
+      to Reinhard Tartler).
+    - Add debugging messages for distribution selection and schroot
+      session creation (thanks to Reinhard Tartler).
+  * debian/control:
+    - Recommend schroot (>= 0.2.3-2), for its "Session Managed"
+      information in --info output, used for skipping chroot cleanup.
+
+ -- Roger Leigh <rleigh@debian.org>  Tue, 21 Feb 2006 23:44:19 +0000
+
+sbuild (0.38) experimental; urgency=low
+
+  * Full sudo access is no longer mandatory when using the schroot
+    chroot_mode (Closes: #287669, #331506).
+  * schroot session management is now fully implemented and completely
+    functional.
+  * sbuild:
+    - Move schroot metadata parsing to a separate function,
+      get_schroot_info().  Parse both "Location" (for
+      backwards-compatibility) and "Mount Location".
+    - Move path and APT setup into a separate function, setup_options().
+    - Remove check_dpkg_version().  This has not been necessary since the
+      release of potato (Debian 2.2), which had a dpkg version 1.6.14.
+    - When $chroot_mode == "schroot", clear %main::dist_order and
+      %main::dist_locations using an empty array, rather than undef.
+    - New functions get_command(), run_command(), get_apt_command() and
+      run_apt_command() to run a command inside or outside the build
+      chroot under the specified user, or run apt inside or outside the
+      chroot (depending on the chroot_mode), respectively.
+    - New function exec_command().  This is the same as run_command(), but
+      runs the command with exec rather than system().
+    - New functions log_command() to log a command being run,
+      get_command_internal() and get_apt_command_internal() to get a
+      command string without logging it; these are used by get_command(),
+      run_command, exec_command(), get_apt_command() and run_apt_command(),
+      which do log the command being run.  Commands are logged in for all
+      chroot modes.
+    - get_apt_command() and run_apt_command() take an additional parameter,
+      the command to run (apt-get or apt-cache).
+    - get_apt_command() and run_apt_command() take an additional parameter,
+      the user to run as, because not all commands need (or should) run as
+      root.
+    - Use new commands for running commands inside and outside chroots:
+      + Signing options for dpkg-buildpackage are double-quoted rather than
+        single-quoted (because the main command is single-quoted).
+      + All commands run in a pipeline are obtained with get_command() or
+        get_apt_command().
+      + All other commands are run with run_command(), exec_command() or
+        run_apt_command().
+      + check_space() only requires root access in the chroot.
+    - Add schroot session management.  Sessions are created, run and
+      removed automatically.  The current session is stored in
+      $main::schroot_session.  setup_options is called once per build, in
+      order to set up the session options.
+    - Add missing newline to log message.
+  * sbuild.1:
+    - Update outdated information.
+    - Correct macro usage and reindent.
+    - Correct command-line summary (Closes: #311589).
+  * sbuild-setup.7: New manpage.  This describes how to set up a chroot
+    (Closes: #311363).
+  * avg-pkg-build-time.1: Clean up.
+  * update-sourcedeps.1: Clean up.
+  * sbuild.conf: $schroot_options defaults to "-q" to match the built-in
+    default.
+  * example.sbuildrc: Single quote example email addresses in
+    $maintainer_name, $uploader_name, and $key_id (Closes: #341327).
+  * chroot/buildd.chroot:
+    - Use "set -e" to abort on all errors (Closes: #342357).
+    - Correctly quote all shell variables.
+    - Use cdebootstrap rather than debootstrap.
+  * chroot/buildd.chroot.pre-sarge: Remove.
+  * chroot/README-buildd.chroot.pre-sarge: Remove (Closes: #308065).
+  * debian/control:
+    - Recommend schroot.
+    - Recommend cdebootstrap rather than debootstrap.
+  * debian/README.Debian: Update information about src-deps and schroot.
+
+ -- Roger Leigh <rleigh@debian.org>  Wed, 15 Feb 2006 18:13:23 +0000
+
+sbuild (0.37) unstable; urgency=low
+
+  * Sync with upstream SVN:
+    - avg-pkg-build-time, avg-pkg-build-time.1, sbuild, sbuild.1,
+      update-sourcedeps, update-sourcedeps.1: Update copyright notices with
+      current FSF postal address.
+    - sbuild:
+      + Split changes files sent in the log every 989 characters, to better
+        conform to mail RFCs.
+      + Always show versions of installed build dependencies.
+      + Always purge packages when building in a chroot.
+      + Output purged packages line by line, rather than all at once.
+      + Use strftime() and getpwuid() instead of the external commands
+        date and whoami.
+      + Use /var/lib/sbuild/apt.conf if it exists, and create it if it does
+        not.  This fixes the problem of the root filesystem
+        /etc/apt/apt.conf and /etc/apt/apt.conf.d directories being used,
+        while the copies in the chroot filesystem are ignored.
+      + Allow arch: all packages to be built when $main::build_arch_all
+        is true.
+      + Hardware DEBIAN_FRONTEND to "noninteractive" when installing and
+        purging packages.  "apt-get update" is also run when the package
+        cache is out of date (closes: 331546).
+      + Fix support for '~' in version numbers.
+      + Add Sbuild.pm (upstream WannaBuild.pm), and replace version_cmp()
+        with Sbuild::version_compare().
+      + Add REDO support for binNMUs.
+      + Add stats generation for download+install, build and remove times.
+      + Disassociate from the controlling terminal and make stdin /dev/null
+        for the dpkg-buildpackage process.
+      + Don't create entries to the sbuild log when a package claims to
+        build an _all.deb, but doesn't.  Instead, warn to the build log.
+      + Delete binary-all packages that we didn't ask to be built.
+      + By default, set APT::Get::AllowUnauthenticated to "true".
+      + Add $conf::chroot_only for compatibility with upstream
+        (closes: #302628).
+      + Add $conf::dpkg_source.
+      + Add $conf::build_env_cmnd.
+      + Merge whitespace and indentation changes.
+      + Fix typos.
+      + shutdown(): Don't close the package log if there is no current job.
+      + read_build_essential(): Read build-essential from $main::chroot_dir
+        instead of the root filesystem.
+      + Add @main::toolchain_pkgs and @toolchain_regex.
+      + check_space(): Redirect stderr of du to /dev/null.
+      + run_apt(): Complete support for "install-deps-env".
+      + Add --use-snapshot for building with gcc-snapshot.
+      + build(): Remove dpkg-buildpackage debugging statements.
+      + merge_pkg_build_deps(): Correctly separate dependencies in $deps,
+        and don't immediately return if there are missing packages.
+      + Remove support for --store-built-packages.
+      + get_dpkg_status(): Check $version is set and compute $result in the
+        same manner as upstream.
+      + run_apt(): Remove '*' from $pkgs and $rpkgs.
+      + install_deps(): purge packages with "dpkg --set-selections".
+        schroot support added in addition to upstream changes.
+      + fetch_source_files(): Support versioned fetches with apt-get.
+      + Add support for auto_giveback_socket: add an extra argument to
+        --auto-give-back and add an ssh '-S' option to analyze_fail_stage().
+      + Support new --make-binNMU options.
+      + Add support for $conf::chroot_only, and default to only running in
+        a chroot for security and safety.
+      + cleanup_close: Set $main::current_job to "" and shutdown if
+        $main::HOME/EXIT-DAEMON-PLEASE exists and we are running in
+        batchmode.
+      + Move "Package claims to have built" error message to the same place
+        as upstream.
+    - sbuild.conf:
+      + Remove watches.
+      + Update alternatives (closes: #280689).
+      + Comment out example %individual_stalled_pkg_timeout.
+      + Empty @ignore_watches_no_build_deps.
+    - sbuild.conf.local:
+      + Add $chroot_only.
+    - avg-pkg-build-space.1: Update text.
+    - example.sbuildrc:
+      + Remove $hack_changes_for_frozen.
+      + Update comments.
+  * sbuild.conf.local:
+    - Use FHS-compliant pathnames, as in sbuild.conf.
+  * Add support for building from experimental.
+  * sbuild:
+    - Parse the .changes rather than debian/files, so that the
+      .dsc/.diff.gz/.orig.tar.gz are also copied back to ~/build.
+    - Print information and contents of arch-all packages (closes: #321640).
+  * debian/control: The maintainer field contains the list address.
+
+ -- Roger Leigh <rleigh@debian.org>  Tue, 31 Jan 2006 12:58:57 +0000
+
 sbuild (0.36) unstable; urgency=low
 
   Roger Leigh:
