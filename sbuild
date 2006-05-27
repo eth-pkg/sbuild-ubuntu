@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 #
-# $Id: sbuild 544 2006-04-07 08:42:27Z rleigh $
+# $Id: sbuild 584 2006-05-27 13:03:47Z rleigh $
 #
 
 package main;
@@ -432,7 +432,7 @@ sub fetch_source_files {
 			if (!defined($entries{$version})) {
 				if (!$retried) {
 					# try to update apt's cache if nothing found
-					run_apt_command("$conf::apt_get", "update >/dev/null", "root", 1);
+					run_apt_command("$conf::apt_get", "update >/dev/null", "root", 0);
 					$retried = 1;
 					goto retry;
 				}
@@ -780,7 +780,7 @@ EOF
 				 "LD_LIBRARY_PATH=".$main::ld_library_path." " : "").
 				 "exec $conf::build_env_cmnd dpkg-buildpackage $conf::pgp_options ".
 				 "$binopt $main::dpkg_buildpackage_signopt -r$conf::fakeroot 2>&1";
-			exec_command($buildcmd, $main::username, 1, 1);
+			exec_command($buildcmd, $main::username, 1, 0);
 		}
 		else {
 			if (-f "/etc/ld.so.conf" && ! -r "/etc/ld.so.conf") {
@@ -1316,7 +1316,7 @@ sub uninstall_debs {
 	return 1 if !@_;
 	print "Uninstalling packages: @_\n" if $conf::debug;
 
-	my $command = get_command("$conf::dpkg --$mode @_ 2>&1 </dev/null", "root", 1, 1);
+	my $command = get_command("$conf::dpkg --$mode @_ 2>&1 </dev/null", "root", 1, 0);
   repeat:
 	my $output;
 	my $remove_start_time = time;
@@ -1724,7 +1724,7 @@ sub get_dpkg_status {
 					 $result{$pkg}->{'Version'} eq '=*=PROVIDED=*=');
 			next;
 		}
-		if (!$version) {
+		if (!defined $version || $version eq "") {
 			print PLOG "sbuild: parse error in $main::chroot_dir/var/lib/dpkg/status: ",
 					   "no Version: field for package $pkg\n";
 			next;

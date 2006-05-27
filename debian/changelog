@@ -1,3 +1,33 @@
+sbuild (0.46) unstable; urgency=low
+
+  * sbuild:
+    - fetch_source_files: Only print "apt-get update" invocation in debug
+      mode.
+    - get_dpkg_status: Make sure $version is defined before checking its
+      value, to ensure the Debian version can have a value of 0.  Thanks
+      to Santiago Vila for this fix (Closes: #368066).
+  * Update svn::ignore properties to ignore generated files.
+  * debian/control:
+    - Update to Standards-Version 3.7.2.
+    - Use Build-Depends, rather than Build-Depends-Indep.
+
+ -- Roger Leigh <rleigh@debian.org>  Sat, 27 May 2006 15:22:02 +0100
+
+sbuild (0.45) unstable; urgency=low
+
+  * bin/checkchroot:
+    - Check if the dpkg and reference files contained any data, and exit
+      with an error if either were empty (Closes: #363351).
+    - On error, use Sbuild::Utility::shutdown to clean up.
+  * bin/chr-hold, bin/chr-unhold: On error, use Sbuild::Utility::shutdown
+    to clean up.
+  * sbuild:
+    - build: Only print dpkg-buildpackage invocation in debug mode.
+    - uninstall_debs: Only print dpkg invocation in debug mode.
+  * debian/control: Update to Standards-Version 3.7.0.
+
+ -- Roger Leigh <rleigh@debian.org>  Mon,  1 May 2006 09:48:20 +0100
+
 sbuild (0.44) unstable; urgency=low
 
   * avg-pkg-build-time: Use Sbuild::Conf.
