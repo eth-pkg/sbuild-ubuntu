@@ -115,8 +115,6 @@ sub init {
 		if !-x $Sbuild::Conf::apt_cache;
 	die "dpkg-source binary $Sbuild::Conf::dpkg_source does not exist or isn't executable\n"
 		if !-x $Sbuild::Conf::dpkg_source;
-	die "$Sbuild::Conf::log_dir is not a directory\n"
-		if ! -d $Sbuild::Conf::log_dir;
 	die "$Sbuild::Conf::srcdep_lock_dir is not a directory\n"
 		if ! -d $Sbuild::Conf::srcdep_lock_dir;
 	die "mailto not set\n" if !$Sbuild::Conf::mailto;
