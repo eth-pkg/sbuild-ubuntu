@@ -16,7 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
-# $Id: Sbuild.pm 540 2006-04-07 08:27:59Z rleigh $
+# $Id: Sbuild.pm 1006 2006-08-22 21:55:41Z rleigh $
 #
 
 package Sbuild;
@@ -165,23 +165,7 @@ sub binNMU_version {
 	my $v = shift;
 	my $binNMUver = shift;
 
-	if ($v =~ /^(.*)-([^-]+)$/) {
-		my ($upstream, $debian) = ($1, $2);
-		my @parts = split( /\./, $debian );
-		if (@parts == 1) {
-			return "$upstream-$debian.0.$binNMUver";
-		}
-		elsif (@parts == 2) {
-			return "$upstream-$debian.$binNMUver";
-		}
-		else {
-			$parts[$#parts]+=$binNMUver;
-			return "$upstream-".join( ".", @parts );
-		}
-	}
-	else {
-		return "$v.0.$binNMUver";
-	}
+	return "$v+b$binNMUver";
 }
 
 1;
