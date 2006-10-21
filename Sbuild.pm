@@ -16,7 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
-# $Id: Sbuild.pm 1006 2006-08-22 21:55:41Z rleigh $
+# $Id: Sbuild.pm 1021 2006-09-29 22:06:18Z rleigh $
 #
 
 package Sbuild;
@@ -139,8 +139,14 @@ sub version_cmp_single {
 		$versb =~ /^(\d*)(.*)/; $b = $1; $b ||= 0; $versb = $2;
 		return $a - $b if $a != $b;
 		return 0 if !$versa && !$versb;
-		return -1 if !$versa;
-		return +1 if !$versb;
+		if (!$versa) {
+			return +1 if order(substr( $versb, 0, 1 ) ) < 0;
+			return -1;
+		}
+		if (!$versb) {
+			return -1 if order(substr( $versa, 0, 1 ) ) < 0;
+			return +1;
+		}
 	}
 }
 

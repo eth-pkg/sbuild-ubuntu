@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 #
-# $Id: sbuild 1019 2006-09-29 15:04:29Z rleigh $
+# $Id: sbuild 1058 2006-10-21 20:30:08Z rleigh $
 #
 
 package main;
@@ -287,6 +287,8 @@ foreach $pkgv (@ARGV) {
 	$main::chroot_build_dir = $$Sbuild::Chroot::current{'Build Location'};
 	$main::srcdep_lock_dir = $$Sbuild::Chroot::current{'Srcdep Lock Dir'};
 	$main::ilock_file = $$Sbuild::Chroot::current{'Install Lock'};
+
+	$main::arch = chroot_arch();
 
 	$main::pkg_status = "failed"; # assume for now
 	$main::current_job = $pkgv;
@@ -1519,6 +1521,11 @@ sub filter_dependencies {
 	}
 	my $status = get_dpkg_status( keys %names );
 
+	my %policy;
+	if ($conf::apt_policy) {
+		%policy = get_apt_policy( keys %names );
+	}
+
 	foreach $dep (@$dependencies) {
 		$name = $dep->{'Package'};
 		next if !$name;
@@ -1572,6 +1579,23 @@ sub filter_dependencies {
 			if (!$stat->{'Installed'}) {
 				print "$name: pos dep, not installed\n" if $conf::debug;
 				print PLOG "$name: missing\n";
+				if ($conf::apt_policy && $rel) {
+					if (!version_compare($policy{$name}->{defversion}, $rel, $vers)) {
+						print PLOG "Default version of $name not sufficient, ";
+						foreach my $cvers (@{$policy{$name}->{versions}}) {
+							if (version_compare($cvers, $rel, $vers)) {
+								print PLOG "using version $cvers\n";
+								$installable = $name . "=" . $cvers if !$installable;
+								last;
+							}
+						}
+						if(!$installable) {
+							print PLOG "no suitable version found. Skipping for now, maybe there are alternatives.\n" if !$installable;
+						}
+					} else {
+						print PLOG "Using default version " . $policy{$name}->{defversion} . "\n";
+					}
+				}
 				$installable = $name if !$installable;
 				next;
 			}
@@ -1596,6 +1620,20 @@ sub filter_dependencies {
 				print PLOG "$name: would have to downgrade!\n";
 			}
 			else {
+				if ($conf::apt_policy && !version_compare($policy{$name}->{defversion}, $rel, $vers)) {
+					print PLOG "Default version of $name not sufficient, ";
+					foreach my $cvers (@{$policy{$name}->{versions}}) {
+						if(version_compare($cvers, $rel, $vers)) {
+							print PLOG "using version $cvers\n";
+							$upgradeable = $name if ! $upgradeable;
+							last;
+						}
+					}
+					print PLOG "no suitable alternative found. I probably should dep-wait this one.\n" if !$upgradeable;
+					return 0;
+				} else {
+					print PLOG "Using default version " . $policy{$name}->{defversion} . "\n";
+				}
 				$upgradeable = $name if !$upgradeable;
 			}
 		}
@@ -1609,9 +1647,9 @@ sub filter_dependencies {
 				push( @$pos_list, $installable );
 			}
 			else {
-				print PLOG "To satisfy this dependency the package(s) would ",
-						   "have\n",
-						   "to be downgraded; this is not implemented.\n";
+				print PLOG "This dependency could not be satisfied. Possible reasons:\n";
+				print PLOG "* The package has a versioned dependency that is not yet available.\n";
+				print PLOG "* The package has a versioned dependency on a package version that is\n  older than the currently-installed package. Downgrades are not implemented.\n";
 				return 0;
 			}
 		}
@@ -1694,6 +1732,28 @@ sub check_dependencies {
 	}
 
 	return $fail;
+}
+
+sub get_apt_policy {
+	my @interest = @_;
+	my $package;
+	my %packages;
+
+	$ENV{LC_ALL}='C';
+
+	my $command = get_apt_command("$conf::apt_cache", "policy @interest", $main::username, 0);
+
+	open(APTCACHE, "$command |" )
+		or die "Cannot start $conf::apt_cache $!\n";
+	while(<APTCACHE>) {
+		$package=$1 if /^([0-9a-z+.-]+):$/;
+		$packages{$package}->{curversion}=$1 if /^ {2}Installed: ([0-9a-zA-Z-.:+]*)$/;
+		$packages{$package}->{defversion}=$1 if /^ {2}Candidate: ([0-9a-zA-Z-.:+]*)$/;
+		push @{$packages{$package}->{versions}}, "$2" if /^ (\*{3}| {3}) ([0-9a-zA-Z-.:+]*) 0$/;
+	}
+	die "$conf::apt_cache exit status $?\n" if $?;
+
+	return %packages;
 }
 
 sub get_dpkg_status {
@@ -2960,7 +3020,11 @@ sub verify_md5sums {
 	if (scalar keys %$exp_md5 > 0) {
 
 		my @files = keys %$exp_md5;
-		my $command = get_command("cd $main::cwd && $conf::md5sum @files </dev/null", $main::username, 1, 0);
+		# NOTE this is run outside the chroot, but in schroot
+		# mode the files are downloaded inside the chroot, and
+		# so this will break if the build directory is not
+		# bind mounted inside the chroot.
+		my $command = get_command("cd $main::cwd && $conf::md5sum @files </dev/null", $main::username, 0, 0);
 
 		open(OBS, "$command |") or return 1;
 		while (<OBS>) {
@@ -2989,4 +3053,24 @@ sub verify_md5sums {
 	}
 
 	return 0;
+}
+
+# Figure out chroot architecture
+sub chroot_arch {
+	$main::sub_pid = open( PIPE, "-|" );
+	if (!defined $main::sub_pid) {
+		print PLOG "Can't spawn dpkg: $!\n";
+		return 0;
+	}
+	if ($main::sub_pid == 0) {
+		exec_command("$conf::dpkg --print-installation-architecture 2>/dev/null", $main::username, 1, 0);
+	}
+	chomp( my $chroot_arch = <PIPE> );
+	close( PIPE );
+	undef $main::sub_pid;
+
+	die "Can't determine architecture of chroot: $!\n"
+		if ($? || !defined($chroot_arch));
+
+	return $chroot_arch;
 }

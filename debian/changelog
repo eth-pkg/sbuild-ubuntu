@@ -1,3 +1,31 @@
+sbuild (0.52) unstable; urgency=low
+
+  * New upstream release.
+  * sbuild: Remove incorrect WannaBuild:: prefix from version_compare.
+
+ -- Roger Leigh <rleigh@debian.org>  Sat, 21 Oct 2006 21:23:16 +0100
+
+sbuild (0.51) unstable; urgency=high
+
+  * Urgency is high because this version fixes an RC bug in testing.
+  * Sbuild.pm: Fix handling of ~ in versions (merge from upstream SVN cset
+    100; Closes: 392752).
+  * sbuild, Sbuild/Conf.pm, sbuild.conf.local: Add support for setting APT
+    policy, to allow building from experimental and sarge-backports.
+    Thanks to Wouter Verhelst for this patch, which has been slightly
+    modified to add configurability and adapt to this version of sbuild.
+  * sbuild:
+    - Don't run md5sum inside the chroot.  Thanks to Michael Banck
+      (Closes: #392323).
+    - chroot_arch():  New function to detect build architecture from
+      within the chroot.  Thanks to Kees Cook (Closes: #392992).
+  * Sbuild/Conf.pm: Fix check for schroot.  Thanks to Julien Danjou for
+    finding this (Closes: #392751).
+  * sbuild-setup.7.in: Correct example commandline for debootstrap.
+    Thanks to Alex Pennace (Closes: #391277).
+
+ -- Roger Leigh <rleigh@debian.org>  Sat, 21 Oct 2006 10:13:00 +0100
+
 sbuild (0.50) unstable; urgency=low
 
   * debian/copyright: Add Alioth file download location.
