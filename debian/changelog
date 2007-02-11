@@ -1,3 +1,34 @@
+sbuild (0.53) unstable; urgency=low
+
+  * Sbuild/Conf.pm: Add and export check_watches configuration variable.
+  * sbuild:
+    - Set umask to 022 so that dpkg-buildpackage always runs with a sane
+      umask (Closes: #405836).
+    - check_watches: Don't check watches if check_watches configuration
+      variable isn't set (Closes: #397123).
+    - get_apt_policy: Allow ~ in version numbers.  Thanks to Frank
+      Lichtenheld for this patch (Closes: #407293).
+    - When running apt-cache, divert STDOUT to the package log, so that
+      warnings do not get mailed separately (Closes: #399178).
+    - fetch_source_files:
+      + Correct indentation, and error with brace placement which caused
+        apt-cache output to not be used.
+      + Add package information into the key of the %entries hash, in
+        order to cope with multiple packages being returned by apt-cache.
+        Based on a patch by Goswin von Brederlow for Bug #408091.
+  * sbuild.conf: Obsolete $source_dependencies.
+  * sbuild.conf.local:
+    - Add pgp_options from sbuild.conf (Closes: #398128).
+    - Add check_watches.
+    - Obsolete $source_dependencies.
+  * update-sourcedeps, update-sourcedeps.1.in: Remove (Closes: 409642).
+    Thanks to Kenshi Muto for reporting that it no longer works.
+  * debian/rules, debian/manpages, debian/README.Debian: Remove support
+    for update-sourcedeps, and note that sourcedeps support is obsoleted
+    and will be removed in Lenny.
+
+ -- Roger Leigh <rleigh@debian.org>  Sun, 11 Feb 2007 10:18:12 +0000
+
 sbuild (0.52) unstable; urgency=low
 
   * New upstream release.
