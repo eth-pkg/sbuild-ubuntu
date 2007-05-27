@@ -30,6 +30,7 @@ use File::Basename qw(basename dirname);
 use IO::Handle;
 use IPC::Open3;
 use FileHandle;
+use Getopt::Long qw(:config no_ignore_case auto_abbrev gnu_getopt);
 use Sbuild qw(binNMU_version version_compare);
 use Data::Dumper;
 
@@ -83,6 +84,7 @@ $main::chroot_dir = "";
 $main::chroot_build_dir = "";
 @main::toolchain_pkgs = ();
 $main::override_distribution = 0;
+$main::sub_task = "initialisation";
 
 # Be verbose by default if on a tty
 if (-t STDIN && -t STDOUT && $main::verbose == 0) {
@@ -92,175 +94,88 @@ if (-t STDIN && -t STDOUT && $main::verbose == 0) {
 # Find chroots
 Sbuild::Chroot::init();
 
-while( @ARGV && $ARGV[0] =~ /^-/ ) {
-	$_ = shift @ARGV;
-	if (/^-v$/ || /^--verbose$/) {
-		$conf::verbose++;
-	}
-	elsif (/^-q$/ || /^--quiet$/) {
-		$main::verbose--;
-		if ($conf::verbose < 0) {
-		    $conf::verbose = 0;
-		}
-	}
-	elsif (/^-D$/ || /^--debug$/) {
-		$conf::debug++;
-	}
-	elsif (/^-b$/ || /^--batch$/) {
-		$main::batchmode = 1;
-	}
-	elsif (/^-n$/ || /^--nolog$/) {
-		$conf::nolog = 1;
-	}
-	elsif (/^-A$/ || /^--arch-all$/) {
-		$main::build_arch_all++;
-	}
-	elsif (/^-s$/ || /^--source$/) {
-		$main::build_source++;
-	}
-	elsif (/^--force-orig-source$/) {
-		$conf::force_orig_source++;
-	}
-	elsif (/^-d/ || /^--dist/) {
-		if (/^-d(.)/ || /^--dist=(.)/) {
-			$main::distribution = $1.$';
-		}
-		elsif (!@ARGV) {
-			die "$_ option missing argument\n";
-		}
-		else {
-			$main::distribution = shift @ARGV;
-		}
-		$main::distribution = "oldstable" if $main::distribution eq "o";
-		$main::distribution = "stable"   if $main::distribution eq "s";
-		$main::distribution = "testing"  if $main::distribution eq "t";
-		$main::distribution = "unstable" if $main::distribution eq "u";
-		$main::distribution = "experimental" if $main::distribution eq "e";
-		$main::override_distribution = 1;
-		print "Selected distribution $main::distribution\n"
-			if $conf::debug;
-	}
-	elsif (/^--arch/) {
-		if (/^--arch=(.)/) {
-			$main::user_arch = $1.$';
-		}
-		elsif (!@ARGV) {
-			die "$_ option missing argument\n";
-		}
-		else {
-			$main::user_arch = shift @ARGV;
-		}
-		print "Selected architecture $main::user_arch\n"
-			if $conf::debug;
-	}
-	elsif (/^-p/ || /^--purge/) {
-		if (/^-p(.)/ || /^--purge=(.)/) {
-			$conf::purge_build_directory = $1.$';
-		}
-		elsif (!@ARGV) {
-			die "$_ option missing argument\n";
-		}
-		else {
-			$conf::purge_build_directory = shift @ARGV;
-		}
-		die "Bad purge mode\n"
-			if !isin($conf::purge_build_directory, qw(always successful never));
-	}
-	elsif (/^-m/ || /^--maintainer/) {
-		if (/^-m(.)/ || /^--maintainer=(.)/) {
-			$conf::maintainer_name = $1.$';
-		}
-		elsif (!@ARGV) {
-			die "$_ option missing argument\n";
-		}
-		else {
-			$conf::maintainer_name = shift @ARGV;
-		}
-	}
-	elsif (/^-k/ || /^--keyid/) {
-		if (/^-k(.)/ || /^--keyid=(.)/) {
-			$conf::key_id = $1.$';
-		}
-		elsif (!@ARGV) {
-			die "$_ option missing argument\n";
-		}
-		else {
-			$conf::key_id = shift @ARGV;
-		}
-	}
-	elsif (/^-e/ || /^--uploader/) {
-		if (/^-e(.)/ || /^--uploader=(.)/) {
-			$conf::uploader_name = $1.$';
-		}
-		elsif (!@ARGV) {
-			die "$_ option missing argument\n";
-		}
-		else {
-			$conf::uploader_name = shift @ARGV;
-		}
-	}
-	elsif (/^-f/ || /^--force-depends/) {
-		if (/^-f(.)/ || /^--force-depends=(.)/) {
-			push( @main::manual_srcdeps, "f".$1.$' );
-		}
-		elsif (!@ARGV) {
-			die "$_ option missing argument\n";
-		}
-		else {
-			push( @main::manual_srcdeps, "f".(shift @ARGV) );
-		}
-	}
-	elsif (/^-a/ || /^--add-depends/) {
-		if (/^-a(.)/ || /^--add-depends=(.)/) {
-			push( @main::manual_srcdeps, "a".$1.$' );
-		}
-		elsif (!@ARGV) {
-			die "$_ option missing argument\n";
-		}
-		else {
-			push( @main::manual_srcdeps, "a".(shift @ARGV) );
-		}
-	}
-	elsif (/^--auto-give-back(=(.*))?$/) {
-		$main::auto_giveback = 1;
-		if ($2) {
-			my @parts = split( '@', $2 );
-			$main::auto_giveback_socket  = $parts[$#parts-3] if @parts > 3;
-			$main::auto_giveback_wb_user = $parts[$#parts-2] if @parts > 2;
-			$main::auto_giveback_user    = $parts[$#parts-1] if @parts > 1;
-			$main::auto_giveback_host    = $parts[$#parts];
-		}
-	}
-	elsif (/^--database=(.+)$/) {
-		$main::database = $1;
-	}
-	elsif (/^--stats-dir=(.+)$/) {
-		$main::stats_dir = $1;
-	}
-	elsif (/^--make-binNMU=(.+)$/) {
-		$main::binNMU = $1;
-		$main::binNMUver ||= 1;
-	}
-	elsif (/^--binNMU=(\d+)$/) {
-		$main::binNMUver = $1;
-	}
-	elsif (/^--use-snapshot$/) {
-		$main::useSNAP = 1;
-		$main::ld_library_path = "/usr/lib/gcc-snapshot/lib";
-		$conf::path = "/usr/lib/gcc-snapshot/bin:$conf::path";
-	}
-	else {
-		die "Unknown option: $_\n";
-	}
-}
+exit 1 if !GetOptions ("arch" => \$main::user_arch,
+		       "A|arch-all" => \$main::build_arch_all,
+		       "auto-give-back=s" => sub {
+			       $main::auto_giveback = 1;
+			       if ($_[1]) {
+				       my @parts = split( '@', $_[1] );
+				       $main::auto_giveback_socket =
+					       $parts[$#parts-3] if @parts > 3;
+				       $main::auto_giveback_wb_user =
+					       $parts[$#parts-2] if @parts > 2;
+				       $main::auto_giveback_user =
+					       $parts[$#parts-1] if @parts > 1;
+				       $main::auto_giveback_host =
+					       $parts[$#parts];
+			       }
+		       },
+		       "f|force-depends=s" => sub {
+			       push( @main::manual_srcdeps, "f".$_[1] );
+		       },
+		       "a|add-depends=s" => sub {
+			       push( @main::manual_srcdeps, "a".$_[1] );
+		       },
+		       "b|batch" => \$main::batchmode,
+		       "make-binNMU=s" => sub {
+			       $main::binNMU = $_[1];
+			       $main::binNMUver ||= 1;
+		       },
+		       "binNMU" => \$main::binNMUver,
+		       "database" => \$main::database,
+		       "D|debug+" => \$conf::debug,
+		       "d|dist=s" => sub {
+			       $main::distribution = $_[1];
+			       $main::distribution = "oldstable"
+				       if $main::distribution eq "o";
+			       $main::distribution = "stable"
+				       if $main::distribution eq "s";
+			       $main::distribution = "testing"
+				       if $main::distribution eq "t";
+			       $main::distribution = "unstable"
+				       if $main::distribution eq "u";
+			       $main::distribution = "experimental"
+				       if $main::distribution eq "e";
+			       $main::override_distribution = 1;
+		       },
+		       "force_orig_source" => \$conf::force_orig_source,
+		       "m|maintainer" => \$conf::maintainer_name,
+		       "k|keyid" => \$conf::key_id,
+		       "e|uploader" => \$conf::uploader_name,
+		       "n|nolog" => \$conf::nolog,
+		       "purge" => sub {
+			       $conf::purge_build_directory = $_[1];
+			       die "Bad purge mode\n"
+				       if !isin($conf::purge_build_directory,
+						qw(always successful never));
+		       },
+		       "s|source" => \$main::build_source,
+		       "stats-dir" => \$main::stats_dir,
+		       "use-snapshot" => sub {
+			       $main::useSNAP = 1;
+			       $main::ld_library_path =
+				       "/usr/lib/gcc-snapshot/lib";
+			       $conf::path =
+				       "/usr/lib/gcc-snapshot/bin:$conf::path";
+		       },
+		       "v|verbose+" => \$main::verbose,
+		       "q|quiet" => sub {
+			       $main::verbose-- if $conf::verbose;
+		       },
+		       );
+
+print "Selected distribution $main::distribution\n"
+	if $conf::debug;
+print "Selected architecture $main::user_arch\n"
+	if $conf::debug;
 
 $conf::mailto = $conf::mailto{$main::distribution}
 	if $conf::mailto{$main::distribution};
 
 # see debsign for priorities, we will follow the same order
 $main::dpkg_buildpackage_signopt="-m\"".$conf::maintainer_name."\"" if defined $conf::maintainer_name;
-$main::dpkg_buildpackage_signopt="-e\"".$conf::uploader_name."\"" if defined $conf::uploader_name; 
-$main::dpkg_buildpackage_signopt="-k\"".$conf::key_id."\"" if defined $conf::key_id; 
+$main::dpkg_buildpackage_signopt="-e\"".$conf::uploader_name."\"" if defined $conf::uploader_name;
+$main::dpkg_buildpackage_signopt="-k\"".$conf::key_id."\"" if defined $conf::key_id;
 $conf::maintainer_name=$conf::uploader_name if defined $conf::uploader_name;
 $conf::maintainer_name=$conf::key_id if defined $conf::key_id;
 
@@ -276,6 +191,8 @@ $SIG{'INT'} = \&shutdown;
 $SIG{'TERM'} = \&shutdown;
 $SIG{'ALRM'} = \&shutdown;
 $SIG{'PIPE'} = \&shutdown;
+
+parse_manual_srcdeps( map { m,(?:.*/)?([^_/]+)[^/]*, } @ARGV );
 
 write_jobs_file();
 
@@ -323,6 +240,15 @@ foreach $dscfile (@ARGV) {
 		next if !open_pkg_log( $tpkg, $main::distribution );
 	}
 
+	$main::pkg_status = "failed"; # assume for now
+	$main::current_job = $pkgv;
+	$main::additional_deps = [];
+	write_jobs_file( "currently building" );
+	if (should_skip( $pkgv )) {
+		$main::pkg_status = "skipped";
+		goto cleanup_close;
+	}
+
 	if (!begin_session($main::distribution, $main::user_arch)) {
 		print PLOG "Skipping $pkg\n";
 		$main::pkg_status = "skipped";
@@ -335,14 +261,6 @@ foreach $dscfile (@ARGV) {
 
 	$main::arch = chroot_arch();
 
-	$main::pkg_status = "failed"; # assume for now
-	$main::current_job = $pkgv;
-	$main::additional_deps = [];
-	write_jobs_file( "currently building" );
-	if (should_skip( $pkgv )) {
-		$main::pkg_status = "skipped";
-		goto cleanup_close;
-	}
 
 	$main::pkg_fail_stage = "fetch-src";
 	my @files_to_rm = fetch_source_files( \$dscfile,
@@ -351,7 +269,7 @@ foreach $dscfile (@ARGV) {
 		shift @files_to_rm;
 		goto cleanup_symlinks;
 	}
-		
+
 	$main::pkg_fail_stage = "install-deps";
 	if (!install_deps( $pkg )) {
 		print PLOG "Source-dependencies not satisfied; skipping $pkg\n";
@@ -409,7 +327,8 @@ sub fetch_source_files {
 
 	my ($dscbase, $files, @other_files, $dscarchs, @made);
 
-	$dscbase = "${pkg}_${version}.dsc";
+	(my $sversion = $version) =~ s/^\d+://; # Strip epoch
+	$dscbase = "${pkg}_${sversion}.dsc";
 
 	my $build_depends = "";
 	my $build_depends_indep = "";
@@ -586,12 +505,12 @@ sub build {
 	$main::this_space = 0;
 	$pkgv =~ /^([a-zA-Z\d.+-]+)_([a-zA-Z\d:.+~-]+)/;
 	my ($pkg, $version) = ($1,$2);
-	(my $sversion = $version) =~ s/^\d+://;
+	(my $sversion = $version) =~ s/^\d+://; # Strip epoch
 	my $tmpunpackdir = $dsc;
 	$tmpunpackdir =~ s/-.*$/.orig.tmp-nest/;
 	$tmpunpackdir =~ s/_/-/;
 	$tmpunpackdir = "$main::chroot_build_dir/$tmpunpackdir";
-	
+
 	if (-d "$main::chroot_build_dir/$dsc" && -l "$main::chroot_build_dir/$dsc") {
 		# if the package dir already exists but is a symlink, complain
 		print PLOG "Cannot unpack source: a symlink to a directory with the\n",
@@ -614,7 +533,7 @@ sub build {
 			exec_command("$conf::dpkg_source -sn -x $dsc 2>&1", $main::username, 1, 0);
 		}
 		$main::sub_task = "dpkg-source";
-		
+
 		while( <PIPE> ) {
 			print PLOG $_;
 			$dir = $1 if /^dpkg-source: extracting \S+ in (\S+)/;
@@ -625,7 +544,7 @@ sub build {
 		undef $main::sub_pid;
 		if ($?) {
 			print PLOG "FAILED [dpkg-source died]\n";
-		
+
 		    system ("rm -fr '$tmpunpackdir'") if -d $tmpunpackdir;
 			return 0;
 		}
@@ -747,7 +666,7 @@ sub build {
 		@lines = map { my $ind = 68-length($_);
 					   $ind = 0 if $ind < 0;
 					   "| $_".(" " x $ind)." |\n"; } @lines;
-		
+
 		print PLOG <<"EOF";
 
 +----------------------------------------------------------------------+
@@ -777,7 +696,6 @@ EOF
 	}
 	if ($main::sub_pid == 0) {
 		open( STDIN, "</dev/null" );
-		setsid;
 		my $binopt = $main::build_source ?
 			$conf::force_orig_source ? "-sa" : "" :
 				$main::build_arch_all ?	"-b" : "-B";
@@ -807,7 +725,8 @@ EOF
 	$timeout *= 60;
 	my $timed_out = 0;
 	my(@timeout_times, @timeout_sigs, $last_time);
-	$SIG{'ALRM'} = sub {
+
+	local $SIG{'ALRM'} = sub {
 		my $signal = ($timed_out > 0) ? "KILL" : "TERM";
 		run_command("perl -e \"kill( \\\"$signal\\\", $main::sub_pid )\"", "root", 1, 0);
 		$timeout_times[$timed_out] = time - $last_time;
@@ -900,7 +819,7 @@ EOF
 				print PLOG "Cannot create $changes.new: $!\n";
 				print PLOG "Distribution field may be wrong!!!\n";
 				if ($main::chroot_build_dir) {
-					system "mv", "$main::chroot_build_dir/$changes", "."
+					system "mv", "-f", "$main::chroot_build_dir/$changes", "."
 						and print PLOG "ERROR: Could not move ".basename($_)." to .\n";
 				}
 			}
@@ -942,7 +861,7 @@ EOF
 
 		foreach (@cfiles) {
 			push( @space_files, $_ );
-			system "mv", "$main::chroot_build_dir/$_", "."
+			system "mv", "-f", "$main::chroot_build_dir/$_", "."
 				and print PLOG "ERROR: Could not move $_ to .\n";
 		}
 		print PLOG "\n";
@@ -959,14 +878,14 @@ EOF
 		my $bdir = strip_chroot_path($dir);
 		run_command("rm -rf '$bdir'", "root", 1, 0);
 	}
-	
+
 	print PLOG "-"x78, "\n";
 	return $rv == 0 ? 1 : 0;
 }
 
 sub analyze_fail_stage {
 	my $pkgv = shift;
-	
+
 	return if $main::pkg_status ne "failed";
 	return if !$main::auto_giveback;
 	if (isin( $main::pkg_fail_stage,
@@ -1020,7 +939,7 @@ sub install_deps {
 
   repeat:
 	lock_file( "$main::ilock_file", 1 );
-	
+
 	print "Filtering dependencies\n" if $conf::debug;
 	if (!filter_dependencies( $dep, \@positive, \@negative )) {
 		print PLOG "Package installation not possible\n";
@@ -1044,7 +963,7 @@ sub install_deps {
 		wait_for_srcdep_conflicts( @confl );
 		goto repeat;
 	}
-	
+
 	write_srcdep_lock_file( $dep );
 
 	my $install_start_time = time;
@@ -1067,7 +986,7 @@ sub install_deps {
 	}
 	set_installed( @instd );
 	set_removed( @rmvd );
-	
+
 	print "Removing negative dependencies: @negative\n" if $conf::debug;
 	if (!uninstall_debs( $main::chroot_dir ? "purge" : "remove", @negative )) {
 		print PLOG "Removal of packages failed\n";
@@ -1078,7 +997,7 @@ sub install_deps {
 	my $install_stop_time = time;
 	write_stats( 'install-download-time',
 		$install_stop_time - $install_start_time );
-	
+
 	my $fail = check_dependencies( $dep );
 	if ($fail) {
 		print PLOG "After installing, the following source dependencies are ".
@@ -1111,7 +1030,7 @@ sub install_deps {
 
 sub wait_for_srcdep_conflicts {
 	my @confl = @_;
-	
+
 	for(;;) {
 		sleep( $conf::srcdep_lock_wait*60 );
 		my $allgone = 1;
@@ -1163,7 +1082,7 @@ sub uninstall_debs {
 	local (%ENV) = %ENV; # make local environment
 	# hardwire frontend for debconf to non-interactive
 	$ENV{'DEBIAN_FRONTEND'} = "noninteractive";
-	
+
 	return 1 if !@_;
 	print "Uninstalling packages: @_\n" if $conf::debug;
 
@@ -1270,13 +1189,13 @@ sub run_apt {
 			$selected = $providers[0];
 			print PLOG "Using $selected (no default, using first one)\n";
 		}
-		
+
 		@to_install = grep { $_ ne $to_replace } @to_install;
 		push( @to_install, $selected );
-		
+
 		goto repeat;
 	}
-	
+
 	if ($status != 0 && ($msgs =~ /^E: Could( not get lock|n.t lock)/mi ||
 						 $msgs =~ /^dpkg: status database area is locked/mi)) {
 		print PLOG "Another apt-get or dpkg is running -- retrying later\n";
@@ -1299,13 +1218,13 @@ sub run_apt {
 		print PLOG "Unable to fetch build-depends\n";
 		$main::pkg_fail_stage = "install-deps-env";
 	}
-	
+
 	if ($status != 0 && $mode ne "-s" &&
 		(($msgs =~ /^W: Couldn't stat source package list /mi))) {
 		print PLOG "Missing a packages file (mismatch with Release.gpg?), giving back.\n";
 		$main::pkg_fail_stage = "install-deps-env";
 	}
-	
+
 	$pkgs = $rpkgs = "";
 	if ($msgs =~ /NEW packages will be installed:\n((^[ 	].*\n)*)/mi) {
 		($pkgs = $1) =~ s/^[ 	]*((.|\n)*)\s*$/$1/m;
@@ -1329,7 +1248,7 @@ sub filter_dependencies {
 	my($dep, $d, $name, %names);
 
 	print PLOG "Checking for already installed source dependencies...\n";
-	
+
 	@$pos_list = @$neg_list = ();
 	foreach $d (@$dependencies) {
 		my $name = $d->{'Package'};
@@ -1375,7 +1294,7 @@ sub filter_dependencies {
 			}
 			next;
 		}
-		
+
 		my $is_satisfied = 0;
 		my $installable = "";
 		my $upgradeable = "";
@@ -1471,7 +1390,7 @@ sub check_dependencies {
 	my($dep, $d, $name, %names);
 
 	print PLOG "Checking correctness of source dependencies...\n";
-	
+
 	foreach $d (@$dependencies) {
 		my $name = $d->{'Package'};
 		$names{$name} = 1 if $name !~ /^\*/;
@@ -1533,7 +1452,12 @@ sub check_dependencies {
 		print PLOG "Kernel: $sysname $release $main::arch ($machine)\n";
 		print PLOG "Toolchain package versions:";
 		foreach $name (@main::toolchain_pkgs) {
-			print PLOG ' ' . $name . '_' . $status->{$name}->{'Version'};
+			if (defined($status->{$name}->{'Version'})) {
+				print PLOG ' ' . $name . '_' . $status->{$name}->{'Version'};
+			} else {
+				print PLOG ' ' . $name . '_' . ' =*=NOT INSTALLED=*=';
+
+			}
 		}
 		print PLOG "\n";
 	}
@@ -1649,7 +1573,7 @@ sub copy {
 	else {
 		die "unknown ref type in copy\n";
 	}
-	
+
 	return $new;
 }
 
@@ -1668,12 +1592,14 @@ sub merge_pkg_build_deps {
 	print PLOG "Build-Conflicts-Indep: $conflictsi\n" if $conflictsi;
 
 	my $old_deps = copy($main::deps{$pkg});
-	# keep deps from the central file marked as overrides (& prefix)
+
+	# Add gcc-snapshot as an override.
 	if ( $main::useSNAP ) {
 	    $dep->{'Package'} = "gcc-snapshot";
 	    $dep->{'Override'} = 1;
 	    push( @{$main::deps{$pkg}}, $dep );
 	}
+
 	foreach $dep (@{$main::deps{$pkg}}) {
 		if ($dep->{'Override'}) {
 			print PLOG "Added override: ",
@@ -1687,7 +1613,7 @@ sub merge_pkg_build_deps {
 
 	$conflicts = join( ", ", map { "!$_" } split( /\s*,\s*/, $conflicts ));
 	$conflictsi = join( ", ", map { "!$_" } split( /\s*,\s*/, $conflictsi ));
-	
+
 	my $deps = $depends . ", " . $conflicts;
 	$deps .= ", " . $dependsi . ", " . $conflictsi if $main::build_arch_all;
 	@{$main::deps{$pkg}} = @l;
@@ -1696,8 +1622,8 @@ sub merge_pkg_build_deps {
 
 	my $missing = (cmp_dep_lists( $old_deps, $main::deps{$pkg} ))[1];
 
-	# read list of build-essential packages (if not yet done) and expand their
-	# dependencies (those are implicitly essential)
+	# read list of build-essential packages (if not yet done) and
+	# expand their dependencies (those are implicitly essential)
 	if (!defined($main::deps{'ESSENTIAL'})) {
 		my $ess = read_build_essential();
 		parse_one_srcdep( 'ESSENTIAL', $ess, \%main::deps );
@@ -1707,7 +1633,8 @@ sub merge_pkg_build_deps {
 	print "Dependency-expanded build essential packages:\n",
 		  format_deps(@$exp_essential), "\n" if $conf::debug;
 
-	# populate toolchain_pkgs from toolchain_regexes and essential packages.
+	# populate toolchain_pkgs from toolchain_regexes and
+	# build-essential packages.
 	@main::toolchain_pkgs = ();
 	foreach my $tpkg (@$exp_essential) {
 		foreach my $regex (@conf::toolchain_regex) {
@@ -1715,11 +1642,12 @@ sub merge_pkg_build_deps {
 				if $tpkg->{'Package'} =~ m,^$regex,;
 		}
 	}
+
 	return if !@$missing;
 
-	# remove missing central deps that are essential
+	# remove missing essential deps
 	($filt_essential, $missing) = cmp_dep_lists( $missing, $exp_essential );
-	print PLOG "** Filtered missing central deps that are build-essential:\n",
+	print PLOG "** Filtered missing build-essential deps:\n",
 			   format_deps(@$filt_essential), "\n"
 				   if @$filt_essential;
 
@@ -1735,9 +1663,9 @@ sub merge_pkg_build_deps {
 		  format_deps(@$exp_pkgdeps), "\n" if $conf::debug;
 	$main::additional_deps = $exp_pkgdeps;
 
-	# remove missing central deps that are dependencies of build deps
+	# remove missing essential deps that are dependencies of build deps
 	($filt_pkgdeps, $missing) = cmp_dep_lists( $missing, $exp_pkgdeps );
-	print PLOG "** Filtered missing central deps that are dependencies of ",
+	print PLOG "** Filtered missing build-essential deps that are dependencies of ",
 			   "or provide build-deps:\n",
 			   format_deps(@$filt_pkgdeps), "\n"
 				   if @$filt_pkgdeps;
@@ -1750,7 +1678,7 @@ sub merge_pkg_build_deps {
 						   $_->{'Package'} =~ /^needs-no-/)) } @$missing ];
 
 	print PLOG "**** Warning:\n",
-			   "**** The following central src deps are ",
+			   "**** The following src deps are ",
 			   "(probably) missing:\n  ", format_deps(@$missing), "\n"
 				   if @$missing;
 }
@@ -1881,7 +1809,7 @@ sub expand_dependencies {
 			}
 		}
 	}
-	
+
 	return \@result;
 }
 
@@ -1917,11 +1845,11 @@ sub expand_virtuals {
 
 	return \@new_dlist;
 }
-		
+
 sub get_dependencies {
 	local(*PIPE);
 	my %deps;
-	
+
 	my $command = get_apt_command("$conf::apt_cache", "show @_", $main::username, 0);
 	my $pid = open3(\*main::DEVNULL, \*PIPE, '>&PLOG', "$command" );
 	if (!$pid) {
@@ -1944,7 +1872,7 @@ sub get_dependencies {
 
 	return \%deps;
 }
-		
+
 sub get_virtuals {
 	local(*PIPE);
 
@@ -1981,7 +1909,7 @@ sub parse_one_srcdep {
 	my $pkg = shift;
 	my $deps = shift;
 	my $hash = shift;
-	
+
 	$deps =~ s/^\s*(.*)\s*$/$1/;
 	foreach (split( /\s*,\s*/, $deps )) {
 		my @l;
@@ -2057,6 +1985,22 @@ sub parse_one_srcdep {
 	}
 }
 
+sub parse_manual_srcdeps {
+	my @for_pkgs = @_;
+
+	foreach (@main::manual_srcdeps) {
+		if (!/^([fa])([a-zA-Z\d.+-]+):\s*(.*)\s*$/) {
+			warn "Syntax error in manual source dependency: ",
+				substr( $_, 1 ), "\n";
+			next;
+	}
+		my ($mode, $pkg, $deps) = ($1, $2, $3);
+		next if !isin( $pkg, @for_pkgs );
+		@{$main::deps{$pkg}} = () if $mode eq 'f';
+		parse_one_srcdep( $pkg, $deps, \%main::deps );
+	}
+}
+
 sub check_space {
 	my @files = @_;
 	my $sum = 0;
@@ -2091,17 +2035,17 @@ sub file_for_name {
 	my @x = grep { /^\Q$name\E_/ } @_;
 	return $x[0];
 }
-				
+
 sub write_jobs_file {
 	my $news = shift;
 	my $job;
 	local( *F );
-	
+
 	$main::job_state{$main::current_job} = $news
 		if $news && $main::current_job;
 
 	return if !$main::batchmode;
-	
+
 	return if !open( F, ">$main::jobs_file" );
 	foreach $job (@ARGV) {
 		my $jobname;
@@ -2124,7 +2068,7 @@ sub append_to_FINISHED {
 	local( *F );
 
 	return if !$main::batchmode;
-	
+
 	open( F, ">>SBUILD-FINISHED" );
 	print F "$pkg\n";
 	close( F );
@@ -2397,7 +2341,7 @@ sub isin {
 
 sub fixup_pkgv {
 	my $pkgv = shift;
-	
+
 	$$pkgv =~ s,^.*/,,; # strip path
 	$$pkgv =~ s/\.(dsc|diff\.gz|tar\.gz|deb)$//; # strip extension
 	$$pkgv =~ s/_[a-zA-Z\d+~-]+\.(changes|deb)$//; # strip extension
@@ -2417,7 +2361,7 @@ sub lock_file {
 	my $for_srcdep = shift;
 	my $lockfile = "$file.lock";
 	my $try = 0;
-	
+
   repeat:
 	if (!sysopen( F, $lockfile, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0644 )){
 		if ($! == EEXIST) {
@@ -2480,7 +2424,7 @@ sub shutdown {
 	chdir( $main::cwd );
 
 	goto not_ni_shutdown if !$main::batchmode;
-	
+
 	# most important: dump out names of unfinished jobs to REDO
 	foreach $job (@ARGV) {
 		my $job2 = $job;
@@ -2504,9 +2448,9 @@ sub shutdown {
 		foreach $job (@npkgs) {
 			next if grep( /^\Q$job\E\s/, @pkgs );
 			if (not defined $main::binNMUver) {
-				print F "$job $main::distribution\n"; 
+				print F "$job $main::distribution\n";
 			} else {
-				print F "$job $main::distribution $main::binNMUver $main::binNMU\n"; 
+				print F "$job $main::distribution $main::binNMUver $main::binNMU\n";
 			}
 		}
 		close( F );
@@ -2529,7 +2473,7 @@ sub shutdown {
 		print "The following packages still need to be uninstalled ",
 			  "(--purge):\n@pkgs\n";
 	}
-	
+
   not_ni_shutdown:
 	# next: kill currently running command (if one)
 	if ($main::sub_pid) {
@@ -2541,6 +2485,7 @@ sub shutdown {
 	# close logs and send mails
 	if ( $main::current_job ) {
 		fixup_pkgv( \$main::current_job );
+		end_session();
 		close_pkg_log( $main::pkg_status,
 			       $main::pkg_start_time, $main::pkg_end_time,
 			       $main::this_space );
@@ -2607,6 +2552,8 @@ sub dsc_md5sums {
 			}
 		}
 		close( DSC ) or print PLOG "Failed to close $dsc\n";
+	} else {
+		print PLOG "Failed to open $dsc\n";
 	}
 
 	return \%dsc_md5;
