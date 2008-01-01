@@ -1,0 +1,153 @@
+2008-01-01  Roger Leigh  <rleigh@debian.org>
+
+	* Version 0.57.0.
+
+	* lib/Sbuild/Makefile.am: Install Sysconfig.pm.
+
+2008-01-01  Roger Leigh  <rleigh@debian.org>
+
+	* bin/Makefile.am: Create sbuild-adduser and sbuild-createchroot
+	compatibility symlinks to $(sbindir).
+
+2008-01-01  Roger Leigh  <rleigh@debian.org>
+
+	* NEWS: Add changes.
+
+2008-01-01  Roger Leigh  <rleigh@debian.org>
+
+	* Makefile.am: Distribute all scripts and files.
+
+2008-01-01  Roger Leigh  <rleigh@debian.org>
+
+	* man/sbuild-stats.1.in: Rename from avg-pkg-build-time.1.in.
+	Update with --time option and examples.  Update copyright
+	information.
+
+	* man/Makefile.am
+	(man_MANS): Rename avg-pkg-build-time.1 to sbuild-stats.1.
+	(install-data-hook): Create compatibility symlinks for
+	avg-pkg-build-*.
+
+	* configure.ac: Add man/sbuild-stats.1.
+
+	* bin/sbuild-stats: Rename from avg-pkg-build-time.  Use
+	Getopt::Long.  Unify modes into $mode, and update database
+	location based upon $db, which is also set if invoked through a
+	compatibility avg-pkg-build-* symlink.
+
+	* bin/Makefile.am
+	(bin_SCRIPTS): Add sbuild-stats.
+	(pkglibexec_SCRIPTS): Remove avg-pkg-build-time.
+	(install-exec-hook): Symlink avg-pkg-build-time and
+	avg-pkg-build-space to sbuild-stats.
+
+2007-12-29  Roger Leigh  <rleigh@debian.org>
+
+	* Document chroot abbreviations.
+
+2007-12-29  Roger Leigh  <rleigh@debian.org>
+
+	* man/Makefile.am: Add new manual page.
+
+	* man/sbuild-abort.1.in: New file.
+
+	* bin/Makefile.am: Use new program name.  Create compatibility
+	symlink.  Add --list and --set options.
+
+	* lib/Sbuild/Conf.pm: Add and export $package_checklist.
+
+	* configure.ac: Add sbuild-checkpackages.1.
+
+	* bin/sbuild-checkpackages: Rename from bin/checkchroot.  Use
+	$Sbuild::Conf::package_checklist for reference list location.
+
+2007-12-29  Roger Leigh  <rleigh@debian.org>
+
+	* sbuild-abort.1.in, sbuild-apt.1.in, sbuild-hold.1.in,
+	sbuild-shell.1.in, sbuild-update.1.in, sbuild-upgrade.1.in: New
+	manual pages.
+
+	* lib/Sbuild/Utility.pm: Call open_log and close_log in setup and
+	cleanup, respectively (following setting nolog=1).  This is to
+	create main::LOG and main::PLOG.
+
+	* lib/Sbuild/Sysconfig.pm.in: Use Sbuild::Conf::dpkg.
+
+	* lib/Sbuild/Chroot.pm (begin_session): Ensure $arch is defined.
+	Use main::LOG rather than LOG.
+
+	* configure.ac: Add manual pages.
+
+	* bin/sbuild-apt, bin/sbuild-update, bin/sbuild-upgrade: Set
+	DEBIAN_FRONTEND to "noninteractive".
+
+	* bin/Makefile.am: Update script names, and create symlinks for
+	compatibility with the old names.
+
+	* sbuild-abort, sbuild-apt, sbuild-update, sbuild-upgrade,
+	sbuild-shell, sbuild-hold, sbuild-unhold: Rename from
+	abort-current-build, chrapt, updatechroot, upgradechroot,
+	gochroot, chr-hold, and chr-unhold, respectively.
+
+2007-12-28  Roger Leigh  <rleigh@debian.org>
+
+	* man/Makefile.am: Add sbuild-adduser.8.in.
+
+	* bin/Makefile.am: Add sbuild-adduser.  Move sbuild-adduser and
+	sbuild-createchroot to sbin_SCRIPTS.
+
+	* bin/sbuild-adduser: Renamed from bin/add_sbuild_user.
+
+	* man/sbuild-adduser.8.in: New file.
+
+2007-12-28  Roger Leigh  <rleigh@debian.org>
+
+	* Update copyright and GPL2+ licence boilerplate on all files.
+
+2007-12-27  Roger Leigh  <rleigh@debian.org>
+
+	* configure.ac: Create lib/Sbuild/Sysconfig.pm.  Don't create
+	lib/Sbuild/Log.pm.
+
+	* lib/Sbuild/Sysconfig.pm.in: New file.  Generate with version
+	number, and determine hostname and arch.  Export arch, hostname
+	and version.
+
+	* lib/Sbuild/Log.pm: Rename from lib/Sbuild/Log.pm.in.  Remove
+	substituted @VERSION@ and hostname and arch determination.
+
+2007-12-27  Roger Leigh  <rleigh@debian.org>
+
+	* debian/*: Update packaging to use new autoconf/make.  See
+	debian/changelog.
+
+	* scripts/sbuild_release.m4.in: New file for generating release
+	date.
+
+	* scripts/global.mk: Global automake defaults.
+
+	* */.gitignore: Update with new generated files.
+
+	* man/*.1.in, man/*.7.in: Use @RELEASE_DATE@.
+
+	* debian/.cvsignore: Remove.
+
+	* bin/add_sbuild_user: Move from chroot/.
+
+	* TODO: Add checkchroot updates.
+
+	* lib/Sbuild*: Move from Sbuild*.
+
+	* README: Move from chroot/README.
+
+	* bootstrap: Add autotools bootstrap script.
+
+	* configure.ac: Add autoconf template.
+
+	* */Makefile.am: Add automake templates.
+
+	* AUTHORS: New file.
+
+	* ChangeLog: Start upstream changelog.
+
+

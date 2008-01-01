@@ -1,8 +1,23 @@
 #!/bin/bash -e
 #
-# vim:ts=4:noet:wrap:sts=4:sw=4:
-# $Id: dobuildlog 3 2004-09-17 13:17:40Z frankie $
-# Rick Younie <rick@def.debian.net>
+# Copyright © 2002 Rick Younie <rick@def.debian.net>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
+#
+#######################################################################
+
 #
 # craft a bug report or fail/success reply to a buildd log mail
 # using vim, mutt and optionally quintuple-agent:
@@ -20,13 +35,13 @@ FROM="$EMAIL"	# "Your Name <your@addr.ess>"
 ARCH=m68k		# for the bug report log link
 
 print_header () {
-	echo "From: $FROM"
-	sed -n '
+    echo "From: $FROM"
+    sed -n '
 		/^-----/,/^Automatic/ {
 			s/From: /To: /p
 			s/^Subject: Log/Subject: Re: Log/p
 		}'
-	echo
+    echo
 }
 
 fail_options () {
@@ -50,32 +65,32 @@ EOF
 }
 
 success_fail () {
-	STATUS=$(sed -n '/^-----/,/^Automatic/ s/^Subject: Log for \([^ ]*\) build .*/\1/p')
+    STATUS=$(sed -n '/^-----/,/^Automatic/ s/^Subject: Log for \([^ ]*\) build .*/\1/p')
 
-	case "$STATUS" in
-		successful )
-			print_header
-			sed -n '/\.changes:$/,$ {
+    case "$STATUS" in
+	successful )
+	    print_header
+	    sed -n '/\.changes:$/,$ {
 				/^Format: /,/^$/p
 			}' |$SIGNPRG 2>/dev/null
-			;;
-		failed )
-			print_header
-			fail_options
-			sed -n '/^Automatic build of/,$p'
-			;;
-		* )
-			echo "..this doesn't appear to be a buildd success/fail message"
-			exit 1
-			;;
-	esac
+	    ;;
+	failed )
+	    print_header
+	    fail_options
+	    sed -n '/^Automatic build of/,$p'
+	    ;;
+	* )
+	    echo "..this doesn't appear to be a buildd success/fail message"
+	    exit 1
+	    ;;
+    esac
 }
 
 bug_report () {
-	PKG=$1
-	VERS=$2
-	
-cat << EOF
+    PKG=$1
+    VERS=$2
+
+    cat << EOF
 From: $FROM
 To: submit@bugs.debian.org
 Subject: $PKG_VERS: fails to build
@@ -88,8 +103,9 @@ Hi,
 
 
 EOF
-sed -n '/^Automatic build of/,/^Build needed/ s/^/| /p'
-cat <<EOF
+
+    sed -n '/^Automatic build of/,/^Build needed/ s/^/| /p'
+    cat <<EOF
 
 
 The $ARCH build logs for $PKG can be found at
@@ -100,17 +116,17 @@ EOF
 }
 
 case "$1" in
-	gpg | agpg )
-		SIGNPRG="$1 $SIGNOPTS"
-		success_fail
-		exit 0
-		;;
-	bug )
-		PKG_VERS=$(sed -n '/^-----/,/^Automatic/ s/^Subject: Log for \([^ ]*\) build of \([^ ]*\) .*/\2/p')
-		bug_report $(echo "$PKG_VERS" |sed 's/_/ /')
-		;;
-	* )
-		echo "Usage: $(basename $0) gpg|agpg|bug"
-		exit 1
-		;;
+    gpg | agpg )
+	SIGNPRG="$1 $SIGNOPTS"
+	success_fail
+	exit 0
+	;;
+    bug )
+	PKG_VERS=$(sed -n '/^-----/,/^Automatic/ s/^Subject: Log for \([^ ]*\) build of \([^ ]*\) .*/\2/p')
+	bug_report $(echo "$PKG_VERS" |sed 's/_/ /')
+	;;
+    * )
+	echo "Usage: $(basename $0) gpg|agpg|bug"
+	exit 1
+	;;
 esac
