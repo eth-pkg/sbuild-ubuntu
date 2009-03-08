@@ -1,7 +1,7 @@
 # sbuild Makefile template
 #
 #
-# Copyright © 2004-2007  Roger Leigh <rleigh@debian.org>
+# Copyright © 2004-2008  Roger Leigh <rleigh@debian.org>
 #
 # sbuild is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -21,25 +21,32 @@
 
 include $(top_srcdir)/scripts/global.mk
 
-pkglibexecdir = $(SBUILD_LIBEXEC_DIR)
+sbuildlibexecdir = $(SBUILD_LIBEXEC_DIR)
+wblibexecdir = $(WANNA_BUILD_LIBEXEC_DIR)
 
-bin_SCRIPTS = 			\
-	sbuild			\
-	sbuild-abort		\
-	sbuild-apt		\
-	sbuild-checkpackages	\
-	sbuild-update		\
-	sbuild-upgrade		\
-	sbuild-shell		\
-	sbuild-stats		\
-	sbuild-hold		\
-	sbuild-unhold
+bin_SCRIPTS = 				\
+	sbuild				\
+	sbuild-abort			\
+	sbuild-apt			\
+	sbuild-checkpackages		\
+	sbuild-update			\
+	sbuild-upgrade			\
+	sbuild-shell			\
+	sbuild-stats			\
+	sbuild-hold			\
+	sbuild-unhold			\
+	wanna-build			\
+	wanna-build-catdb		\
+	wanna-build-mail		\
+	wanna-build-merge-packages	\
+	wanna-build-merge-quinn		\
+	wanna-build-statistics
 
 sbin_SCRIPTS = 			\
 	sbuild-adduser		\
 	sbuild-createchroot
 
-pkglibexec_SCRIPTS =		\
+sbuildlibexec_SCRIPTS =		\
 	dobuildlog
 
 doc_DATA = 		\
@@ -48,20 +55,33 @@ doc_DATA = 		\
 EXTRA_DIST =			\
 	$(bin_SCRIPTS)		\
 	$(sbin_SCRIPTS) 	\
-	$(pkglibexec_SCRIPTS)	\
+	$(sbuildlibexec_SCRIPTS)	\
 	$(doc_DATA)
 
 install-exec-hook:
 # Links for compatibility.
-	ln -sf $(sbindir)/sbuild-adduser $(DESTDIR)$(pkglibexecdir)/add_sbuild_user
-	ln -sf $(sbindir)/sbuild-createchroot $(DESTDIR)$(pkglibexecdir)/buildd.chroot
-	ln -sf $(bindir)/sbuild-apt $(DESTDIR)$(pkglibexecdir)/chrapt
-	ln -sf $(bindir)/sbuild-upgrade $(DESTDIR)$(pkglibexecdir)/upgradechroot
-	ln -sf $(bindir)/sbuild-update $(DESTDIR)$(pkglibexecdir)/updatechroot
-	ln -sf $(bindir)/sbuild-shell $(DESTDIR)$(pkglibexecdir)/gochroot
-	ln -sf $(bindir)/sbuild-hold $(DESTDIR)$(pkglibexecdir)/chr-hold
-	ln -sf $(bindir)/sbuild-unhold $(DESTDIR)$(pkglibexecdir)/chr-unhold
-	ln -sf $(bindir)/sbuild-abort $(DESTDIR)$(pkglibexecdir)/abort-current-build
-	ln -sf $(bindir)/sbuild-checkpackages $(DESTDIR)$(pkglibexecdir)/checkchroot
-	ln -sf sbuild-stats $(DESTDIR)$(bindir)/avg-pkg-build-time
-	ln -sf sbuild-stats $(DESTDIR)$(bindir)/avg-pkg-build-space
+	$(MKDIR_P) "$(DESTDIR)$(sbuildlibexecdir)"
+	$(MKDIR_P) "$(DESTDIR)$(wblibexecdir)"
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/wanna-build"
+
+	ln -sf "$(bindir)/wanna-build-catdb" "$(DESTDIR)$(bindir)/wanna-build-catgdbm"
+	ln -sf "$(bindir)/wanna-build-catdb" "$(DESTDIR)$(bindir)/wanna-build-catmldbm"
+
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/wanna-build"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/uploaded-build"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/failed-build"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/dep-wait-build"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/forget-build"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/no-build"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/build-info"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/list-needs-build"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/list-building"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/list-uploaded"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/list-installed"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/list-failed"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/list-dep-wait"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/list-not-for-us"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/list-all"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/merge-quinn"
+	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/merge-packages"
+

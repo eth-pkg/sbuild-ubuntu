@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright © 2006 Roger Leigh <rleigh@debian.org>
+# Copyright © 2006-2008 Roger Leigh <rleigh@debian.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,31 +20,40 @@
 
 use strict;
 use warnings;
+
+use Getopt::Long;
+use Sbuild qw(help_text version_text usage_error);
+use Sbuild::Conf;
 use Sbuild::Utility qw(setup cleanup);
 
 package main;
 
-sub usage {
-    print STDERR "Usage: $0 <chroot> [<chroot> ...]\n";
-    exit 1;
-}
+my $conf = Sbuild::Conf->new();
 
-usage() if (@ARGV < 1);
+GetOptions (
+    "h|help" => sub { help_text("1", "sbuild-upgrade"); },
+    "V|version" => sub {version_text("sbuild-upgrade"); })
+or usage_error("sbuild-upgrade", "Error parsing command-line options");
 
-$Sbuild::Conf::cwd = "/";
+usage_error("sbuild-upgrade", "Incorrect number of options") if (@ARGV < 1);
 
 foreach (@ARGV) {
 
     my $chroot = Sbuild::Utility::get_dist($_);
 
-    !setup($_) or die "Chroot setup failed for $chroot chroot";
+    my $session = setup($_, $conf) or die "Chroot setup failed for $chroot chroot";
 
     print STDOUT "Upgrading $chroot chroot...\n";
     $ENV{'DEBIAN_FRONTEND'} = "noninteractive";
-    my $status = run_apt_command($Sbuild::Conf::apt_get, "-uy upgrade",
-				 "root", 1);
+    $session->run_apt_command(
+	{ COMMAND => [$conf->get('APT_GET'), '-uy', 'upgrade'],
+	  ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
+	  USER => 'root',
+	  PRIORITY => 1,
+	  DIR => '/' });
+    my $status = $? >> 8;
 
-    cleanup();
+    cleanup($conf);
 
     exit $status if ($status);
 }

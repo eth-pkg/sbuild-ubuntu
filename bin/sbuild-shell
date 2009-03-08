@@ -21,20 +21,36 @@
 
 use strict;
 use warnings;
+
+use Getopt::Long;
+use Sbuild qw(help_text version_text usage_error);
+use Sbuild::Conf;
 use Sbuild::Utility qw(setup cleanup);
+use Sbuild::Sysconfig;
 
 package main;
 
-sub usage {
-    print STDERR "Usage: $0 <chroot>\n";
-    exit 1;
-}
+my $conf = Sbuild::Conf->new();
 
-usage() if (@ARGV != 1);
+GetOptions (
+    "h|help" => sub { help_text("1", "sbuild-shell"); },
+    "V|version" => sub {version_text("sbuild-shell"); })
+or usage_error("sbuild-shell", "Error parsing command-line options");
 
-!setup($ARGV[0]) or die "Chroot setup failed";
+usage_error("sbuild-shell", "Incorrect number of options") if (@ARGV != 1);
 
-my $status = run_command("/bin/sh", $Sbuild::Conf::username, 1);
 
-cleanup();
+my $session = setup($ARGV[0], $conf) or die "Chroot setup failed";
+
+$session->run_command(
+    { COMMAND => [$Sbuild::Sysconfig::programs{'SHELL'}],
+      PRIORITY => 1,
+      STREAMIN => \*STDIN,
+      STREAMOUT => \*STDOUT,
+      STREAMERR => \*STDERR });
+
+my $status = $? >> 8;
+
+cleanup($conf);
+
 exit $status;

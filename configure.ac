@@ -1,5 +1,5 @@
 #                                                              -*- Autoconf -*-
-# Copyright © 2004-2007  Roger Leigh <rleigh@debian.org>
+# Copyright © 2004-2008  Roger Leigh <rleigh@debian.org>
 #
 # sbuild is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #####################################################################
 pushdef([SBUILD_NAME],              [sbuild])
 pushdef([SBUILD_MAJOR_VERSION],     [0])
-pushdef([SBUILD_MINOR_VERSION],     [57])
+pushdef([SBUILD_MINOR_VERSION],     [58])
 pushdef([SBUILD_MICRO_VERSION],     [0])
 pushdef([SBUILD_EXTRA_VERSION],     [])
 pushdef([SBUILD_VERSION], SBUILD_MAJOR_VERSION.SBUILD_MINOR_VERSION.SBUILD_MICRO_VERSION[]SBUILD_EXTRA_VERSION)
@@ -42,7 +42,7 @@ AC_CONFIG_HEADER([config.h])
 
 AC_COPYRIGHT(
 [
-Copyright © 2004-2007  Roger Leigh <rleigh@debian.org>
+Copyright © 2004-2008  Roger Leigh <rleigh@debian.org>
 
 Parts of this configure script come from the 'configure.ac' file, and
 are not based on freely-redistributable m4 macros; you can
@@ -77,12 +77,11 @@ AC_SUBST([SBUILD_MICRO_VERSION])
 AC_SUBST([SBUILD_VERSION])
 
 dnl Initialise automake stuff.
-AM_INIT_AUTOMAKE([1.9 gnu check-news dist-bzip2 no-dist-gzip tar-pax])
+AM_INIT_AUTOMAKE([1.9 gnu check-news tar-pax])
 AM_MAINTAINER_MODE
 SBUILD_RELEASE_DATE
 
 AC_MSG_CHECKING([whether to enable debugging messages])
-enable_debug="no"
 AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug], [Enable debugging messages])],
               [ case "${enableval}" in
                 yes) enable_debug="yes" ;;
@@ -90,14 +89,42 @@ AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug], [Enable debugging messa
                 unset)  enable_debug="no" ;;
                 *) AC_MSG_RESULT([unknown])
                    AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
-                esac])
+                esac ],
+              [ enable_debug="no" ])
 AC_MSG_RESULT([$enable_debug])
 if test "$enable_debug" = "yes"; then
   AC_DEFINE_UNQUOTED([SBUILD_DEBUG], [1], [Enable debugging])
 fi
 
 # Checks for programs.
+AC_PROG_CC_C99
+AC_PROG_CXX
+AC_LANG([C++])
+AC_PATH_PROG([APT_CACHE], [apt-cache])
+AC_PATH_PROG([APT_GET], [apt-get])
+AC_PATH_PROG([CHMOD], [chmod])
+AC_PATH_PROG([DATE], [date])
+AC_PATH_PROG([DCMD], [dcmd])
+AC_PATH_PROG([DF], [df])
+AC_PATH_PROG([DPKG], [dpkg])
+AC_PATH_PROG([DPKG_BUILDPACKAGE], [dpkg-buildpackage])
+AC_PATH_PROG([DPKG_PARSECHANGELOG], [dpkg-parsechangelog])
+AC_PATH_PROG([DPKG_SOURCE], [dpkg-source])
+AC_PATH_PROG([DU], [du])
+AC_PATH_PROG([FAKEROOT], [fakeroot])
 AC_PATH_PROG([FIND], [find])
+AC_PATH_PROG([GPG], [gpg])
+AC_PATH_PROG([HOSTNAME], [hostname])
+AC_PATH_PROG([MAN], [man])
+AC_PATH_PROG([MD5SUM], [md5sum])
+AC_PATH_PROG([PGP], [pgp])
+AC_PATH_PROG([PS], [ps])
+AC_PATH_PROG([RM], [rm])
+AC_PATH_PROG([SCHROOT], [schroot])
+AC_PATH_PROG([SENDMAIL], [sendmail], [/usr/sbin/sendmail], [$PATH:/sbin:/usr/sbin])
+AC_PATH_PROG([SUDO], [sudo])
+AC_PATH_PROG([SU], [su])
+AC_PATH_PROG([TEMPFILE], [tempfile])
 AC_PATH_PROG([XARGS], [xargs])
 
 dnl Set PACKAGE_LOCALE_DIR in config.h
@@ -146,21 +173,26 @@ AH_TEMPLATE(PACKAGE_LIBEXEC_DIR, [Package libexec directory])
 if test "x${libexecdir}" = 'x${exec_prefix}/libexec'; then
   if test "x${exec_prefix}" = "xNONE"; then
     if test "x${prefix}" = "xNONE"; then
-      PACKAGE_LIBEXEC_DIR="${ac_default_prefix}/libexec/${PACKAGE}"
+      PACKAGE_LIBEXEC_DIR="${ac_default_prefix}/libexec"
     else
-      PACKAGE_LIBEXEC_DIR="${prefix}/libexec/${PACKAGE}"
+      PACKAGE_LIBEXEC_DIR="${prefix}/libexec"
     fi
   else
-    PACKAGE_LIBEXEC_DIR="${exec_prefix}/libexec/${PACKAGE}"
+    PACKAGE_LIBEXEC_DIR="${exec_prefix}/libexec"
   fi
 else
-  PACKAGE_LIBEXEC_DIR="${libexecdir}/${PACKAGE}"
+  PACKAGE_LIBEXEC_DIR="${libexecdir}"
 fi
 
-SBUILD_LIBEXEC_DIR="${PACKAGE_LIBEXEC_DIR}"
+SBUILD_LIBEXEC_DIR="${PACKAGE_LIBEXEC_DIR}/sbuild"
 AC_SUBST(SBUILD_LIBEXEC_DIR)
 AH_TEMPLATE(SBUILD_LIBEXEC_DIR, [Package libexec directory])
 AC_DEFINE_UNQUOTED(SBUILD_LIBEXEC_DIR, ["$SBUILD_LIBEXEC_DIR"])
+
+WANNA_BUILD_LIBEXEC_DIR="${PACKAGE_LIBEXEC_DIR}/wanna-build"
+AC_SUBST(WANNA_BUILD_LIBEXEC_DIR)
+AH_TEMPLATE(WANNA_BUILD_LIBEXEC_DIR, [Package libexec directory])
+AC_DEFINE_UNQUOTED(WANNA_BUILD_LIBEXEC_DIR, ["$WANNA_BUILD_LIBEXEC_DIR"])
 
 dnl Set PACKAGE_LOCALSTATE_DIR in config.h.
 AH_TEMPLATE(PACKAGE_LOCALSTATE_DIR, [Package localstate directory])
@@ -178,26 +210,71 @@ else
   PACKAGE_LOCALSTATE_DIR="${localstatedir}"
 fi
 
-dnl Set PACKAGE_SYSCONF_DIR in config.h.
-AH_TEMPLATE(PACKAGE_SYSCONF_DIR, [Package system configuration directory])
+dnl Set SBUILD_SYSCONF_DIR in config.h.
+AH_TEMPLATE(SBUILD_SYSCONF_DIR, [Package system configuration directory])
 if test "x${sysconfdir}" = 'x${prefix}/etc'; then
   if test "x${prefix}" = "xNONE"; then
-    PACKAGE_SYSCONF_DIR="${ac_default_prefix}/etc"
+    SBUILD_SYSCONF_DIR="${ac_default_prefix}/etc"
   else
-    PACKAGE_SYSCONF_DIR="${prefix}/etc"
+    SBUILD_SYSCONF_DIR="${prefix}/etc"
   fi
 else
-  PACKAGE_SYSCONF_DIR="${sysconfdir}"
+  SBUILD_SYSCONF_DIR="${sysconfdir}"
 fi
-PACKAGE_SYSCONF_DIR="${PACKAGE_SYSCONF_DIR}/sbuild"
-AC_DEFINE_UNQUOTED([PACKAGE_SYSCONF_DIR], ["$PACKAGE_SYSCONF_DIR"])
-AC_SUBST([PACKAGE_SYSCONF_DIR])
+SBUILD_SYSCONF_DIR="${SBUILD_SYSCONF_DIR}/sbuild"
+AC_DEFINE_UNQUOTED([SBUILD_SYSCONF_DIR], ["$SBUILD_SYSCONF_DIR"])
+AC_SUBST([SBUILD_SYSCONF_DIR])
 
-SBUILD_CONF="${PACKAGE_SYSCONF_DIR}/sbuild.conf"
+SBUILD_CONF="${SBUILD_SYSCONF_DIR}/sbuild.conf"
 AC_SUBST([SBUILD_CONF])
 
 AH_TEMPLATE(SBUILD_CONF, [sbuild config file path])
 AC_DEFINE_UNQUOTED(SBUILD_CONF, ["$SBUILD_CONF"])
+
+dnl Set BUILDD_SYSCONF_DIR in config.h.
+AH_TEMPLATE(BUILDD_SYSCONF_DIR, [Package system configuration directory])
+if test "x${sysconfdir}" = 'x${prefix}/etc'; then
+  if test "x${prefix}" = "xNONE"; then
+    BUILDD_SYSCONF_DIR="${ac_default_prefix}/etc"
+  else
+    BUILDD_SYSCONF_DIR="${prefix}/etc"
+  fi
+else
+  BUILDD_SYSCONF_DIR="${sysconfdir}"
+fi
+BUILDD_SYSCONF_DIR="${BUILDD_SYSCONF_DIR}/buildd"
+AC_DEFINE_UNQUOTED([BUILDD_SYSCONF_DIR], ["$BUILDD_SYSCONF_DIR"])
+AC_SUBST([BUILDD_SYSCONF_DIR])
+
+BUILDD_CONF="${BUILDD_SYSCONF_DIR}/buildd.conf"
+AC_SUBST([BUILDD_CONF])
+
+dnl Set SCHROOT_SYSCONF_DIR in config.h.
+AH_TEMPLATE(SCHROOT_SYSCONF_DIR, [Package system configuration directory])
+if test "x${sysconfdir}" = 'x${prefix}/etc'; then
+  if test "x${prefix}" = "xNONE"; then
+    SCHROOT_SYSCONF_DIR="${ac_default_prefix}/etc"
+  else
+    SCHROOT_SYSCONF_DIR="${prefix}/etc"
+  fi
+else
+  SCHROOT_SYSCONF_DIR="${sysconfdir}"
+fi
+SCHROOT_SYSCONF_DIR="${SCHROOT_SYSCONF_DIR}/schroot"
+AC_DEFINE_UNQUOTED([SCHROOT_SYSCONF_DIR], ["$SCHROOT_SYSCONF_DIR"])
+AC_SUBST([SCHROOT_SYSCONF_DIR])
+
+SCHROOT_CONF="${SCHROOT_SYSCONF_DIR}/schroot.conf"
+AC_SUBST([SCHROOT_CONF])
+
+AH_TEMPLATE(BUILDD_CONF, [buildd config file path])
+AC_DEFINE_UNQUOTED(BUILDD_CONF, ["$BUILDD_CONF"])
+
+WANNA_BUILD_CONF="${BUILDD_SYSCONF_DIR}/wanna-build.conf"
+AC_SUBST([WANNA_BUILD_CONF])
+
+AH_TEMPLATE(WANNA_BUILD_CONF, [wanna-build config file path])
+AC_DEFINE_UNQUOTED(WANNA_BUILD_CONF, ["$WANNA_BUILD_CONF"])
 
 AH_TEMPLATE(SBUILD_DATADIR, [Package data directory])
 SBUILD_DATADIR="${PACKAGE_DATA_DIR}/${PACKAGE_VERSION}"
@@ -211,9 +288,13 @@ dnl Configure which files to generate.
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([bin/Makefile])
 AC_CONFIG_FILES([configs/Makefile])
+AC_CONFIG_FILES([db/Makefile])
 AC_CONFIG_FILES([etc/Makefile])
 AC_CONFIG_FILES([lib/Makefile])
+AC_CONFIG_FILES([lib/Buildd/Makefile])
 AC_CONFIG_FILES([lib/Sbuild/Makefile])
+AC_CONFIG_FILES([lib/Sbuild/DB/Makefile])
+AC_CONFIG_FILES([lib/WannaBuild/Makefile])
 AC_CONFIG_FILES([lib/Sbuild/Sysconfig.pm])
 AC_CONFIG_FILES([man/Makefile])
 AC_CONFIG_FILES([man/sbuild.1])
@@ -228,6 +309,12 @@ AC_CONFIG_FILES([man/sbuild-shell.1])
 AC_CONFIG_FILES([man/sbuild-stats.1])
 AC_CONFIG_FILES([man/sbuild-update.1])
 AC_CONFIG_FILES([man/sbuild-upgrade.1])
+AC_CONFIG_FILES([man/wanna-build.1])
+AC_CONFIG_FILES([man/wanna-build-catdb.1])
+AC_CONFIG_FILES([man/wanna-build-mail.1])
+AC_CONFIG_FILES([man/wanna-build-merge-packages.1])
+AC_CONFIG_FILES([man/wanna-build-statistics.1])
+AC_CONFIG_FILES([src/Makefile])
 
 dnl Output the generated config.status script.
 AC_OUTPUT

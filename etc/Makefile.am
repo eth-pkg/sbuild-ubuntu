@@ -1,7 +1,7 @@
 # sbuild Makefile template
 #
 #
-# Copyright © 2004-2007  Roger Leigh <rleigh@debian.org>
+# Copyright © 2004-2008  Roger Leigh <rleigh@debian.org>
 #
 # sbuild is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -21,12 +21,20 @@
 
 include $(top_srcdir)/scripts/global.mk
 
-pkgsysconfdir = $(PACKAGE_SYSCONF_DIR)
-pkgsysconf_DATA = sbuild.conf
+sbuildsysconfdir = $(SBUILD_SYSCONF_DIR)
+sbuildsysconf_DATA = sbuild.conf
+
+builddsysconfdir = $(BUILDD_SYSCONF_DIR)
+builddsysconf_DATA = buildd.conf wanna-build.conf
 
 exampleconfdir = $(docdir)/examples
 exampleconf_DATA = example.sbuildrc
 
+schrootsetupdir = $(SCHROOT_SYSCONF_DIR)/setup.d
+schrootsetup_SCRIPTS = 50sbuild
+
 EXTRA_DIST =			\
-	$(pkgsysconf_DATA)	\
-	$(exampleconf_DATA)
+	$(sbuildsysconf_DATA)	\
+	$(builddsysconf_DATA)	\
+	$(exampleconf_DATA)	\
+	$(schrootsetup_SCRIPTS)

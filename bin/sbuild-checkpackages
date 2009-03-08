@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # check the package list in a chroot against a reference list.
 #
-# Copyright © 2006 Roger Leigh <rleigh@debian.org>
+# Copyright © 2006-2008 Roger Leigh <rleigh@debian.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,114 +21,38 @@
 
 use strict;
 use warnings;
+
 use locale;
 use POSIX qw(locale_h);
-use Sbuild::Conf qw($package_checklist);
+use Getopt::Long;
+use Sbuild qw(help_text version_text usage_error check_packages);
+use Sbuild::Conf;
 use Sbuild::Utility qw(setup cleanup shutdown);
 
 package main;
 
-sub usage {
-    print STDERR "Usage: $0 <chroot> [--list|--set]\n";
-    exit 1;
-}
+our $mode = undef;
 
-usage() if (@ARGV != 2 ||
-	    ($ARGV[1] ne "--list" && $ARGV[1] ne "--set") );
+my $conf = Sbuild::Conf->new();
+
+GetOptions (
+    "h|help" => sub { help_text("1", "sbuild-checkpackages"); },
+    "V|version" => sub {version_text("sbuild-checkpackages"); },
+    "l|list" => sub { $mode = "list"; },
+    "s|set" => sub { $mode = "set"; })
+or usage_error("sbuild-checkpackages", "Error parsing command-line options");
+
+usage_error("sbuild-checkpackages", "--list or --set must be specified")
+    if (@ARGV != 1 || !defined($mode));
 
 my $chroot = $ARGV[0];
-my $cmd = $ARGV[1];
 
 setlocale(LC_COLLATE, "POSIX");
 $ENV{'LC_COLLATE'} = "POSIX";
 
-!setup($chroot) or die "Chroot setup failed";
-my $chroot_dir = $$Sbuild::Chroot::current{'Location'};
-my (@status, @ref, @install, @remove);
+my $session = setup($chroot, $conf) or die "Chroot setup failed";
 
-if (! open STATUS, "grep-status -F Status -s Package ' installed' '$chroot_dir/var/lib/dpkg/status' | awk '{print \$2}' |" ) {
-    print STDERR "Can't read dpkg status file in chroot: $!\n";
-    shutdown();
-}
-while (<STATUS>) {
-    chomp;
-    push @status, $_;
-}
-if (! close STATUS) {
-    print STDERR "Error reading dpkg status file in chroot: $!\n";
-    shutdown();
-}
-@status = sort @status;
-if (!@status) {
-    print STDERR "dpkg status file is empty\n";
-    shutdown();
-}
+check_packages($session, $mode);
 
-if ($cmd eq "--set") {
-    if (! open WREF, "> $chroot_dir/$package_checklist") {
-	print STDERR "Can't write reference status file $chroot_dir/$package_checklist: $!\n";
-	shutdown();
-    }
-    foreach (@status) {
-	print WREF "$_\n";
-    }
-    if (! close WREF) {
-	print STDERR "Error writing reference status file: $!\n";
-	shutdown();
-    }
-} else { # --list
-
-    if (! open REF, "< $chroot_dir/$package_checklist") {
-	print STDERR "Can't read reference status file $chroot_dir/$package_checklist: $!\n";
-	shutdown();
-    }
-    while (<REF>) {
-	chomp;
-	push @ref, $_;
-    }
-    if (! close REF) {
-	print STDERR "Error reading reference status file: $!\n";
-	shutdown();
-    }
-
-    @ref = sort @ref;
-    if (!@ref) {
-	print STDERR "Reference status file is empty\n";
-	shutdown();
-    }
-
-    print "DELETE             ADD\n";
-    print "======================================\n";
-    my $i = 0;
-    my $j = 0;
-
-    while ($i < scalar @status && $j < scalar @ref) {
-
-	my $c = $status[$i] cmp $ref[$j];
-	if ($c < 0) {
-	    # In status, not reference; remove.
-	    print "$status[$i]\n";
-	    $i++;
-	} elsif ($c > 0) {
-	    # In reference, not status; install.
-	    print "                   $ref[$j]\n";
-	    $j++;
-	} else {
-	    # Identical; skip.
-	    $i++; $j++;
-	}
-    }
-
-# Print any remaining elements
-    while ($i < scalar @status) {
-	print "$status[$i]\n";
-	$i++;
-    }
-    while ($j < scalar @ref) {
-	print "                   $ref[$j]\n";
-	$j++;
-    }
-}
-
-cleanup();
+cleanup($conf);
 exit 0;

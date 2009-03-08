@@ -1,5 +1,11 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* buildd config file path */
+#undef BUILDD_CONF
+
+/* Package system configuration directory */
+#undef BUILDD_SYSCONF_DIR
+
 /* Name of package */
 #undef PACKAGE
 
@@ -27,9 +33,6 @@
 /* Define to the full name and version of this package. */
 #undef PACKAGE_STRING
 
-/* Package system configuration directory */
-#undef PACKAGE_SYSCONF_DIR
-
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
@@ -54,5 +57,17 @@
 /* Package module directory */
 #undef SBUILD_MODULEDIR
 
+/* Package system configuration directory */
+#undef SBUILD_SYSCONF_DIR
+
+/* Package system configuration directory */
+#undef SCHROOT_SYSCONF_DIR
+
 /* Version number of package */
 #undef VERSION
+
+/* wanna-build config file path */
+#undef WANNA_BUILD_CONF
+
+/* Package libexec directory */
+#undef WANNA_BUILD_LIBEXEC_DIR

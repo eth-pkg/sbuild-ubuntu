@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright © 2006-2007 Roger Leigh <rleigh@debian.org>
+# Copyright © 2006-2008 Roger Leigh <rleigh@debian.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,12 +23,15 @@ use warnings;
 
 package main;
 
-sub usage {
-    print STDERR "Usage: $0 <username>\n";
-    exit 1;
-}
+use Getopt::Long;
+use Sbuild qw(help_text version_text usage_error);
 
-usage() if (@ARGV < 1);
+GetOptions (
+    "h|help" => sub { help_text("8", "sbuild-adduser"); },
+    "V|version" => sub {version_text("sbuild-adduser"); })
+or usage_error("sbuild-adduser", "Error parsing command-line options");
+
+usage_error("sbuild-adduser", "Incorrect number of options") if (@ARGV < 1);
 
 my $status = 0;
 
@@ -46,6 +49,13 @@ foreach (@ARGV) {
 if ($status == 0) {
     print STDOUT <<EOF;
 
+# Setup tasks for sudo users:
+
+# BUILD
+# HOME directory in chroot, user:sbuild, 0770 perms, from
+# passwd/group copying to chroot, filtered
+# Maybe source 50sbuild, or move into common location.
+
 Next, copy the example sbuildrc file to the home directory of each user and
 set the variables for your system:
 
@@ -60,9 +70,9 @@ EOF
 Now try a build:
 
   cd /path/to/source
-  /usr/share/sbuild/chrapt <distribution> apt-get update
-  /usr/share/sbuild/chrapt <distribution> apt-get upgrade
-  (or "/usr/share/sbuild/chrapt <distribution> apt-get -f install"
+  sbuild-update <distribution>
+  sbuild-upgrade <distribution> apt-get upgrade
+  (or "sbuild-apt <distribution> apt-get -f install"
        first if the chroot is broken)
   sbuild -d <distribution> <package>_<version>
 EOF

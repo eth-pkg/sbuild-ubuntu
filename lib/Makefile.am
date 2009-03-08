@@ -21,9 +21,10 @@
 
 include $(top_srcdir)/scripts/global.mk
 
-SUBDIRS = Sbuild
+SUBDIRS = Buildd Sbuild WannaBuild
 
 perlmod_DATA =		\
+	Buildd.pm	\
 	Sbuild.pm
 
 EXTRA_DIST =		\

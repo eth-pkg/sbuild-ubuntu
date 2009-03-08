@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # changes the dpkg status of a package in a chroot to "hold"
 #
-# Copyright © 2006 Roger Leigh <rleigh@debian.org>
+# Copyright © 2006,2008 Roger Leigh <rleigh@debian.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,45 +21,61 @@
 
 use strict;
 use warnings;
+
+use Getopt::Long;
+use Sbuild qw(help_text version_text usage_error);
+use Sbuild::Conf;
 use Sbuild::Utility qw(setup cleanup shutdown);
 
 package main;
 
-sub usage {
-    print STDERR "Usage: $0 <chroot> package [package ...]\n";
-    exit 1;
-}
+my $conf = Sbuild::Conf->new();
 
-usage() if (@ARGV < 2);
+GetOptions (
+    "h|help" => sub { help_text("1", "sbuild-hold"); },
+    "V|version" => sub {version_text("sbuild-hold"); })
+or usage_error("sbuild-hold", "Error parsing command-line options");
+
+usage_error("sbuild-hold", "Incorrect number of options") if (@ARGV < 2);
 
 my $chroot = Sbuild::Utility::get_dist($ARGV[0]);
 
-!setup($ARGV[0]) or die "Chroot setup failed for $chroot chroot";
+my $session = setup($ARGV[0], $conf) or die "Chroot setup failed for $chroot chroot";
 
 print STDOUT "Holding packages in $chroot chroot:";
 
-my $command = get_command("$Sbuild::Conf::dpkg --set-selections", "root", 1);
-if (!open(SELECTIONS, "| $command")) {
+my $pipe = $session->pipe_command(
+    {COMMAND => [$conf->get('DPKG'), '--set-selections'],
+     PIPE => 'out',
+     USER => 'root',
+     CHROOT => 1,
+     PRIORITY => 0});
+
+if (!$pipe) {
     print STDERR "Can't run dpkg --set-selections in chroot\n";
-    shutdown();
+    shutdown("TERM");
 }
 
 shift @ARGV;
 foreach (@ARGV) {
-    print SELECTIONS "$_        hold\n";
+    print $pipe "$_        hold\n";
     print STDOUT " $_";
 }
 
-if (!close SELECTIONS) {
+if (!close $pipe) {
     print STDERR "Can't run dpkg --set-selections in chroot\n";
-    shutdown();
+    shutdown("TERM");
 }
 
-print STDOUT ".\n";
+print STDOUT ".\n\n";
 
-my $packages = join(" ", @ARGV);
-my $status = run_command("$Sbuild::Conf::dpkg --list $packages", "root", 1, 0);
+$session->run_command(
+    {COMMAND => [$conf->get('DPKG'), '--list', @ARGV],
+     USER => 'root',
+     CHROOT => 1,
+     PRIORITY => 0});
+my $status = $? >> 8;
 
-cleanup();
+cleanup($conf);
 
 exit $status;

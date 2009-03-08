@@ -1,11 +1,124 @@
 NEWS                                                            -*- outline -*-
 ----
 
-Welcome to sbuild 0.57.0.  Please read these release notes carefully.
+Welcome to sbuild 0.58.0.  Please read these release notes carefully.
 
 Full installation instructions are provided in the INSTALL file.  The
 README file also contains more specific notes regarding building and
 configuration.
+
+* Major changes in 0.58.0:
+
+  1) The configuration option @no_auto_upgrade, which was no longer
+     used, has been removed.  To prevent packages being upgraded
+     automatically, please use sbuild-hold.  See sbuild-hold(1).
+
+  2) The configuration option $chroot_mode has been restored, allowing
+     chroot access by both schroot (which remains the default) and
+     sudo.
+
+  3) A new configuration option $chroot_split has been added.  This
+     allows both schroot and sudo chroot access to be modified to run
+     apt/dpkg on the host system.  Note that schroot needs sudo to run
+     commands as root on the host system.
+
+  4) Deprecated commands from /usr/lib/sbuild have been removed.
+     Please use the sbuild-* replacements found in /usr/bin.
+
+  5) The maintainer name defaults to DEBEMAIL if set in the
+     environment, so no longer needs setting explicitly in .sbuildrc.
+
+  6) Unless configured as a buildd ($sbuild_mode), when using sudo
+     chroot access, chroots are searched for in /etc/sbuild/chroots.
+     This directory should contain symlinks to the chroots, with the
+     distribution name being the name of the symlink.  Buildd mode
+     will continue to use the old method of current-$distribution
+     symlinks in the current directory.
+
+  7) The log format used for build logs has been updated to use a more
+     readable format, and is now encoded in UTF-8 rather than
+     US-ASCII.  Code which parses the log file may need to be updated
+     to handle the new format.  Further log format changes made in the
+     future.
+
+  8) All commands now have a corresponding manual page.
+
+  9) The wanna-build configuration has moved from
+     /etc/wanna-build/wanna-build.conf into /etc/sbuild/sbuild.conf as
+     part of ongoing refactoring work.  It is expected that this will
+     be split into a separate file in the future once this work is
+     completed.
+
+  10) wanna-build can now correctly dump and restore its databases
+      using the --export and --import options.  Note that
+      wanna-build-catmldbm and related commands can not correctly dump
+      the current database format, can not be used to restore the dump
+      and will be removed in the future.
+
+  11) The wanna-build commands do-merge-packages and do-merge-quinn
+      have been renamed to wanna-build-merge-packages and
+      wanna-build-merge-quinn.
+
+  12) wanna-build changes from the official Debian wanna-build
+      installation have been merged.
+
+  13) Initial support for a wanna-build PostgreSQL backend backend has
+      been added, but is not currently functional.  The database
+      schema is also included, but not yet finalised.
+
+* Major changes in 0.57.5:
+
+  1) sbuild-createchroot now supports most of the options found in
+     debootstrap.  It no longer adds main and contrib to
+     /etc/apt/sources.list in the chroot (the components are now
+     specified with --components instead of being hard-coded).
+
+  2) All sbuild commands now support --help and --version options.
+
+  3) sbuild-abort and sbuild have been updated to work with the
+     current dpkg-buildpackage and handle build termination
+     gracefully.
+
+* Major changes in 0.57.4:
+
+  None.
+
+* Major changes in 0.57.3:
+
+  None.
+
+* Major changes in 0.57.2:
+
+  1) The new dpkg source format is now supported.
+
+  2) The chroot to build in may be specified independently of the
+     distribution.
+
+  3) Purging of files in the chroot has been made more reliable, by
+     putting all of the build files in a single temporary directory
+     which is purged after the build completes.
+
+  4) $mailto no longer needs setting in .sbuildrc if not running as a
+     buildd.
+
+  5) An option to always update the APT package list has been added
+     ($apt_update in sbuild.conf).
+
+  6) wanna-build, the database used to track which packages need
+     rebuilding, has been added as a separate package.
+
+* Major changes in 0.57.1:
+
+  1) While not used in the Debian packaging, the buildd and
+     wanna-build sources have been merged from the separate buildd.git
+     repository.  They will be built as packages in a future release.
+
+  2) Helper scripts in the Debian package have been moved from
+     /usr/lib/sbuild back to /usr/share/sbuild, where they were
+     located prior to 0.57.0.
+
+  3) schroot "directory" type chroots are now purged correctly
+     following a package build.
 
 * Major changes in 0.57.0:
 

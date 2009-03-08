@@ -1,7 +1,8 @@
 #
 # Chroot.pm: chroot library for sbuild
 # Copyright © 2005      Ryan Murray <rmurray@debian.org>
-# Copyright © 2005-2006 Roger Leigh <rleigh@debian.org>
+# Copyright © 2005-2008 Roger Leigh <rleigh@debian.org>
+# Copyright © 2008      Simon McVittie <smcv@debian.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +22,13 @@
 
 package Sbuild::Chroot;
 
+use Sbuild qw(copy debug);
+use Sbuild::Base;
 use Sbuild::Conf;
-use Sbuild::Sysconfig;
+use Sbuild::ChrootInfo;
 
 use strict;
+use warnings;
 use POSIX;
 use FileHandle;
 use File::Temp ();
@@ -33,339 +37,330 @@ BEGIN {
     use Exporter ();
     our (@ISA, @EXPORT);
 
-    @ISA = qw(Exporter);
+    @ISA = qw(Exporter Sbuild::Base);
 
-    @EXPORT = qw(begin_session end_session strip_chroot_path
-		 get_command run_command exec_command get_apt_command
-		 run_apt_command current); }
-
-my %chroots = ();
-my $schroot_session = "";
-
-our $current;
-
-sub _get_schroot_info {
-    my $chroot = shift;
-    my $chroot_type = "";
-    my %tmp = ('Priority' => 0,
-	       'Location' => "",
-	       'Session Managed' => 0);
-    open CHROOT_DATA, '-|', $Sbuild::Conf::schroot, '--info', '--chroot', $chroot or die "Can't run $Sbuild::Conf::schroot to get chroot data";
-    while (<CHROOT_DATA>) {
-	chomp;
-	if (/^\s*Type:?\s+(.*)$/) {
-	    $chroot_type = $1;
-	}
-	if (/^\s*Location:?\s+(.*)$/ &&
-	    $tmp{'Location'} eq "") {
-	    $tmp{'Location'} = $1;
-	}
-	if (/^\s*Mount Location:?\s+(.*)$/ &&
-	    $tmp{'Location'} eq "") {
-	    $tmp{'Location'} = $1;
-	}
-	# Path takes priority over Location and Mount Location.
-	if (/^\s*Path:?\s+(.*)$/) {
-	    $tmp{'Location'} = $1;
-	}
-	if (/^\s*Priority:?\s+(\d+)$/) {
-	    $tmp{'Priority'} = $1;
-	}
-	if (/^\s*Session Managed\s+(.*)$/) {
-	    if ($1 eq "true") {
-		$tmp{'Session Managed'} = 1;
-	    }
-	}
-    }
-
-    close CHROOT_DATA or die "Can't close schroot pipe getting chroot data";
-
-    # "plain" chroots are never session-capable, even if they say
-    # they are.
-    if ($chroot_type eq "plain") {
-	$tmp{'Session Managed'} = 0;
-    }
-
-    if ($Sbuild::Conf::debug) {
-	print STDERR "Found schroot chroot: $chroot\n";
-	foreach (sort keys %tmp) {
-	    print STDERR "  $_ $tmp{$_}\n";
-	}
-    }
-
-    $chroots{$chroot} = \%tmp;
+    @EXPORT = qw();
 }
 
-sub init {
-    foreach (glob("${Sbuild::Conf::build_dir}/chroot-*")) {
-	my %tmp = ('Priority' => 0,
-		   'Location' => $_,
-		   'Session Managed' => 0);
-	if (-d $tmp{'Location'}) {
-	    my $name = $_;
-	    $name =~ s/\Q${Sbuild::Conf::build_dir}\/chroot-\E//;
-	    print STDERR "Found chroot $name\n"
-		if $Sbuild::Conf::debug;
-	    $chroots{$name} = \%tmp;
-	}
+sub new {
+    my $class = shift;
+    my $conf = shift;
+    my $chroot_id = shift;
+
+    my $self = $class->SUPER::new($conf);
+    bless($self, $class);
+
+    $self->set('Session ID', "");
+    $self->set('Chroot ID', $chroot_id);
+    $self->set('Split', $self->get_conf('CHROOT_SPLIT'));
+    $self->set('Defaults', {
+	'COMMAND' => [],
+	'INTCOMMAND' => [], # Private
+	'EXPCOMMAND' => [], # Private
+	'ENV' => {},
+	'USER' => 'root',
+	'CHROOT' => 1,
+	'PRIORITY' => 0,
+	'DIR' => '/',
+	'STREAMIN' => undef,
+	'STREAMOUT' => undef,
+	'STREAMERR' => undef});
+
+    if (!defined($self->get('Chroot ID'))) {
+	return undef;
     }
 
-    # Pick up available chroots and dist_order from schroot
-    %chroots = ();
-    open CHROOTS, '-|', $Sbuild::Conf::schroot, '--list' or die "Can't run $Sbuild::Conf::schroot";
-    while (<CHROOTS>) {
-	chomp;
-	my $chroot = $_;
-	print STDERR "Getting info for $chroot chroot\n"
-	    if $Sbuild::Conf::debug;
-	_get_schroot_info($chroot);
+    return $self;
+}
+
+sub _setup_aptconf {
+    my $self = shift;
+    my $aptconf = shift;
+
+    if ($self->get_conf('APT_ALLOW_UNAUTHENTICATED')) {
+	print $aptconf "APT::Get::AllowUnauthenticated true;\n";
     }
-    close CHROOTS or die "Can't close schroot pipe";
+    print $aptconf "APT::Install-Recommends false;\n";
+
+    if ($self->get('Split')) {
+	my $chroot_dir = $self->get('Location');
+	print $aptconf "Dir \"$chroot_dir\";\n";
+    }
 }
 
 sub _setup_options {
-    my $distribution = shift;
+    my $self = shift;
 
-    if (defined($chroots{$distribution}) &&
-	-d $chroots{"$distribution"}->{'Location'}) {
-	my $chroot_dir = $chroots{"$distribution"}->{'Location'};
-	$chroots{"$distribution"}->{'Build Location'} = "$chroot_dir/build/$Sbuild::Conf::username";
-	my $srcdep_lock_dir = "$chroot_dir/$Sbuild::Conf::srcdep_lock_dir";
-	$chroots{"$distribution"}->{'Srcdep Lock Dir'} = $srcdep_lock_dir;
-	$chroots{"$distribution"}->{'Install Lock'} = "$srcdep_lock_dir/install";
+    $self->set('Build Location', $self->get('Location') . "/build");
+    $self->set('Srcdep Lock Dir', $self->get('Location') . '/' . $self->get_conf('SRCDEP_LOCK_DIR'));
+    $self->set('Install Lock', $self->get('Srcdep Lock Dir') . "/install");
 
-	my $aptconf = "/var/lib/sbuild/apt.conf";
-	$chroots{"$distribution"}->{'APT Options'} = "";
+    my $aptconf = "/var/lib/sbuild/apt.conf";
+    $self->set('APT Conf', $aptconf);
 
-	my $chroot_aptconf = "$chroot_dir/$aptconf";
-	$ENV{'APT_CONFIG'} = $aptconf;
+    my $chroot_aptconf = $self->get('Location') . "/$aptconf";
+    $self->set('Chroot APT Conf', $chroot_aptconf);
 
-	# Always write out apt.conf, because it may become outdated.
-	if (my $F = new File::Temp( TEMPLATE => "$aptconf.XXXXXX",
-				    DIR => $chroot_dir,
-				    UNLINK => 0) ) {
+    # Always write out apt.conf, because it may become outdated.
+    if (my $F = new File::Temp( TEMPLATE => "$aptconf.XXXXXX",
+				DIR => $self->get('Location'),
+				UNLINK => 0) ) {
+	$self->_setup_aptconf($F);
 
-	    print $F "APT::Get::AllowUnauthenticated true;\n";
-	    print $F "APT::Install-Recommends false;\n";
-
-	    if (! rename $F->filename, $chroot_aptconf) {
-		die "Can't rename $F->filename to $chroot_aptconf: $!\n";
-	    }
+	if (! rename $F->filename, $chroot_aptconf) {
+	    die "Can't rename $F->filename to $chroot_aptconf: $!\n";
 	}
     } else {
-	die "$distribution chroot does not exist\n";
-    }
-}
-
-sub begin_session {
-    my $distribution = shift;
-    my $arch = shift;
-
-    $arch = "" if !defined($arch);
-
-    my $arch_found = 0;
-
-    if ($arch ne "" &&
-	defined($chroots{"${distribution}-${arch}-sbuild"})) {
-	$distribution = "${distribution}-${arch}-sbuild";
-	$arch_found = 1;
-    }
-    elsif (defined($chroots{"${distribution}-sbuild"})) {
-	$distribution = "${distribution}-sbuild";
-    }
-    elsif ($arch ne "" &&
-	   defined($chroots{"${distribution}-${arch}"})) {
-	$distribution = "${distribution}-${arch}";
-	$arch_found = 1;
+	die "Can't create $chroot_aptconf: $!";
     }
 
-    if (!$arch_found && $arch ne "") {
-	print STDERR "Chroot for architecture $arch not found\n";
-	return 0;
-    }
+    # unsplit mode uses an absolute path inside the chroot, rather
+    # than on the host system.
+    if ($self->get('Split')) {
+	my $chroot_dir = $self->get('Location');
 
-    $schroot_session=`$Sbuild::Conf::schroot -c $distribution --begin-session`;
-    chomp($schroot_session);
-    if ($?) {
-	print STDERR "Chroot setup failed\n";
+	$self->set('APT Options',
+		   ['-o', "Dir::State::status=$chroot_dir/var/lib/dpkg/status",
+		    '-o', "DPkg::Options::=--root=$chroot_dir",
+		    '-o', "DPkg::Run-Directory=$chroot_dir"]);
 
-	if (-d "chroot-$distribution" || -l "chroot-$distribution") {
-	    print STDERR "\nFound obsolete chroot: ${Sbuild::Conf::build_dir}/chroot-$distribution\n";
-	    print STDERR "Chroot access via sudo has been replaced with schroot chroot management.\n";
-	    print STDERR "To upgrade to schroot, add the following lines to /etc/schroot/schroot.conf:\n\n";
-	    print STDERR "[$distribution]\n";
-	    print STDERR "type=directory\n";
-	    print STDERR "description=Debian $distribution autobuilder\n";
-	    print STDERR "location=${Sbuild::Conf::build_dir}/chroot-$distribution\n";
-	    print STDERR "priority=3\n";
-	    print STDERR "groups=root,sbuild\n";
-	    print STDERR "root-groups=root,sbuild\n";
-	    print STDERR "aliases=$distribution-sbuild\n";
-	    print STDERR "run-setup-scripts=true\n";
-	    print STDERR "run-exec-scripts=true\n\n";
-	    print STDERR "It is preferable to specify location as a directory, not a symbolic link\n\n"
-	}
-	return 0;
+	# sudo uses an absolute path on the host system.
+	$self->get('Defaults')->{'ENV'}->{'APT_CONFIG'} =
+	    $self->get('Chroot APT Conf');
+    } else { # no split
+	$self->set('APT Options', []);
+	$self->get('Defaults')->{'ENV'}->{'APT_CONFIG'} =
+	    $self->get('APT Conf');
     }
-    print STDERR "Setting up chroot $distribution (session id $schroot_session)\n"
-	if $Sbuild::Conf::debug;
-    _get_schroot_info($schroot_session);
-    _setup_options($schroot_session);
-    $current = $chroots{$schroot_session};
-    return 1;
-}
-
-sub end_session {
-    $current = undef;
-    return if $schroot_session eq "";
-    print STDERR "Cleaning up chroot (session id $schroot_session)\n"
-	if $Sbuild::Conf::debug;
-    system("$Sbuild::Conf::schroot -c $schroot_session --end-session");
-    $schroot_session = "";
-    if ($?) {
-	print STDERR "Chroot cleanup failed\n";
-	return 0;
-    }
-    return 1;
 }
 
 sub strip_chroot_path {
+    my $self = shift;
     my $path = shift;
 
-    $path =~ s/^\Q$$current{'Location'}\E//;
+    my $location = $self->get('Location');
+    $path =~ s/^\Q$location\E//;
 
     return $path;
 }
 
 sub log_command {
-    my $msg = shift;      # Message to log
-    my $priority = shift; # Priority of log message
+    my $self = shift;
+    my $options = shift;
 
-    if ((defined($priority) && $priority >= 1) || $Sbuild::Conf::debug) {
-	if ($$current{'APT Options'} ne "") {
-	    $msg =~ s/\Q$$current{'APT Options'}\E/CHROOT_APT_OPTIONS/g;
+    my $priority = $options->{'PRIORITY'};
+
+    if ((defined($priority) && $priority >= 1) || $self->get_conf('DEBUG')) {
+	my $command;
+	if ($self->get_conf('DEBUG')) {
+	    $command = $options->{'EXPCOMMAND'};
+	} else {
+	    $command = $options->{'COMMAND'};
 	}
-	print STDERR "$msg\n";
+
+	$self->log_info(join(" ", @$command), "\n");
     }
-}
-
-sub get_command_internal {
-    my $command = shift; # Command to run
-    my $user = shift;    # User to run command under
-    if (!defined $user || $user eq "") {
-	$user = $Sbuild::Conf::username;
-    }
-    my $chroot = shift;  # Run in chroot?
-    if (!defined $chroot) {
-	$chroot = 1;
-    }
-
-    my $cmdline;
-    if ($chroot != 0) { # Run command inside chroot
-	my $dir = strip_chroot_path($$current{'Build Location'});
-	$cmdline = "$Sbuild::Conf::schroot -d '$dir' -c $schroot_session --run-session $Sbuild::Conf::schroot_options -u $user -p -- /bin/sh -c '$command'";
-    } else { # Run command outside chroot
-	if ($user ne $Sbuild::Conf::username) {
-	    print main::LOG "Command \"$command\" cannot be run as root or any other user on the host system\n";
-	}
-	$cmdline .= "/bin/sh -c '$command'";
-    }
-
-    return $cmdline;
-}
-
-sub get_command {
-    my $command = shift;  # Command to run
-    my $user = shift;     # User to run command under
-    my $chroot = shift;   # Run in chroot?
-    my $priority = shift; # Priority of log message
-    my $cmdline = get_command_internal($command, $user, $chroot);
-
-    if ($Sbuild::Conf::debug) {
-	log_command($cmdline, $priority);
-    } else {
-	log_command($command, $priority);
-    }
-
-    if ($chroot != 0) {
-	chdir($Sbuild::Conf::cwd);
-    }
-
-    return $cmdline;
 }
 
 # Note, do not run with $user="root", and $chroot=0, because root
-# access to the host system is not allowed.
-sub run_command {
-    my $command = shift;  # Command to run
-    my $user = shift;     # User to run command under
-    my $chroot = shift;   # Run in chroot?
-    my $priority = shift; # Priority of log message
-    my $cmdline = get_command_internal($command, $user, $chroot);
+# access to the host system is not allowed by schroot, nor required
+# via sudo.
+sub pipe_command_internal {
+    my $self = shift;
+    my $options = shift;
 
-    if ($Sbuild::Conf::debug) {
-	log_command($cmdline, $priority);
+    my $pipetype = "-|";
+    $pipetype = "|-" if (defined $options->{'PIPE'} &&
+			 $options->{'PIPE'} eq 'out');
+
+    my $pipe = undef;
+    my $pid = open($pipe, $pipetype);
+    if (!defined $pid) {
+	warn "Cannot open pipe: $!\n";
+    } elsif ($pid == 0) { # child
+	if (!defined $options->{'PIPE'} ||
+	    $options->{'PIPE'} ne 'out') { # redirect stdin
+	    my $in = undef;
+	    $in = $self->get('Defaults')->{'STREAMIN'} if
+		(defined($self->get('Defaults')) &&
+		 defined($self->get('Defaults')->{'STREAMIN'}));
+	    $in = $options->{'STREAMIN'} if defined($options->{'STREAMIN'});
+	    if (defined($in) && $in && \*STDIN != $in) {
+		open(STDIN, '<&', $in)
+		    or warn "Can't redirect stdin\n";
+	    }
+	} else { # redirect stdout
+	    my $out = undef;
+	    $out = $self->get('Defaults')->{'STREAMOUT'} if
+		(defined($self->get('Defaults')) &&
+		 defined($self->get('Defaults')->{'STREAMOUT'}));
+	    $out = $options->{'STREAMOUT'} if defined($options->{'STREAMOUT'});
+	    if (defined($out) && $out && \*STDOUT != $out) {
+		open(STDOUT, '>&', $out)
+		    or warn "Can't redirect stdout\n";
+	    }
+	}
+	# redirect stderr
+	my $err = undef;
+	$err = $self->get('Defaults')->{'STREAMERR'} if
+	    (defined($self->get('Defaults')) &&
+	     defined($self->get('Defaults')->{'STREAMERR'}));
+	$err = $options->{'STREAMERR'} if defined($options->{'STREAMERR'});
+	if (defined($err) && $err && \*STDERR != $err) {
+	    open(STDERR, '>&', $err)
+		or warn "Can't redirect stderr\n";
+	}
+
+	$self->exec_command($options);
+    }
+
+    debug("Pipe (PID $pid, $pipe) created for: ",
+	  join(" ", @{$options->{'COMMAND'}}),
+	  "\n");
+
+    $options->{'PID'} = $pid;
+
+    return $pipe;
+}
+
+# Note, do not run with $user="root", and $chroot=0, because root
+# access to the host system is not allowed by schroot, nor required
+# via sudo.
+sub run_command_internal {
+    my $self = shift;
+    my $options = shift;
+
+    $options->{'PIPE'} = 'in';
+    my $pipe = $self->pipe_command($options);
+
+    if (defined($pipe)) {
+	while (<$pipe>) {
+	    $self->log("$_");
+	}
+	return close($pipe);
     } else {
-	log_command($command, $priority);
+	return 1;
     }
+}
 
-    if ($chroot != 0) {
-	chdir($Sbuild::Conf::cwd);
-    }
-    return system($cmdline);
+# Note, do not run with $user="root", and $chroot=0, because root
+# access to the host system is not allowed by schroot, nor required
+# via sudo.
+sub run_command {
+    my $self = shift;
+    my $options = shift;
+
+    $options->{'INTCOMMAND'} = copy($options->{'COMMAND'});
+
+    return $self->run_command_internal($options);
+}
+
+# Note, do not run with $user="root", and $chroot=0, because root
+# access to the host system is not allowed by schroot, nor required
+# via sudo.
+sub pipe_command {
+    my $self = shift;
+    my $options = shift;
+
+    $options->{'INTCOMMAND'} = copy($options->{'COMMAND'});
+
+    return $self->pipe_command_internal($options);
 }
 
 sub exec_command {
-    my $command = shift;  # Command to run
-    my $user = shift;     # User to run command under
-    my $chroot = shift;   # Run in chroot?
-    my $priority = shift; # Priority of log message
-    my $cmdline = get_command_internal($command, $user, $chroot);
+    my $self = shift;
+    my $options = shift;
 
-    if ($Sbuild::Conf::debug) {
-	log_command($cmdline, $priority);
-    } else {
-	log_command($command, $priority);
+    $self->get_command_internal($options);
+
+    debug("COMMAND: ", join(" ", @{$options->{'COMMAND'}}), "\n");
+    debug("INTCOMMAND: ", join(" ", @{$options->{'INTCOMMAND'}}), "\n");
+    debug("EXPCOMMAND: ", join(" ", @{$options->{'EXPCOMMAND'}}), "\n");
+
+    $self->log_command($options);
+
+    my $dir = $options->{'CHDIR'};
+    my $command = $options->{'EXPCOMMAND'};
+
+    my $chrootenv = $self->get('Defaults')->{'ENV'};
+    foreach (keys %$chrootenv) {
+	$ENV{$_} = $chrootenv->{$_};
     }
 
-    if ($chroot != 0) {
-	chdir($Sbuild::Conf::cwd);
+    my $commandenv = $options->{'ENV'};
+    foreach (keys %$commandenv) {
+	$ENV{$_} = $commandenv->{$_};
     }
-    exec $cmdline;
+
+    debug("Environment set:\n");
+    foreach (keys %ENV) {
+	debug("  $_=$ENV{$_}\n");
+    }
+
+    if (defined($dir) && $dir) {
+	debug("Changing to directory: $dir\n");
+	chdir($dir) or die "Can't change directory to $dir: $!";
+    }
+
+    debug("Running command: ", join(" ", @$command), "\n");
+    exec @$command;
+    die "Failed to exec: $command->[0]: $!";
 }
 
 sub get_apt_command_internal {
-    my $aptcommand = shift; # Command to run
-    my $options = shift;    # Command options
-    $aptcommand .= " $$current{'APT Options'} $options";
+    my $self = shift;
+    my $options = shift;
 
-    return $aptcommand;
-}
+    my $command = $options->{'COMMAND'};
+    my $apt_options = $self->get('APT Options');
 
-sub get_apt_command {
-    my $command = shift;  # Command to run
-    my $options = shift;  # Command options
-    my $user = shift;     # User to run command under
-    my $priority = shift; # Priority of log message
+    debug("APT Options: ", join(" ", @$apt_options), "\n");
 
-    my $aptcommand = get_apt_command_internal($command, $options);
+    my @aptcommand = ();
+    if (defined($apt_options)) {
+	push(@aptcommand, @{$command}[0]);
+	push(@aptcommand, @$apt_options);
+	if ($#$command > 0) {
+	    push(@aptcommand, @{$command}[1 .. $#$command]);
+	}
+    } else {
+	@aptcommand = @$command;
+    }
 
-    my $cmdline = get_command($aptcommand, $user, 1, $priority);
+    debug("APT Command: ", join(" ", @aptcommand), "\n");
 
-    chdir($Sbuild::Conf::cwd);
-    return $cmdline;
+    $options->{'CHROOT'} = $self->apt_chroot();
+    $options->{'CHDIR_CHROOT'} = !$options->{'CHROOT'};
+
+    $options->{'INTCOMMAND'} = \@aptcommand;
 }
 
 sub run_apt_command {
-    my $command = shift;  # Command to run
-    my $options = shift;  # Command options
-    my $user = shift;     # User to run command under
-    my $priority = shift; # Priority of log message
+    my $self = shift;
+    my $options = shift;
 
-    my $aptcommand = get_apt_command_internal($command, $options);
+    # Set modfied command
+    $self->get_apt_command_internal($options);
 
-    chdir($Sbuild::Conf::cwd);
-    return run_command($aptcommand, $user, 1, $priority);
+    return $self->run_command_internal($options);
+}
+
+sub pipe_apt_command {
+    my $self = shift;
+    my $options = shift;
+
+    # Set modfied command
+    $self->get_apt_command_internal($options);
+
+    return $self->pipe_command_internal($options);
+}
+
+sub apt_chroot {
+    my $self = shift;
+
+    my $chroot =  $self->get('Split') ? 0 : 1;
+
+    return $chroot
 }
 
 1;

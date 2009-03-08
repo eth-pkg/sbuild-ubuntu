@@ -1,3 +1,133 @@
+sbuild (0.58.0-1) unstable; urgency=low
+
+  [ Roger Leigh ]
+  * New release.
+  * debian/rules:
+    - Clean up old unused code.
+    - Correct patching of config.status and config.guess.
+    - Add functional binary-arch target.
+    - Use dh_prep in place of dh_clean -k.
+    - Don't configure with --with-postgresql (debversion code moved
+      to postgresql-debversion).
+  * debian/compat: Update to debhelper version 7.
+  * debian/control:
+    - Build-Depend on debhelper 7.
+    - wanna-build recommends postgresql-8.3-debversion.
+  * debian/NEWS: Document incompatible changes from previous versions.
+  * debian/sbuild.docs: New file.  Add NEWS.
+  * debian/wanna-build.docs: New file.  Add NEWS.
+  * buildd-mail-wrapper: Use more portable BSD getloadavg in place of
+    Linux-specific sysinfo.  Thanks to Robert Millan for this
+    patch (Closes: #511095). 
+  * wanna-build: --help output now documents --create-db, since --help
+    now displays the full manual page (Closes: #511314).
+
+  [ Kees Cook ]
+  * lib/Sbuild.pm: always perform version checks on provided packages
+    (Closes: #505747).
+
+ -- Roger Leigh <rleigh@debian.org>  Sun, 08 Mar 2009 21:53:54 +0000
+
+sbuild (0.57.5-1) unstable; urgency=low
+
+  * New release.
+  * Sbuild::Build::new: Check if 'DSC' exists rather than 'DSC File' to allow
+    the .dsc to be in any directory (Closes: #489794).  Thanks to
+    Francois-Denis Gonthier for this patch.
+  * $Sbuild::Conf::apt_allow_unauthenticated: New configuration parameter
+    to disable APT package authentication, which is now enabled by default
+    (Closes: #492327).  Thanks to Enrico Zini for this patch.
+  * Sbuild::Options: Use isin from Sbuild.pm (Closes: #492577).
+  * Sbuild::Log: Add version number and correctly-formatted date to the
+    package log name instead of a raw time_t (Closes: #493150).
+    Additionally add user and architecture to the name.
+  * Sbuild::Options: --make-binNMU no longer tries to assign an lvalue
+    (Closes: #493325).  Thanks to Greg Hudson for this patch.
+  * $maintainer_name, $uploader_name and $key_id are now optional in
+    .sbuildrc; one is only required with performing binary NMUs for the
+    entry in debian/changelog (Closes: #489557).
+  * debian/sbuild.postrm: Correct use of local to remove bashisms.
+
+ -- Roger Leigh <rleigh@debian.org>  Sat, 02 Aug 2008 21:23:13 +0100
+
+sbuild (0.57.4-1) unstable; urgency=low
+
+  * New release.
+  * debian/control: Update to Standards Version 3.8.0.
+  * Use schroot "Session Purged" flag rather than "Session Cloned"
+    (Closes: #482804).  Thanks to Timothy G Abbott.
+  * Handle version provides correctly, by using "~*=PROVIDED=*=" in place
+    of "=*=PROVIDED=*=" as the package version (Closes: #395271).  Thanks
+    to Niko Tyni for this patch.
+  * Don't include epoch version in directory names (Closes: #482456).
+    Thanks to Raphael Hertzog.
+  * man/sbuild-setup.7.in: Replace references to buildd.chroot with
+    sbuild-createchroot, and adduser with sbuild-adduser (Closes: #483654).
+    Thanks to Marc Fargas.
+  * Package name, version, build directory and associated information are
+    now contained within Sbuild::Build objects.  This allows stripping of
+    epoch to construct correct unpack directory location
+    (Closes: #482931, #482922).
+  * Warnings due to uninitialised variables are no longer reproducible
+    (Closes: #449251).
+
+ -- Roger Leigh <rleigh@debian.org>  Sun, 06 Jul 2008 12:21:06 +0100
+
+sbuild (0.57.3-1) unstable; urgency=low
+
+  * New release.
+  * --chroot and --arch now work together (Closes: #479714).
+
+ -- Roger Leigh <rleigh@debian.org>  Sun, 11 May 2008 10:49:17 +0100
+
+sbuild (0.57.2-1) unstable; urgency=low
+
+  * debian/copyright: Update copyright holders and copyright information.
+  * debian/rules: Run dh_link in binary-indep target to correct symlinks.
+  * debian/wanna-build.install: Install manual pages.
+  * man/sbuild.1.in:
+    - Add missing character, thanks to LI Daobing (Closes: #474487).
+    - Document --binNMU (Closes: #466927).
+    - --distribution should be --dist (Closes: #477693).  Thanks to Martin
+      F Krafft.
+  * debian/README.Debian: Remove reference to README-buildd.chroot
+    (Closes: #474030), thanks to Marc Fargas.  Update sbuild statistics
+    information.
+  * Add --apt-update option to sbuild to run "apt-get update" in the
+    chroot prior to fetching sources and building (Closes: #472350).
+    Thanks to Timothy G Abbott for this patch.
+  * Add --chroot option to specify a chroot separately from the
+    distribution name (Closes: #474160).  Thanks to Simon McVittie for
+    this patch.
+  * debian/control: Depend on debhelper version 6 or greater (Closes:
+    #477655).  Thanks to Martin F Krafft.
+  * lib/Sbuild/Conf.pm: Don't require $mailto to be set if not running in
+    a buildd environment (Closes: #478045).  Thanks to Martin F Krafft.
+  * Use dcmd to parse dsc files, rather than hand-parsing.  This allows
+    support of the new dpkg source format.
+  * All files used in a build are stored in
+    /build/username-package_version-arch-XXXXXX inside the chroot (Closes:
+    #478044).
+
+ -- Roger Leigh <rleigh@debian.org>  Sun, 27 Apr 2008 21:22:19 +0100
+
+sbuild (0.57.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/control:
+    - Depend upon schroot >= 1.1.6.  This version includes a
+      SESSION_CLONE property, used to determine if a chroot is cloned,
+      and hence package removal may be skipped.
+    - Add wanna-build package.
+  * debian/rules: set libexecdir to /usr/share, for compatibility with
+    locations of scripts in earlier versions.
+  * debian/sbuild.install: use /usr/share in place of /usr/lib
+    (Closes: #458779).
+  * debian/wanna-build.install: New file: files for wanna-build.
+  * sbuild: Don't parse output of dpkg-source (Closes: #471747).
+
+ -- Roger Leigh <rleigh@debian.org>  Thu, 27 Mar 2008 20:42:56 +0000
+
 sbuild (0.57.0-1) unstable; urgency=low
 
   * Sbuild/*.pm: Reindent to increase readability.

@@ -4,6 +4,9 @@ principal areas that each contributed to are listed in addition.
 Ben Collins	     	<bcollins@debian.org>
 	the "apt patch" for sbuild for finding source
 
+Enrico Zini             <enrico@debian.org>
+       support for disabling APT package authentication
+
 Roman Hodek   	        <Roman.Hodek@informatik.uni-erlangen.de>
       	wanna-build
 	sbuild
@@ -16,3 +19,10 @@ Roger Leigh		<rleigh@debian.org>
 Ryan Murray		<rmurray@debian.org>
      	modifications for security building
 	maintenance
+
+Simon McVittie		<smcv@debian.org>
+        --chroot option for sbuild
+
+Timothy G Abbott	<tabbott@mit.edu>
+	support for running "apt-get update" in chroots prior to
+	fetching sources and building
