@@ -1,3 +1,31 @@
+commit 5ba6126dd2abe41448cb71cbea87a209c86b1349
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 11 23:19:34 2009 +0000
+
+    [debian] Close #519276
+
+commit 508cec92f2b85c1cab6df7301d859b49cececa7b
+Author: Francois-Denis Gonthier <fdgonthier@kryptiva.com>
+Date:   Wed Mar 11 23:16:08 2009 +0000
+
+    [sbuild] Don't erase default chroot environment
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 3f15b8166d4f94dea041fbb837312b6b7f83577b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 11 22:49:18 2009 +0000
+
+    [debian] configure sets DCMD, SCHROOT and SUDO explicitly.
+    
+    Closes: #519097
+
+commit 04d7105f14309bce23c6adb99152719dbc8846c6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 11 22:44:48 2009 +0000
+
+    [build] Bump version to 0.58.1
+
 commit b8e50ae888d7a15a0e6c6a5efc53d2d566845734
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sun Mar 8 21:54:33 2009 +0000
