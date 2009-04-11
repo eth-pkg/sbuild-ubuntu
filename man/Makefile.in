@@ -72,6 +72,8 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	$(srcdir)/buildd-mail.1.in $(srcdir)/buildd-uploader.1.in \
+	$(srcdir)/buildd-watcher.1.in $(srcdir)/buildd.1.in \
 	$(srcdir)/sbuild-abort.1.in $(srcdir)/sbuild-adduser.8.in \
 	$(srcdir)/sbuild-apt.1.in $(srcdir)/sbuild-checkpackages.1.in \
 	$(srcdir)/sbuild-createchroot.8.in $(srcdir)/sbuild-hold.1.in \
@@ -91,7 +93,8 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES = sbuild.1 sbuild-abort.1 sbuild-adduser.8 \
+CONFIG_CLEAN_FILES = buildd.1 buildd-mail.1 buildd-uploader.1 \
+	buildd-watcher.1 sbuild.1 sbuild-abort.1 sbuild-adduser.8 \
 	sbuild-apt.1 sbuild-checkpackages.1 sbuild-createchroot.8 \
 	sbuild-hold.1 sbuild-setup.7 sbuild-shell.1 sbuild-stats.1 \
 	sbuild-update.1 sbuild-upgrade.1 wanna-build.1 \
@@ -117,19 +120,11 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BUILDD_CONF = @BUILDD_CONF@
 BUILDD_SYSCONF_DIR = @BUILDD_SYSCONF_DIR@
-CC = @CC@
-CCDEPMODE = @CCDEPMODE@
-CFLAGS = @CFLAGS@
 CHMOD = @CHMOD@
-CPPFLAGS = @CPPFLAGS@
-CXX = @CXX@
-CXXDEPMODE = @CXXDEPMODE@
-CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DATE = @DATE@
 DCMD = @DCMD@
 DEFS = @DEFS@
-DEPDIR = @DEPDIR@
 DF = @DF@
 DPKG = @DPKG@
 DPKG_BUILDPACKAGE = @DPKG_BUILDPACKAGE@
@@ -139,7 +134,6 @@ DU = @DU@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
-EXEEXT = @EXEEXT@
 FAKEROOT = @FAKEROOT@
 FIND = @FIND@
 GPG = @GPG@
@@ -149,7 +143,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
@@ -158,7 +151,6 @@ MAKEINFO = @MAKEINFO@
 MAN = @MAN@
 MD5SUM = @MD5SUM@
 MKDIR_P = @MKDIR_P@
-OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -196,11 +188,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
-ac_ct_CC = @ac_ct_CC@
-ac_ct_CXX = @ac_ct_CXX@
-am__include = @am__include@
 am__leading_dot = @am__leading_dot@
-am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
@@ -239,6 +227,10 @@ top_srcdir = @top_srcdir@
 # Global options for use in all Makefiles.
 perlmoddir = $(PERL_MODULE_DIR)
 man_MANS = \
+	buildd.1			\
+	buildd-mail.1			\
+	buildd-uploader.1		\
+	buildd-watcher.1		\
 	sbuild.1			\
 	sbuild-abort.1			\
 	sbuild-adduser.8		\
@@ -289,6 +281,14 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+buildd.1: $(top_builddir)/config.status $(srcdir)/buildd.1.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+buildd-mail.1: $(top_builddir)/config.status $(srcdir)/buildd-mail.1.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+buildd-uploader.1: $(top_builddir)/config.status $(srcdir)/buildd-uploader.1.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+buildd-watcher.1: $(top_builddir)/config.status $(srcdir)/buildd-watcher.1.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 sbuild.1: $(top_builddir)/config.status $(srcdir)/sbuild.1.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 sbuild-abort.1: $(top_builddir)/config.status $(srcdir)/sbuild-abort.1.in
@@ -601,6 +601,7 @@ install-data-hook:
 	ln -sf wanna-build-catdb.1 $(DESTDIR)$(man1dir)/wanna-build-catgdbm.1
 	ln -sf wanna-build-catdb.1 $(DESTDIR)$(man1dir)/wanna-build-catmldbm.1
 	ln -sf wanna-build-merge-packages.1 $(DESTDIR)$(man1dir)/wanna-build-merge-quinn.1
+	ln -sf buildd-mail.1 $(DESTDIR)$(man1dir)/buildd-mail-wrapper.1
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

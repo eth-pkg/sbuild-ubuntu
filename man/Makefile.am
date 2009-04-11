@@ -21,7 +21,11 @@
 
 include $(top_srcdir)/scripts/global.mk
 
-man_MANS = \
+man_MANS =				\
+	buildd.1			\
+	buildd-mail.1			\
+	buildd-uploader.1		\
+	buildd-watcher.1		\
 	sbuild.1			\
 	sbuild-abort.1			\
 	sbuild-adduser.8		\
@@ -45,3 +49,4 @@ install-data-hook:
 	ln -sf wanna-build-catdb.1 $(DESTDIR)$(man1dir)/wanna-build-catgdbm.1
 	ln -sf wanna-build-catdb.1 $(DESTDIR)$(man1dir)/wanna-build-catmldbm.1
 	ln -sf wanna-build-merge-packages.1 $(DESTDIR)$(man1dir)/wanna-build-merge-quinn.1
+	ln -sf buildd-mail.1 $(DESTDIR)$(man1dir)/buildd-mail-wrapper.1

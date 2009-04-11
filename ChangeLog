@@ -1,3 +1,623 @@
+commit 2a35efe5454ae358a27a0d632233e9295f9d8aa9
+Merge: 0ed0c0e 6c6c949
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 10:25:51 2009 +0100
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+    
+    Conflicts:
+    	debian/control
+
+commit 0ed0c0e05eddb71edb335359ce1d3df02cf513a6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 10:24:55 2009 +0100
+
+    [debian] Remove buildd packaging for 0.58.2
+
+commit 6c6c9499a2cef75e0a1cc5e00f6765572510fc8f
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Apr 9 13:18:41 2009 +0200
+
+    [Buildd::Conf] correct variable typo
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 24832ce99a8587eeebf1669d90b67f9b2cf42833
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Apr 9 13:13:20 2009 +0200
+
+    [buildd-uploader] use Buildd::isin
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 04f88f5a0e243fa1ab45c76749dc2f21df03f460
+Author: Philipp Kern <pkern@debian.org>
+Date:   Wed Apr 8 13:07:09 2009 +0200
+
+    [debian/sbuild.install] install all schroot scripts we find
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 7492f3f8314fbf43336c13e4354fc25e65654707
+Author: Philipp Kern <pkern@debian.org>
+Date:   Wed Apr 8 12:13:09 2009 +0200
+
+    [buildd-mail] use arch and HOME out of Buildd::Conf
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 355c9d4c7c118914b84ee657fd62e0f83035ebb1
+Author: Philipp Kern <pkern@debian.org>
+Date:   Wed Apr 8 12:10:28 2009 +0200
+
+    [Buildd::Conf] use "$arch" instead of "arch" in $wanna_build_dbbase
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit c93104cbafb535fdb910aefd755d82f5cada4086
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Apr 6 16:51:59 2009 +0200
+
+    [Sbuild::Build] fix 95538e9 by using localtime somewhere else
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 9e6f004149293a7089436d67b7dbaaff4e03279c
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Apr 6 16:48:35 2009 +0200
+
+    [buildd-mail] import binNMU_version out of Sbuild
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 002d69e3b29896eca96ffa45e0052e583f7b4b63
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Apr 5 14:46:58 2009 +0200
+
+    [debian/control] buildd, wanna-build: depend on exim4
+    
+    exim does not exist anymore, so use exim4 as default alternative instead.
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 707839ae1445a4effbfc20214e5cb45650fd1ee9
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Apr 5 01:11:24 2009 +0200
+
+    [buildd-watcher] avoid warning about the (valid) usage of exec
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 95538e909d26151fff7071bbe3dca78ebeda7467
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Apr 5 01:09:11 2009 +0200
+
+    [Sbuild::Build] display a valid "finished at" time in any case
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit c07c294aa7a2eef29f7ca0faf70b3db7a5da5fee
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Apr 4 23:41:20 2009 +0200
+
+    [buildd-watcher] use Buildd::Conf
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 3f59513837683d3a35c4169c086e32dae74bf234
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Apr 4 19:37:20 2009 +0200
+
+    [Buildd] lock_file: initialize optional nowait if not set
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit b87b5581292b5d105fb409b28a596ecda70265f6
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Apr 4 17:43:32 2009 +0200
+
+    [Buildd::Conf] update scalar ref correctly
+    
+    Thanks for Stephan Gran to telling me how Perl works.
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 2de585d82f245c6eb9503d679e53db6539a379f3
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Apr 4 17:35:59 2009 +0200
+
+    [buildd-mail] check if content-transfer-encoding is present at all
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 88b567ea7cdd7404abb8c8bb65aed7cc56d06635
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Apr 4 17:21:48 2009 +0200
+
+    [buildd, buildd-mail, Buildd] move isin to the Buildd module
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit fd90e484d08f5325a87b8de3181f716181760bfd
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Apr 4 17:11:15 2009 +0200
+
+    [Buildd::Conf] fix global configuration file location
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 6248bdcb731f14f9383ccd9774f1dcb02a438850
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Apr 4 17:07:08 2009 +0200
+
+    [buildd-mail] use Buildd::Conf
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit d211c2284ebefc0916a6a70d6eda1d222b48b6e0
+Author: Philipp Kern <pkern@debian.org>
+Date:   Wed Mar 18 12:54:14 2009 +0100
+
+    [buildd-uploader] initialize the configuration
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 8b045b6a2a01842e3e06ee43ede1ff8bb2e4b543
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Mar 29 23:03:51 2009 +0100
+
+    [debian] Install example buildd crontab
+
+commit 0f1b86e987d15d790c92a8305e536b6f204c6f78
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Mar 29 22:22:04 2009 +0100
+
+    Sbuild::ChrootInfoSchroot] Run schroot in C locale
+    
+    This avoids localisation of the output which breaks parsing.
+    This was preventing the detection of chroots in some locales.
+    
+    Closes: #520755
+
+commit 5eba1b2cb805b26ac3f03d9a4f493a14a000795b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Mar 29 22:06:30 2009 +0100
+
+    [etc] 50sbuild: Don't create user home directory in chroot
+
+commit 608fa5556d8a268d6221e7213513cb09225a5646
+Author: Adeodato Simó <dato@net.com.org.es>
+Date:   Mon Mar 23 22:04:47 2009 +0000
+
+    [db] Add a "type" column in binaries, to specify 'deb' or 'udeb'
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit efc2393a7cd8d9798224004540980e00b0c63d71
+Author: Adeodato Simó <dato@net.com.org.es>
+Date:   Mon Mar 23 22:04:07 2009 +0000
+
+    [db] Fix name of the build_status_history table in update_history()
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 9b0eab3e3bfd94716c3fe9a775e339523d3105f0
+Author: Adeodato Simó <dato@net.com.org.es>
+Date:   Mon Mar 23 22:03:24 2009 +0000
+
+    [db] Drop NOT NULL constraint in build_status_history.builder
+    
+    The "builder" column can be NULL in build_status, so it should be
+    nullable in build_status_history as well.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 44d7f216d9830bfa78e01eb1a477b3acaf17ce01
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 21 02:00:09 2009 +0000
+
+    [buildd-mail] Remove redundant assignment of $main::HOME
+
+commit 9ac1ba29f5b32401f15c4c93023b3a3ecda358cb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 21 01:57:33 2009 +0000
+
+    [buildd-watcher] Correctly prototype ST_MTIME()
+
+commit 9279d84ffa67c5eb9dd8de24124cff6d469fefc5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 21 01:53:16 2009 +0000
+
+    [bin] Don't add $main::HOME/lib to @INC
+    
+    Now that buildd is installed into standard system paths,
+    there's no need to look in $HOME/lib for perl modules.
+
+commit 67ac2279858f30ea80396aa118ed4fde079d66ea
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 21 01:47:31 2009 +0000
+
+    [buildd-mail] Remove unused $main::keep_running
+
+commit 538492d130cee21bf1af18d0f8f26b57df540c69
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 21 01:32:09 2009 +0000
+
+    [bin] Remove hardcoding of PATH in executables
+    
+    Now that all of the wanna-build and buildd programs are installed
+    into system paths, there is no need to add $HOME/bin and
+    /usr/local/bin to the path explicitly.
+    
+    Also remove unnecessary setting of PATH in Buildd.pm.
+
+commit b6902ec5a588455529fbadbd50fa9cb1efe0ac24
+Author: Cyril Brulebois <kibi@debian.org>
+Date:   Thu Mar 19 23:05:05 2009 +0000
+
+    [man] sbuild-setup.7: Create symlink in /etc/sbuild/chroots
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit eab82c63466d4b2dd87fcf6320b455a02e552432
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Mar 19 21:47:12 2009 +0000
+
+    [debian] Bump version to 0.58.2-1
+
+commit 527eb10d805aed18415204440dc7f436f5d8e60c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Mar 19 21:45:28 2009 +0000
+
+    [debian] buildd: Add buildd man pages
+
+commit 4047da073b7154c08e67329af68cb27ab300e0af
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Mar 19 21:44:30 2009 +0000
+
+    [man] wanna-build.1: Reflow paragraph to avoid leading dot
+
+commit 570ae72303c3885a47e1b68f6acc619d2d59a973
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Mar 19 21:44:03 2009 +0000
+
+    [man] buildd-mail.1: Document buildd-mail-wrapper compatibility
+
+commit 97048f35ad4d878685677f5881c397dabe826173
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Mar 19 21:43:32 2009 +0000
+
+    [man] Make buildd-mail-wrapper.1 a symlink to buildd-mail.1
+
+commit 04e75e8db6386a22a318554ab056dd4935757665
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Mar 19 21:30:33 2009 +0000
+
+    [man] Add skeleton buildd manual pages
+    
+    Document buildd, buildd-mail, buildd-uploader and buildd-watcher.
+    Remove old buildd and buildd-uploader manual pages.
+
+commit 042c634488cf4c9f4be4a658c8a8a334c6f6fa3c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 18 23:40:17 2009 +0000
+
+    [sbuild] Use new hash-based Sbuild::Chroot::run_command
+    
+    Call run_command using hashref rather than old-style
+    multiparameter function.
+
+commit d6fda107b959fe1bd076a5483f99b6d8bf363578
+Merge: 9da2406 d235069
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Mar 17 23:44:26 2009 +0000
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit 9da2406200b58d8e8c0c2dffd511def4d38ded94
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Mar 17 23:43:50 2009 +0000
+
+    [sbuild] Remove last use of get_apt_command
+    
+    Use run_apt_command in place of removed get_apt_command
+    method.
+
+commit d23506952cddaf20ea84c059b722c104b23e68b5
+Author: Philipp Kern <pkern@debian.org>
+Date:   Wed Mar 18 00:01:09 2009 +0100
+
+    [buildd-uploader] use the correct Buildd::Conf module
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit e665a7d77e3034f4a42bee3fe06562a6ded18bf2
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Mar 17 23:48:39 2009 +0100
+
+    etc/buildd.conf: update defaults
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 9f0ace298c84ee4d62b0a67ff1f681b1d85bea96
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Mar 17 23:48:16 2009 +0100
+
+    debian/rules: remove handling of config.{guess,sub}
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 2295de78e97545de802e39521f2aa8580dd9ac95
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Mar 17 23:41:38 2009 +0100
+
+    [Sbuild::Build] fix log subject to state arch if set
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit fca9bfbdc1c20e3b345f7be6063a2ea39b153dd4
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Mar 17 15:17:45 2009 +0100
+
+    [buildd] initialize the configuration and check take_from_dists
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit d4caee7db2e32fb60d764de476c0f1b420b1f056
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Mar 17 15:17:36 2009 +0100
+
+    [Buildd::Conf] do not set a default for take_from_dists
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit c22428f7f52a1eee2dc6ac4bf18a46ec8dde7667
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Mar 17 17:51:49 2009 +0100
+
+    configure.ac: remove checks for C/C++
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit f73f50dfdfb2d11e331c4d2cc6e48a4ec492622a
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 16 22:08:25 2009 +0100
+
+    [buildd] drop POSIX::SigSet usage
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit cc46898dc11d1b7e7960c708ca12b4f6a8659b6c
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 16 21:54:35 2009 +0100
+
+    [Buildd] logger: remove spurious regexp match usage
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit ea0564c5f65d7ef8cc88f64edf25fd8d62a4fffe
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 16 21:36:53 2009 +0100
+
+    [buildd] get rid of more configuration file loading stuff
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 0ae8aab39edec0a90dfed963e57f8744240288a3
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 16 19:27:43 2009 +0100
+
+    bootstrap: drop the libtoolization
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit f82d92981b1aabc0637afbabed3329ee9e209389
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 16 19:26:17 2009 +0100
+
+    [buildd] fix configuration lookup by using Buildd::Conf instead of Conf
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 1e31da431bbc9f484f8502c9c22f40318d0592b6
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 16 18:39:57 2009 +0100
+
+    [buildd, Buildd::Conf] move check_reread_config into Conf module
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 0a9e4ec2d0006bac581a4b49149ca85bea1f2395
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 16 13:13:39 2009 +0100
+
+    [buildd] call logger instead of writing to PLOG
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 825ec61ad5ae172aa0af7ac3dc0c9d5a028b62f2
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 16 12:56:08 2009 +0100
+
+    [buildd] remove unused DSC variable
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 0de309578ee2cadf13099b3f626f3efb11a82c5e
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 16 12:51:19 2009 +0100
+
+    [Buildd] do not import IO as it is not used anyway
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 7ce72856c0800672e7fb5c0be5e3d8df958c4eb5
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 16 12:40:03 2009 +0100
+
+    [buildd] put all weak_no_auto items to the back of the dist todo
+    
+    The former syntax was wrong.  Either we want @lowprio_todo or
+    $lowprio_todo[0].  I opted for the former.
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 7579c33a1c59e73db6b826afc8a9e205cb59451d
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 16 12:37:30 2009 +0100
+
+    [buildd] copied isin from Sbuild and removed that module import
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit fcc11913118fe4688b003309131b8d45a4220925
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 13 14:12:13 2009 +0100
+
+    [buildd] use $arch from Conf module
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit e43ce27e8f4fe137fb19c6da69866eee76aa1084
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 13 14:11:55 2009 +0100
+
+    [Buildd::Conf] add $arch configuration variable
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 131dd5a162be5f7cfc25888cf44267a34034dc28
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 13 14:10:59 2009 +0100
+
+    [buildd] Do not attempt to unlink buildd.pid if $pid is undefined
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 81e3ce2a2085ea6aecc06e0dbfa52531b4d5e22e
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 13 13:42:49 2009 +0100
+
+    [buildd] Fix get_changelog by calling schroot instead of host's apt-get
+    
+    We rely on schroot's presence now and also on the standard form of
+    naming the chroot (i.e. $dist-$arch-sbuild), which needs to be present
+    at least as an alias for this to work.
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 431453dc094b79942c051d9bd9cc82ea7137de5d
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 13 13:18:53 2009 +0100
+
+    [buildd] Remove apt cache updating through host apt-get
+    
+    Using the host apt-get only works if the binary format of the cache has
+    not changed and especially not if the host architecture differs from
+    the one of the chroot.  sbuild will run apt-get update if told to do so
+    before building anyway so we could just delete the lines responsible
+    for this.
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 1693bda26cc0e5e616a6e1744f882495835083d8
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 13 13:16:06 2009 +0100
+
+    [debian] Build a buildd binary package
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 89f6650390b1d4cd8ab0e751132f0ff3ee89501b
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 13 12:35:17 2009 +0100
+
+    bin/Makefile.am: install buildd binaries and handle buildd-mail-wrapper
+    
+    Only install buildd, buildd-mail, buildd-uploader and buildd-watcher for
+    now.
+    
+    buildd-mail-wrapper disappeared so symlink it to buildd-mail because the
+    wrapper will still be in .forward files on the buildds.
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 4db7d8561d9a622f3cd904a8ef0435ef205b5510
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Mar 10 15:17:36 2009 +0100
+
+    [buildd] pass --apt-update to sbuild
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit d6a046c79b33117e52cdf5da9d1aca7d96084850
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Mar 10 15:17:08 2009 +0100
+
+    [Sbuild::Build] Log which positive and negative dependencies were tried
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 15476c78ba2648e41ed6e9626825032451384bcf
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Mar 10 15:06:07 2009 +0100
+
+    get rid of sourcedeps helpers
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit fd063bdd434854740352f77029cd9b0c2c3012d7
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Mar 10 15:01:03 2009 +0100
+
+    [Buildd::Conf] increase default min_free_space to 50M
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit a4f06cb73ed8b84b66e48e80199800e6ee91005d
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 9 23:51:26 2009 +0100
+
+    get rid of buildd-mail-wrapper
+    
+    buildd-mail can be called directly.  The packaging should ensure a
+    symlink from buildd-mail-wrapper's old location to buildd-mail,
+    though.
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 07908f17d43377d1d05f1abda292b7951b5585c6
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 9 23:38:13 2009 +0100
+
+    [buildd-mail] remove own queue handling
+    
+    The queue handling could be done by the MTA invoking buildd-mail
+    nowadays.  buildd-mail should just process the mail it gets feeded
+    on STDIN.  It will still lock the daemon.log, however.
+    
+    This patch also gets rid of two unused functions: dist_cmp and
+    dist_list_ge.
+    
+    Based on a patch by Bastian Blank <waldi@debian.org>.
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 1d554a1d8d5aa8a581c6aa1b581e78f7776c1951
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Mar 12 21:41:45 2009 +0000
+
+    [Sbuild::Conf] Don't require FAKEROOT binary on host system
+    
+    Because the FAKEROOT binary is only required in the build chroot,
+    it doesn't make sense to check for it on the host system.
+
+commit f118a69798cce4b0f1bf43b8e4716f820c184b7d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Mar 12 21:41:26 2009 +0000
+
+    [build] Bump version to 0.58.2
+
 commit 5ba6126dd2abe41448cb71cbea87a209c86b1349
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Wed Mar 11 23:19:34 2009 +0000

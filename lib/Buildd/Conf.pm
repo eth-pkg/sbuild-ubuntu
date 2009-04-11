@@ -33,7 +33,7 @@ BEGIN {
 
     @ISA = qw(Exporter);
 
-    @EXPORT = qw($HOME $max_build $nice_level $idle_sleep_time
+    @EXPORT = qw($HOME $arch $max_build $nice_level $idle_sleep_time
                  $min_free_space @take_from_dists @no_auto_build
                  $no_build_regex $build_regex @weak_no_auto_build
                  $delay_after_give_back $pkg_log_keep $pkg_log_keep
@@ -47,19 +47,29 @@ BEGIN {
                  $log_queued_messages $wanna_build_dbbase read);
 }
 
+sub read_file ($\$);
 sub read ();
+sub convert_sshcmd ();
 sub init ();
+
+my $reread_config = 0;
 
 # Originally from the main namespace.
 (our $HOME = $ENV{'HOME'})
     or die "HOME not defined in environment!\n";
+# Configuration files.
+my $config_global = "/etc/buildd.conf";
+my $config_user = "$HOME/.builddrc";
+my $config_global_time = 0;
+my $config_user_time = 0;
 
 # Defaults.
+chomp( our $arch = `dpkg --print-architecture 2>/dev/null` );
 our $max_build = 10;
 our $nice_level = 10;
 our $idle_sleep_time = 5*60;
-our $min_free_space = 10*1024;
-our @take_from_dists = qw(stable testing unstable);
+our $min_free_space = 50*1024;
+our @take_from_dists = qw();
 our @no_auto_build = ();
 our $no_build_regex = "^(contrib/|non-free/)?non-US/";
 our $build_regex = "";
@@ -69,7 +79,7 @@ our $pkg_log_keep = 7;
 our $build_log_keep = 2;
 our $daemon_log_rotate = 1;
 our $daemon_log_send = 1;
-our $daemon_log_keepb = 7;
+our $daemon_log_keep = 7;
 our $warning_age = 7;
 our $error_mail_window = 8*60*60;
 our $statistics_period = 7;
@@ -88,18 +98,29 @@ our $dupload_to = "anonymous-ftp-master";
 our $dupload_to_non_us = "anonymous-non-us";
 our $dupload_to_security = "security";
 our $log_queued_messages = 0;
-our $wanna_build_dbbase = "arch/build-db";
+our $wanna_build_dbbase = "$arch/build-db";
+
+sub ST_MTIME () { 9 }
+
+sub read_file ($\$) {
+    my $filename = shift;
+    my $time_var = shift;
+    if (-r $filename) {
+        my @stat = stat( $filename );
+        $$time_var = $stat[ST_MTIME];
+        delete $INC{$filename};
+        require $filename;
+    }
+}
 
 # read conf files
 sub read () {
-    require "/etc/buildd/buildd.conf" if -r "/etc/buildd/buildd.conf";
-    require "$HOME/.builddrc" if -r "$HOME/.builddrc";
+    read_file( $config_global, $config_global_time );
+    read_file( $config_user, $config_user_time );
+    convert_sshcmd();
 }
 
-sub init () {
-    Buildd::Conf::read();
-
-    # some checks
+sub convert_sshcmd () {
     if ($sshcmd) {
 	if ($sshcmd =~ /-l\s*(\S+)\s+(\S+)/) {
 	    ($main::sshuser, $main::sshhost) = ($1, $2);
@@ -114,6 +135,25 @@ sub init () {
 	if ($sshsocket) {
 	    $sshcmd .= " -S $sshsocket";
 	}
+    }
+}
+
+sub init () {
+    Buildd::Conf::read();
+}
+
+$SIG{'USR1'} = sub ($) { $reread_config = 1; };
+
+sub check_reread_config () {
+    my @stat_user = stat( $config_user );
+    my @stat_global = stat( $config_global );
+
+    if ( $reread_config ||
+        (@stat_user && $config_user_time != $stat_user[ST_MTIME]) ||
+        (@stat_global && $config_global_time != $stat_global[ST_MTIME])) {
+        logger( "My config file has been updated -- rereading it\n" );
+        Buildd::Conf::read();
+        $reread_config = 0;
     }
 }
 

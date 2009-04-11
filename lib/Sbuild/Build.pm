@@ -861,7 +861,7 @@ sub install_deps {
     $self->write_srcdep_lock_file($dep);
 
     my $install_start_time = time;
-    debug("Installing positive dependencies: @positive\n");
+    $self->log("Installing positive dependencies: @positive\n");
     if (!$self->run_apt("-y", \@instd, \@rmvd, @positive)) {
 	$self->log("Package installation failed\n");
 	# try to reinstall removed packages
@@ -882,7 +882,7 @@ sub install_deps {
     $self->set_installed(@instd);
     $self->set_removed(@rmvd);
 
-    debug("Removing negative dependencies: @negative\n");
+    $self->log("Removing negative dependencies: @negative\n");
     if (!$self->uninstall_debs($self->get('Chroot Dir') ? "purge" : "remove",
 			       @negative)) {
 	$self->log("Removal of packages failed\n");
@@ -2512,7 +2512,11 @@ sub open_build_log {
 sub close_build_log {
     my $self = shift;
 
-    my $date = strftime("%Y%m%d-%H%M", localtime($self->get('Pkg End Time')));
+    my $time = $self->get('Pkg End Time');
+    if ($time == 0) {
+        $time = time;
+    }
+    my $date = strftime("%Y%m%d-%H%M", localtime($time));
 
     if (defined($self->get('Pkg Status')) &&
 	$self->get('Pkg Status') eq "successful") {
@@ -2538,13 +2542,11 @@ sub close_build_log {
     if (defined($self->get_conf('BIN_NMU_VERSION'))) {
 	    $subject .= "+b" . $self->get_conf('BIN_NMU_VERSION');
     }
+    if ($self->get('Arch')) {
+	$subject .= " on " . $self->get('Arch');
+    }
     if ($self->get_conf('ARCHIVE')) {
-	    if ($self->get('Arch')) {
-		$subject .= " on " . $self->get('Arch') . " (" . $self->get_conf('ARCHIVE') . "/" . $self->get_conf('DISTRIBUTION') . ")";
-	    }
-	    else {
-		$subject .= " (" . $self->get_conf('ARCHIVE') . "/" . $self->get_conf('DISTRIBUTION') . ")";
-	    }
+	$subject .= " (" . $self->get_conf('ARCHIVE') . "/" . $self->get_conf('DISTRIBUTION') . ")";
     }
     else {
 	    $subject .= " (dist=" . $self->get_conf('DISTRIBUTION') . ")";

@@ -74,9 +74,8 @@ POST_UNINSTALL = :
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/configure $(top_srcdir)/scripts/global.mk \
-	AUTHORS COPYING ChangeLog INSTALL NEWS TODO \
-	scripts/config.guess scripts/config.sub scripts/depcomp \
-	scripts/install-sh scripts/ltmain.sh scripts/missing
+	AUTHORS COPYING ChangeLog INSTALL NEWS TODO scripts/install-sh \
+	scripts/missing
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/sbuild_release.m4 \
@@ -123,19 +122,11 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BUILDD_CONF = @BUILDD_CONF@
 BUILDD_SYSCONF_DIR = @BUILDD_SYSCONF_DIR@
-CC = @CC@
-CCDEPMODE = @CCDEPMODE@
-CFLAGS = @CFLAGS@
 CHMOD = @CHMOD@
-CPPFLAGS = @CPPFLAGS@
-CXX = @CXX@
-CXXDEPMODE = @CXXDEPMODE@
-CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DATE = @DATE@
 DCMD = @DCMD@
 DEFS = @DEFS@
-DEPDIR = @DEPDIR@
 DF = @DF@
 DPKG = @DPKG@
 DPKG_BUILDPACKAGE = @DPKG_BUILDPACKAGE@
@@ -145,7 +136,6 @@ DU = @DU@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
-EXEEXT = @EXEEXT@
 FAKEROOT = @FAKEROOT@
 FIND = @FIND@
 GPG = @GPG@
@@ -155,7 +145,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
@@ -164,7 +153,6 @@ MAKEINFO = @MAKEINFO@
 MAN = @MAN@
 MD5SUM = @MD5SUM@
 MKDIR_P = @MKDIR_P@
-OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -202,11 +190,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
-ac_ct_CC = @ac_ct_CC@
-ac_ct_CXX = @ac_ct_CXX@
-am__include = @am__include@
 am__leading_dot = @am__leading_dot@
-am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
@@ -244,7 +228,7 @@ top_srcdir = @top_srcdir@
 
 # Global options for use in all Makefiles.
 perlmoddir = $(PERL_MODULE_DIR)
-SUBDIRS = bin configs etc lib man db src
+SUBDIRS = bin configs etc lib man db
 EXTRA_DIST = \
 	bootstrap			\
 	debian				\

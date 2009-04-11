@@ -1,5 +1,5 @@
 #                                                              -*- Autoconf -*-
-# Copyright © 2004-2008  Roger Leigh <rleigh@debian.org>
+# Copyright © 2004-2009  Roger Leigh <rleigh@debian.org>
 #
 # sbuild is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 pushdef([SBUILD_NAME],              [sbuild])
 pushdef([SBUILD_MAJOR_VERSION],     [0])
 pushdef([SBUILD_MINOR_VERSION],     [58])
-pushdef([SBUILD_MICRO_VERSION],     [1])
+pushdef([SBUILD_MICRO_VERSION],     [2])
 pushdef([SBUILD_EXTRA_VERSION],     [])
 pushdef([SBUILD_VERSION], SBUILD_MAJOR_VERSION.SBUILD_MINOR_VERSION.SBUILD_MICRO_VERSION[]SBUILD_EXTRA_VERSION)
 dnl
@@ -97,9 +97,6 @@ if test "$enable_debug" = "yes"; then
 fi
 
 # Checks for programs.
-AC_PROG_CC_C99
-AC_PROG_CXX
-AC_LANG([C++])
 AC_PATH_PROG([APT_CACHE], [apt-cache])
 AC_PATH_PROG([APT_GET], [apt-get])
 AC_PATH_PROG([CHMOD], [chmod])
@@ -297,6 +294,10 @@ AC_CONFIG_FILES([lib/Sbuild/DB/Makefile])
 AC_CONFIG_FILES([lib/WannaBuild/Makefile])
 AC_CONFIG_FILES([lib/Sbuild/Sysconfig.pm])
 AC_CONFIG_FILES([man/Makefile])
+AC_CONFIG_FILES([man/buildd.1])
+AC_CONFIG_FILES([man/buildd-mail.1])
+AC_CONFIG_FILES([man/buildd-uploader.1])
+AC_CONFIG_FILES([man/buildd-watcher.1])
 AC_CONFIG_FILES([man/sbuild.1])
 AC_CONFIG_FILES([man/sbuild-abort.1])
 AC_CONFIG_FILES([man/sbuild-adduser.8])
@@ -314,7 +315,6 @@ AC_CONFIG_FILES([man/wanna-build-catdb.1])
 AC_CONFIG_FILES([man/wanna-build-mail.1])
 AC_CONFIG_FILES([man/wanna-build-merge-packages.1])
 AC_CONFIG_FILES([man/wanna-build-statistics.1])
-AC_CONFIG_FILES([src/Makefile])
 
 dnl Output the generated config.status script.
 AC_OUTPUT

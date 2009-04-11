@@ -111,19 +111,11 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BUILDD_CONF = @BUILDD_CONF@
 BUILDD_SYSCONF_DIR = @BUILDD_SYSCONF_DIR@
-CC = @CC@
-CCDEPMODE = @CCDEPMODE@
-CFLAGS = @CFLAGS@
 CHMOD = @CHMOD@
-CPPFLAGS = @CPPFLAGS@
-CXX = @CXX@
-CXXDEPMODE = @CXXDEPMODE@
-CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DATE = @DATE@
 DCMD = @DCMD@
 DEFS = @DEFS@
-DEPDIR = @DEPDIR@
 DF = @DF@
 DPKG = @DPKG@
 DPKG_BUILDPACKAGE = @DPKG_BUILDPACKAGE@
@@ -133,7 +125,6 @@ DU = @DU@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
-EXEEXT = @EXEEXT@
 FAKEROOT = @FAKEROOT@
 FIND = @FIND@
 GPG = @GPG@
@@ -143,7 +134,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
@@ -152,7 +142,6 @@ MAKEINFO = @MAKEINFO@
 MAN = @MAN@
 MD5SUM = @MD5SUM@
 MKDIR_P = @MKDIR_P@
-OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -190,11 +179,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
-ac_ct_CC = @ac_ct_CC@
-ac_ct_CXX = @ac_ct_CXX@
-am__include = @am__include@
 am__leading_dot = @am__leading_dot@
-am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
@@ -250,7 +235,11 @@ bin_SCRIPTS = \
 	wanna-build-mail		\
 	wanna-build-merge-packages	\
 	wanna-build-merge-quinn		\
-	wanna-build-statistics
+	wanna-build-statistics		\
+	buildd				\
+	buildd-mail			\
+	buildd-uploader			\
+	buildd-watcher
 
 sbin_SCRIPTS = \
 	sbuild-adduser		\
@@ -539,6 +528,8 @@ install-exec-hook:
 	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/list-all"
 	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/merge-quinn"
 	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/merge-packages"
+
+	ln -sf "$(bindir)/buildd-mail" "$(DESTDIR)$(bindir)/buildd-mail-wrapper"
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

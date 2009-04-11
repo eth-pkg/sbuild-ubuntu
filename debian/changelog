@@ -1,3 +1,21 @@
+sbuild (0.58.2-1) unstable; urgency=low
+
+  [ Roger Leigh ]
+  * New release.
+  * etc/50sbuild: Don't create user home directory inside the build
+    chroot.  Home directories are not required for building.
+  * lib/Sbuild/ChrootInfoSchroot.pm: Run schroot in a C locale, to
+    avoid localisation of the output which breaks parsing
+    (Closes: #520755).  This was preventing the detection of chroots
+    in some locales.
+  * debian/buildd.cron.d: Move example crontab here, with entries
+    commented out for now. 
+  * debian/rules: Use dh_installcrontab to install crontabs.
+  * Remove buildd package for this release, because it's not yet
+    ready for use. 
+
+ -- Roger Leigh <rleigh@debian.org>  Sat, 11 Apr 2009 10:20:25 +0100
+
 sbuild (0.58.1-1) unstable; urgency=low
 
   [ Roger Leigh ]
@@ -8,7 +26,7 @@ sbuild (0.58.1-1) unstable; urgency=low
     setting the default path.
   * sbuild: Don't erase default chroot environment (Closes: #519276).
     This removed APT_CONFIG, preventing sbuild from working correctly.
-    Thanks to Francois-Denis Gonthier. 
+    Thanks to Francois-Denis Gonthier.
 
  -- Roger Leigh <rleigh@debian.org>  Wed, 11 Mar 2009 23:16:41 +0000
 
