@@ -26,17 +26,20 @@ use strict;
 use warnings;
 use POSIX;
 use FileHandle;
+use Sbuild::LogBase;
 
 require Exporter;
 @Buildd::ISA = qw(Exporter);
 
 @Buildd::EXPORT = qw(unset_env lock_file unlock_file open_log
- 		     reopen_log close_log logger send_mail
- 		     ll_send_mail exitstatus write_stats);
+ 		     reopen_log close_log send_mail
+ 		     ll_send_mail exitstatus isin
+ 		     wannabuild_command);
 
 $Buildd::lock_interval = 15;
 $Buildd::max_lock_trys = 120;
 ($Buildd::progname = $0) =~ s,.*/,,;
+$Buildd::progpid = $$;
 my @pwinfo = getpwuid($>);
 $Buildd::username = $pwinfo[0];
 $Buildd::gecos = $pwinfo[6];
@@ -48,14 +51,13 @@ sub isin ($@);
 sub unset_env ();
 sub lock_file ($;$);
 sub unlock_file ($);
-sub write_stats ($$);
-sub open_log ();
-sub logger (@);
-sub close_log ();
-sub reopen_log ();
+sub open_log ($);
+sub close_log ($);
+sub reopen_log ($);
 sub send_mail ($$$;$);
 sub ll_send_mail ($$);
 sub exitstatus ($);
+sub wannabuild_command ($);
 
 sub isin ($@) {
     my $val = shift;
@@ -136,53 +138,47 @@ sub unlock_file ($) {
     unlink( $lockfile );
 }
 
+sub open_log ($) {
+    my $conf = shift;
 
-sub write_stats ($$) {
-    my ($cat, $val) = @_;
-    local( *F );
+    my $logfile = $conf->get('DAEMON_LOG_FILE');
 
-    lock_file( "$main::HOME/stats" );
-    open( F, ">>$main::HOME/stats/$cat" );
-    print F "$val\n";
-    close( F );
-    unlock_file( "$main::HOME/stats" );
+    my $log = new FileHandle(">>$logfile")
+	or die "$0: Cannot open logfile $logfile: $!\n";
+    chmod( 0640, "$logfile" )
+	or die "$0: Cannot set modes of $logfile: $!\n";
+
+    my $logfunc = sub {
+	my $F = shift;
+	my $message = shift;
+
+	my $t;
+	my $text = "";
+
+	# omit weekday and year for brevity
+	($t = localtime) =~ /^\w+\s(.*)\s\d+$/; $t = $1;
+	$message =~ s/\n+$//; # remove newlines at end
+	$message = "$t $Buildd::progname\[$Buildd::progpid\]: $message\n";
+
+	print $F $message;
+    };
+
+    return Sbuild::LogBase::open_log($conf, $log, $logfunc);
 }
 
-sub open_log () {
-    open( LOG, ">>$main::HOME/daemon.log" )
-	or die "$0: Cannot open my logfile $main::HOME/daemon.log: $!\n";
-    chmod( 0640, "$main::HOME/daemon.log" )
-	or die "$0: Cannot set modes of $main::HOME/daemon.log: $!\n";
-    select( (select(LOG), $| = 1)[0] );
-    open( STDOUT, ">&LOG" )
-	or die "$0: Can't redirect stdout to $main::HOME/daemon.log: $!\n";
-    open( STDERR, ">&LOG" )
-	or die "$0: Can't redirect stderr to $main::HOME/daemon.log: $!\n";
+sub close_log ($) {
+    my $conf = shift;
+
+    Sbuild::LogBase::close_log($conf);
 }
 
-sub logger (@) {
-    my $t;
-    my $text = "";
+sub reopen_log ($) {
+    my $conf = shift;
 
-    # omit weekday and year for brevity
-    ($t = localtime) =~ /^\w+\s(.*)\s\d+$/; $t = $1;
-    foreach (@_) { $text .= $_; }
-    $text =~ s/\n+$/\n/; # remove newlines at end
-    $text .= "\n" if $text !~ /\n$/; # ensure newline at end
-    $text =~ s/^/$t $Buildd::progname: /mg;
-    print LOG $text;
-}
-
-sub close_log () {
-    close( LOG );
-    close( STDOUT );
-    close( STDERR );
-}
-
-sub reopen_log () {
     my $errno = $!;
-    close_log();
-    open_log();
+
+    close_log($conf);
+    open_log($conf);
     $! = $errno;
 }
 
@@ -206,20 +202,22 @@ sub ll_send_mail ($$) {
     my $text = shift;
     local( *MAIL );
 
+    # TODO: Don't log to STDERR: Implement as class method using
+    # standard pipe interface using normal log streams.
+
     $text =~ s/^\.$/../mg;
     local $SIG{'PIPE'} = 'IGNORE';
     if (!open( MAIL, "|/usr/sbin/sendmail -oem '$to'" )) {
-	logger( "Could not open pipe to /usr/sbin/sendmail: $!\n" );
+	print STDERR "Could not open pipe to /usr/sbin/sendmail: $!\n";
 	return 0;
     }
     print MAIL $text;
     if (!close( MAIL )) {
-	logger( "sendmail failed (exit status ", exitstatus($?), ")\n" );
+	print STDERR "sendmail failed (exit status ", exitstatus($?), ")\n";
 	return 0;
     }
     return 1;
 }
-
 
 sub exitstatus ($) {
     my $stat = shift;
@@ -227,5 +225,16 @@ sub exitstatus ($) {
     return ($stat >> 8) . "/" . ($stat % 256);
 }
 
+sub wannabuild_command ($) {
+    my $conf = shift;
+
+    my @command = ($conf->get('SSH_CMD'), 'wanna-build');
+    push(@command, "--database=" . $conf->get('WANNA_BUILD_DBBASE'))
+	if $conf->get('WANNA_BUILD_DBBASE');
+    push(@command, "--user=" . $conf->get('WANNA_BUILD_USER'))
+	if $conf->get('WANNA_BUILD_USER');
+
+    return @command;
+}
 
 1;

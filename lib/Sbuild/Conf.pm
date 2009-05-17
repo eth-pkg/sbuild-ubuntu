@@ -70,7 +70,19 @@ sub init_allowed_keys {
 	    if !-d $directory;
     };
 
-    my $HOME = $self->get('HOME');
+    my $validate_append_version = sub {
+	my $self = shift;
+	my $entry = shift;
+
+	if (defined($self->get('APPEND_TO_VERSION')) &&
+	    $self->get('APPEND_TO_VERSION') &&
+	    $self->get('BUILD_SOURCE') != 0) {
+	    # See <http://bugs.debian.org/475777> for details
+	    die "The --append-to-version option is incompatible with a source upload\n";
+	}
+    };
+
+    our $HOME = $self->get('HOME');
 
     my %sbuild_keys = (
 	'CHROOT'				=> {
@@ -244,14 +256,6 @@ sub init_allowed_keys {
 	    DEFAULT => 150 # minutes
 	},
 	'SRCDEP_LOCK_DIR'			=> {
-	    CHECK => sub {
-		my $self = shift;
-		my $entry = shift;
-		my $key = $entry->{'NAME'};
-
-		die $self->get('SRCDEP_LOCK_DIR') . " is not a directory\n"
-		    if ! -d $self->get('SRCDEP_LOCK_DIR');
-	    },
 	    # Note: inside chroot only
 	    DEFAULT => "/var/lib/sbuild/srcdep-lock"
 	},
@@ -298,6 +302,9 @@ sub init_allowed_keys {
 	'SBUILD_MODE'				=> {
 	    DEFAULT => 'user'
 	},
+	'CHROOT_SETUP_SCRIPT'				=> {
+	    DEFAULT => undef
+	},
 	'FORCE_ORIG_SOURCE'			=> {
 	    DEFAULT => 0
 	},
@@ -311,7 +318,7 @@ sub init_allowed_keys {
 	    DEFAULT => undef
 	},
 	'MAINTAINER_NAME'			=> {
-	    DEFAULT => $ENV{'DEBEMAIL'}
+	    DEFAULT => undef
 	},
 	'UPLOADER_NAME'				=> {
 	    DEFAULT => undef
@@ -395,11 +402,21 @@ sub init_allowed_keys {
 	'BATCH_MODE'				=> {
 	    DEFAULT => 0
 	},
-	'MANUAL_SRCDEPS'			=> {
+	'MANUAL_DEPENDS'			=> {
+	    DEFAULT => []
+	},
+	'MANUAL_CONFLICTS'			=> {
+	    DEFAULT => []
+	},
+	'MANUAL_DEPENDS_INDEP'			=> {
+	    DEFAULT => []
+	},
+	'MANUAL_CONFLICTS_INDEP'		=> {
 	    DEFAULT => []
 	},
 	'BUILD_SOURCE'				=> {
-	    DEFAULT => 0
+	    DEFAULT => 0,
+	    CHECK => $validate_append_version,
 	},
 	'ARCHIVE'				=> {
 	    DEFAULT => undef
@@ -410,8 +427,15 @@ sub init_allowed_keys {
 	'BIN_NMU_VERSION'			=> {
 	    DEFAULT => undef
 	},
+	'APPEND_TO_VERSION'			=> {
+	    DEFAULT => undef,
+	    CHECK => $validate_append_version,
+	},
 	'GCC_SNAPSHOT'				=> {
 	    DEFAULT => 0
+	},
+	'JOB_FILE'				=> {
+	    DEFAULT => 'build-progress'
 	}
     );
 
@@ -429,69 +453,77 @@ sub read_config {
     my $HOME = $self->get('HOME');
 
     # Variables are undefined, so config will default to DEFAULT if unset.
-    our $mailprog = undef;
-    our $dpkg = undef;
-    our $sudo = undef;
-    our $su = undef;
-    our $schroot = undef;
-    our $schroot_options = undef;
-    our $fakeroot = undef;
-    our $apt_get = undef;
-    our $apt_cache = undef;
-    our $dpkg_source = undef;
-    our $dcmd = undef;
-    our $md5sum = undef;
-    our $avg_time_db = undef;
-    our $avg_space_db = undef;
-    our $stats_dir = undef;
-    our $package_checklist = undef;
-    our $build_env_cmnd = undef;
-    our $pgp_options = undef;
-    our $log_dir = undef;
-    our $mailto = undef;
-    our %mailto;
+    my $mailprog = undef;
+    my $dpkg = undef;
+    my $sudo = undef;
+    my $su = undef;
+    my $schroot = undef;
+    my $schroot_options = undef;
+    my $fakeroot = undef;
+    my $apt_get = undef;
+    my $apt_cache = undef;
+    my $dpkg_source = undef;
+    my $dcmd = undef;
+    my $md5sum = undef;
+    my $avg_time_db = undef;
+    my $avg_space_db = undef;
+    my $stats_dir = undef;
+    my $package_checklist = undef;
+    my $build_env_cmnd = undef;
+    my $pgp_options = undef;
+    my $log_dir = undef;
+    my $mailto = undef;
+    my %mailto;
     undef %mailto;
-    our $mailfrom = undef;
-    our $purge_build_directory = undef;
-    our @toolchain_regex;
+    my $mailfrom = undef;
+    my $purge_build_directory = undef;
+    my @toolchain_regex;
     undef @toolchain_regex;
-    our $stalled_pkg_timeout = undef;
-    our $srcdep_lock_dir = undef;
-    our $srcdep_lock_wait = undef;
-    our $max_lock_trys = undef;
-    our $lock_interval = undef;
-    our $apt_policy = undef;
-    our $check_watches = undef;
-    our @ignore_watches_no_build_deps;
+    my $stalled_pkg_timeout = undef;
+    my $srcdep_lock_dir = undef;
+    my $srcdep_lock_wait = undef;
+    my $max_lock_trys = undef;
+    my $lock_interval = undef;
+    my $apt_policy = undef;
+    my $check_watches = undef;
+    my @ignore_watches_no_build_deps;
     undef @ignore_watches_no_build_deps;
-    our %watches;
+    my %watches;
     undef %watches;
-    our $chroot_mode = undef;
-    our $chroot_split = undef;
-    our $sbuild_mode = undef;
-    our $debug = undef;
-    our $force_orig_source = undef;
-    our %individual_stalled_pkg_timeout;
+    my $chroot_mode = undef;
+    my $chroot_split = undef;
+    my $sbuild_mode = undef;
+    my $debug = undef;
+    my $force_orig_source = undef;
+    my $chroot_setup_script = undef;
+    my %individual_stalled_pkg_timeout;
     undef %individual_stalled_pkg_timeout;
-    our $path = undef;
-    our $ld_library_path = undef;
-    our $maintainer_name = undef;
-    our $uploader_name = undef;
-    our $key_id = undef;
-    our $apt_update = undef;
-    our $apt_allow_unauthenticated = undef;
-    our %alternatives;
+    my $path = undef;
+    my $ld_library_path = undef;
+    my $maintainer_name = undef;
+    my $uploader_name = undef;
+    my $key_id = undef;
+    my $apt_update = undef;
+    my $apt_allow_unauthenticated = undef;
+    my %alternatives;
     undef %alternatives;
-    our $check_depends_algorithm = undef;
-    our $distribution = undef;
-    our $archive = undef;
-    our $chroot = undef;
-    our $build_arch_all = undef;
-    our $arch = undef;
+    my $check_depends_algorithm = undef;
+    my $distribution = undef;
+    my $archive = undef;
+    my $chroot = undef;
+    my $build_arch_all = undef;
+    my $arch = undef;
+    my $job_file = undef;
 
-    require $Sbuild::Sysconfig::paths{'SBUILD_CONF'}
-        if -r $Sbuild::Sysconfig::paths{'SBUILD_CONF'};
-    require "$HOME/.sbuildrc" if -r "$HOME/.sbuildrc";
+    foreach ($Sbuild::Sysconfig::paths{'SBUILD_CONF'}, "$HOME/.sbuildrc") {
+	if (-r $_) {
+	    my $e = eval `cat "$_"`;
+	    if (!defined($e)) {
+		print STDERR "E: $_: Errors found in configuration file:\n$@";
+		exit(1);
+	    }
+	}
+    }
 
     $self->set('ARCH', $arch);
     $self->set('DISTRIBUTION', $distribution);
@@ -519,10 +551,12 @@ sub read_config {
     $self->set('PGP_OPTIONS', $pgp_options);
     $self->set('LOG_DIR', $log_dir);
     $self->set('MAILTO', $mailto);
-    $self->set('MAILTO_HASH', \%mailto);
+    $self->set('MAILTO_HASH', \%mailto)
+	if (%mailto);
     $self->set('MAILFROM', $mailfrom);
     $self->set('PURGE_BUILD_DIRECTORY', $purge_build_directory);
-    $self->set('TOOLCHAIN_REGEX', \@toolchain_regex);
+    $self->set('TOOLCHAIN_REGEX', \@toolchain_regex)
+	if (@toolchain_regex);
     $self->set('STALLED_PKG_TIMEOUT', $stalled_pkg_timeout);
     $self->set('SRCDEP_LOCK_DIR', $srcdep_lock_dir);
     $self->set('SRCDEP_LOCK_WAIT', $srcdep_lock_wait);
@@ -531,14 +565,18 @@ sub read_config {
     $self->set('APT_POLICY', $apt_policy);
     $self->set('CHECK_WATCHES', $check_watches);
     $self->set('IGNORE_WATCHES_NO_BUILD_DEPS',
-	       \@ignore_watches_no_build_deps);
-    $self->set('WATCHES', \%watches);
+	       \@ignore_watches_no_build_deps)
+	if (@ignore_watches_no_build_deps);
+    $self->set('WATCHES', \%watches)
+	if (%watches);
     $self->set('CHROOT_MODE', $chroot_mode);
     $self->set('CHROOT_SPLIT', $chroot_split);
     $self->set('SBUILD_MODE', $sbuild_mode);
     $self->set('FORCE_ORIG_SOURCE', $force_orig_source);
+    $self->set('CHROOT_SETUP_SCRIPT', $chroot_setup_script);
     $self->set('INDIVIDUAL_STALLED_PKG_TIMEOUT',
-	       \%individual_stalled_pkg_timeout);
+	       \%individual_stalled_pkg_timeout)
+	if (%individual_stalled_pkg_timeout);
     $self->set('PATH', $path);
     $self->set('LD_LIBRARY_PATH', $ld_library_path);
     $self->set('MAINTAINER_NAME', $maintainer_name);
@@ -546,8 +584,59 @@ sub read_config {
     $self->set('KEY_ID', $key_id);
     $self->set('APT_UPDATE', $apt_update);
     $self->set('APT_ALLOW_UNAUTHENTICATED', $apt_allow_unauthenticated);
-    $self->set('ALTERNATIVES', \%alternatives);
+    $self->set('ALTERNATIVES', \%alternatives)
+	if (%alternatives);
     $self->set('CHECK_DEPENDS_ALGORITHM', $check_depends_algorithm);
+    $self->set('JOB_FILE', $job_file);
+
+    $self->set('MAILTO',
+	       $self->get('MAILTO_HASH')->{$self->get('DISTRIBUTION')})
+	if $self->get('MAILTO_HASH')->{$self->get('DISTRIBUTION')};
+
+    $self->set('SIGNING_OPTIONS',
+	       "-m".$self->get('MAINTAINER_NAME')."")
+	if defined $self->get('MAINTAINER_NAME');
+    $self->set('SIGNING_OPTIONS',
+	       "-e".$self->get('UPLOADER_NAME')."")
+	if defined $self->get('UPLOADER_NAME');
+    $self->set('SIGNING_OPTIONS',
+	       "-k".$self->get('KEY_ID')."")
+	if defined $self->get('KEY_ID');
+    $self->set('MAINTAINER_NAME', $self->get('UPLOADER_NAME')) if defined $self->get('UPLOADER_NAME');
+    $self->set('MAINTAINER_NAME', $self->get('KEY_ID')) if defined $self->get('KEY_ID');
+
+    if (!defined($self->get('MAINTAINER_NAME')) &&
+	$self->get('BIN_NMU')) {
+	die "A maintainer name, uploader name or key ID must be specified in .sbuildrc,\nor use -m, -e or -k, when performing a binNMU\n";
+    }
+
+}
+
+sub check_group_membership ($) {
+    my $self = shift;
+
+    # Skip for root
+    return if ($< == 0);
+
+    my $user = getpwuid($<);
+    my ($name,$passwd,$gid,$members) = getgrnam("sbuild");
+
+    if (!$gid) {
+	die "Group sbuild does not exist";
+    }
+
+    my $in_group = 0;
+    foreach (split(' ', $members)) {
+	$in_group = 1 if $_ eq $self->get('USERNAME');
+    }
+
+    if (!$in_group) {
+	print STDERR "User $user is not a member of group $name\n";
+	print STDERR "See \"User Setup\" in sbuild-setup(7)\n";
+	exit(1);
+    }
+
+    return;
 }
 
 1;

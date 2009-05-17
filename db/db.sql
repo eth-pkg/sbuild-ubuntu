@@ -23,6 +23,7 @@
 SET search_path = public;
 
 \i /usr/local/share/wanna-build/postgresql/install/language.sql
+\i /usr/local/share/wanna-build/postgresql/install/schema.sql
 \i /usr/local/share/wanna-build/postgresql/install/archive.sql
 \i /usr/local/share/wanna-build/postgresql/install/build.sql
 \i /usr/local/share/wanna-build/postgresql/install/functions.sql

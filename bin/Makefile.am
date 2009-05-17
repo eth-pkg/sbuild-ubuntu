@@ -31,6 +31,7 @@ bin_SCRIPTS = 				\
 	sbuild-checkpackages		\
 	sbuild-update			\
 	sbuild-upgrade			\
+	sbuild-distupgrade		\
 	sbuild-shell			\
 	sbuild-stats			\
 	sbuild-hold			\
@@ -44,6 +45,7 @@ bin_SCRIPTS = 				\
 	buildd				\
 	buildd-mail			\
 	buildd-uploader			\
+	buildd-vlog			\
 	buildd-watcher
 
 sbin_SCRIPTS = 			\
@@ -63,11 +65,22 @@ EXTRA_DIST =			\
 	$(doc_DATA)
 
 install-exec-hook:
-# Links for compatibility.
+# Additional directories
 	$(MKDIR_P) "$(DESTDIR)$(sbuildlibexecdir)"
 	$(MKDIR_P) "$(DESTDIR)$(wblibexecdir)"
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/buildd"
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/buildd/.ssh"
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/buildd/build"
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/buildd/logs"
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/buildd/mqueue"
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/buildd/old-logs"
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/buildd/stats/graphs"
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/buildd/upload"
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/buildd/upload-security"
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/sbuild"
 	$(MKDIR_P) "$(DESTDIR)$(localstatedir)/lib/wanna-build"
 
+# Links for compatibility.
 	ln -sf "$(bindir)/wanna-build-catdb" "$(DESTDIR)$(bindir)/wanna-build-catgdbm"
 	ln -sf "$(bindir)/wanna-build-catdb" "$(DESTDIR)$(bindir)/wanna-build-catmldbm"
 
@@ -90,4 +103,5 @@ install-exec-hook:
 	ln -sf "$(bindir)/wanna-build" "$(DESTDIR)$(wblibexecdir)/merge-packages"
 
 	ln -sf "$(bindir)/buildd-mail" "$(DESTDIR)$(bindir)/buildd-mail-wrapper"
+	ln -sf "$(bindir)/sbuild-abort" "$(DESTDIR)$(bindir)/buildd-abort"
 

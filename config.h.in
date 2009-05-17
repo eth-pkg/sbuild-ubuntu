@@ -3,7 +3,7 @@
 /* buildd config file path */
 #undef BUILDD_CONF
 
-/* Package system configuration directory */
+/* buildd system configuration directory */
 #undef BUILDD_SYSCONF_DIR
 
 /* Name of package */
@@ -60,7 +60,7 @@
 /* Package system configuration directory */
 #undef SBUILD_SYSCONF_DIR
 
-/* Package system configuration directory */
+/* schroot system configuration directory */
 #undef SCHROOT_SYSCONF_DIR
 
 /* Version number of package */
@@ -71,3 +71,6 @@
 
 /* Package libexec directory */
 #undef WANNA_BUILD_LIBEXEC_DIR
+
+/* wanna-build system configuration directory */
+#undef WANNA_BUILD_SYSCONF_DIR

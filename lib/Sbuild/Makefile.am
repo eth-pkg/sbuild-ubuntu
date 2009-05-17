@@ -33,13 +33,16 @@ MODULES =			\
 	ChrootRoot.pm		\
 	ChrootSchroot.pm	\
 	ChrootSudo.pm		\
+	ChrootSetup.pm		\
 	ChrootInfo.pm		\
 	ChrootInfoSchroot.pm	\
 	ChrootInfoSudo.pm	\
 	Conf.pm			\
 	ConfBase.pm		\
 	Log.pm			\
+	LogBase.pm		\
 	Options.pm		\
+	OptionsBase.pm		\
 	Utility.pm
 
 perlmodsbuild_DATA =	\

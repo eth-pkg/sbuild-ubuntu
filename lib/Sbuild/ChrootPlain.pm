@@ -65,7 +65,7 @@ sub begin_session {
     $self->set('Location', $self->get('Chroot ID'));
     $self->set('Session Purged', 0);
 
-    $self->_setup_options();
+    return 0 if !$self->_setup_options();
 
     return 1;
 }
@@ -131,7 +131,7 @@ sub get_command_internal {
 	    $dir = $tmpdir;
 	}
 	if ($user ne $self->get_conf('USERNAME')) {
-	    print main::LOG "Command \"$command\" cannot be run as user $user on the host system\n";
+	    $self->log_warning("Command \"$command\" cannot be run as user $user on the host system\n");
 	}
 	$chdir = $dir if defined($dir);
 	push(@cmdline, @$command);

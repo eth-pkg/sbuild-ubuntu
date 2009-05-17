@@ -24,22 +24,304 @@
 use strict;
 use warnings;
 
+use Sbuild::ChrootSetup qw(update distupgrade);
+
+package Conf;
+
+use Sbuild::Conf;
+
+BEGIN {
+    use Exporter ();
+    our (@ISA, @EXPORT);
+
+    @ISA = qw(Exporter Sbuild::Conf);
+
+    @EXPORT = qw();
+}
+
+sub init_allowed_keys {
+    my $self = shift;
+
+    $self->SUPER::init_allowed_keys();
+
+    my $keyring = '';
+    $keyring = '/etc/apt/trusted.gpg'
+	if -f '/etc/apt/trusted.gpg';
+
+    my %createchroot_keys = (
+	'FOREIGN'				=> {
+	    DEFAULT => 0
+	},
+	'INCLUDE'				=> {
+	    DEFAULT => ''
+	},
+	'EXCLUDE'				=> {
+	    DEFAULT => ''
+	},
+	'COMPONENTS'				=> {
+	    DEFAULT => 'main'
+	},
+	'RESOLVE_DEPS'				=> {
+	    DEFAULT => 1
+	},
+	'KEEP_DEBOOTSTRAP_DIR'			=> {
+	    DEFAULT => 0
+	},
+	'KEYRING'				=> {
+	    DEFAULT => $keyring
+	},
+	'SETUP_ONLY'				=> {
+	    DEFAULT => 0
+	}
+    );
+
+    $self->set_allowed_keys(\%createchroot_keys);
+}
+
+package Options;
+
+use Sbuild::OptionsBase;
+use Sbuild::Conf;
+
+BEGIN {
+    use Exporter ();
+    our (@ISA, @EXPORT);
+
+    @ISA = qw(Exporter Sbuild::OptionsBase);
+
+    @EXPORT = qw();
+}
+
+sub set_options {
+    my $self = shift;
+
+    $self->add_options(
+	"arch=s" => sub {
+	    $self->set_conf('ARCH', $_[1]);
+	},
+	"foreign" => sub {
+	    $self->set_conf('FOREIGN', 0);
+	},
+	"resolve-deps" => sub {
+	    $self->set_conf('RESOLVE_DEPS', 1)
+	},
+	"no-resolve-deps" => sub {
+	    $self->set_conf('RESOLVE_DEPS', 0)
+	},
+	"keep-debootstrap-dir" => sub {
+	    $self->set_conf('KEEP_DEBOOTSTRAP_DIR', 1)
+	},
+	"exclude=s" => sub {
+	    $self->set_conf('EXCLUDE', $_[1]);
+	},
+	"include=s" => sub {
+	    $self->set_conf('INCLUDE', $_[1]);
+	},
+	"components=s" => sub {
+	    $self->set_conf('COMPONENTS', $_[1]);
+	},
+	"keyring=s" => sub {
+	    $self->set_conf('KEYRING', $_[1]);
+	},
+	"setup-only" => sub {
+	    $self->set_conf('SETUP_ONLY', 1);
+	});
+}
+
+package main;
+
 use POSIX;
 use Getopt::Long qw(:config no_ignore_case auto_abbrev gnu_getopt);
 use Sbuild qw(dump_file help_text version_text usage_error check_packages);
-use Sbuild::Conf;
 use Sbuild::ChrootPlain;
 use Sbuild::Sysconfig;
 use File::Path qw(mkpath);
 use File::Temp ();
 
-package main;
-
 sub add_items ($@);
 sub makedir ($$);
 
-my $conf = Sbuild::Conf->new();
-my $hostname = $conf->get('HOSTNAME');
+my $conf = Conf->new();
+exit 1 if !defined($conf);
+my $options = Options->new($conf, "sbuild-createchroot", "8");
+exit 1 if !defined($options);
+
+
+usage_error("sbuild-createchroot",
+	    "Incorrect number of options") if (@ARGV <3 || @ARGV >4);
+
+# Make sure fakeroot and build-essential are installed
+$conf->set('INCLUDE', add_items($conf->get('INCLUDE'),
+				"fakeroot",
+				"build-essential",
+				"debfoster"));
+
+my $suite = $ARGV[0];
+my $target = $ARGV[1];
+my $mirror = $ARGV[2];
+my $script = undef;
+
+$script = $ARGV[3] if $#ARGV == 3;
+
+if ($conf->get('VERBOSE')) {
+    print "I: SUITE: $suite\n";
+    print "I: TARGET: $target\n";
+    print "I: MIRROR: $mirror\n";
+    print "I: SCRIPT: $script\n" if (defined($script));
+}
+
+my @args = ("--arch=" . $conf->get('ARCH'),
+	    "--variant=buildd");
+push @args, "--verbose" if $conf->get('VERBOSE');
+push @args, "--foreign" if $conf->get('FOREIGN');
+push @args, "--keep-debootstrap-dir" if $conf->get('KEEP_DEBOOTSTRAP_DIR');
+push @args, "--include=" . $conf->get('INCLUDE') if $conf->get('INCLUDE');
+push @args, "--exclude=" . $conf->get('EXCLUDE') if $conf->get('EXCLUDE');
+push @args, "--components=" . $conf->get('COMPONENTS')
+    if $conf->get('COMPONENTS');
+push @args, "--keyring=" . $conf->get('KEYRING') if $conf->get('KEYRING');
+push @args, $conf->get('RESOLVE_DEPS') ?
+    "--resolve-deps" : "--no-resolve-deps";
+push @args, "$suite", "$target", "$mirror";
+push @args, "$script" if $script;
+
+if ($conf->get('VERBOSE')) {
+    print "I: Running debootstrap " . join(' ',@args) . "\n";
+}
+
+# Run debootstrap with specified options.
+if (!$conf->get('SETUP_ONLY')) {
+    !system("/usr/sbin/debootstrap", @args) or die "E: Error running debootstrap";
+}
+
+# Set up minimal /etc/hosts.
+my $hosts = "${target}/etc/hosts";
+open(HOSTS, ">$hosts")
+    or die "Can't open $hosts for writing";
+print HOSTS "127.0.0.1 " . $conf->get('HOSTNAME') . " localhost";
+close HOSTS or die "Can't close $hosts";
+
+# Display /etc/hosts.
+print "I: Configured /etc/hosts:\n";
+dump_file("$hosts");
+
+# Set up minimal /usr/sbin/policy-rc.d.
+my $policy_rc_d = "${target}/usr/sbin/policy-rc.d";
+open(POLICY_RC_D, ">$policy_rc_d")
+    or die "Can't open $policy_rc_d for writing";
+print POLICY_RC_D <<"EOF";
+#!/bin/sh
+echo "All runlevel operations denied by policy" >&2
+exit 101
+EOF
+
+close POLICY_RC_D or die "Can't close $policy_rc_d";
+
+!system("chown", "root:", "$policy_rc_d")
+    or die "E: Failed to set root: ownership on $policy_rc_d";
+!system("chmod", "0775", "$policy_rc_d")
+    or die "E: Failed to set 0755 permissions on $policy_rc_d";
+
+# Display /usr/sbin/policy-rc.d.
+print "I: Configured /usr/sbin/policy-rc.d:\n";
+dump_file("$policy_rc_d");
+
+
+
+# Set up minimal /etc/apt/sources.list
+my $sources = "${target}/etc/apt/sources.list";
+my $comps = join(' ',split(/,/,$conf->get('COMPONENTS')));
+open(SOURCES, ">$sources")
+    or die "Can't open $sources for writing";
+print SOURCES "deb $mirror $suite $comps\n";
+print SOURCES "deb-src $mirror $suite $comps\n";
+close SOURCES or die "Can't close $sources";
+
+# Display /etc/apt/sources.list.
+print "I: Configured APT /etc/apt/sources.list:\n";
+dump_file("${target}/etc/apt/sources.list");
+print "I: Please add any additional APT sources to ${target}/etc/apt/sources.list\n";
+
+# Write out schroot chroot configuration.
+my $chrootname = "${suite}-" . $conf->get('ARCH') . "-sbuild";
+
+if (-d "/etc/schroot/chroot.d") {
+    # TODO: Don't hardcode path
+    my $SCHROOT_CONF =
+	new File::Temp( TEMPLATE => "$chrootname.XXXXXX",
+			DIR => "/etc/schroot/chroot.d",
+			UNLINK => 0)
+	or die "Can't open schroot configuration file: $!\n";
+
+    my $arch = $conf->get('ARCH');
+    print $SCHROOT_CONF <<"EOF";
+[$chrootname]
+type=directory
+description=Debian $suite/$arch autobuilder
+location=$target
+priority=3
+groups=root,sbuild
+root-groups=root,sbuild
+run-setup-scripts=true
+run-exec-scripts=true
+EOF
+    # Needed to display file below.
+    $SCHROOT_CONF->flush();
+
+# Display schroot configuration.
+print "I: schroot chroot configuration written to $SCHROOT_CONF.\n";
+dump_file("$SCHROOT_CONF");
+print "I: Please rename and modify this file as required.\n";
+}
+
+if (! -d "$Sbuild::Sysconfig::paths{'SBUILD_SYSCONF_DIR'}/chroot") {
+    makedir("$Sbuild::Sysconfig::paths{'SBUILD_SYSCONF_DIR'}/chroot", 0775);
+}
+
+my $chrootlink = "$Sbuild::Sysconfig::paths{'SBUILD_SYSCONF_DIR'}/chroot/$chrootname";
+if (-l $chrootlink) {
+    unlink($chrootlink) or die "Can't unlink $chrootlink: $!";
+} else {
+    print STDERR "E: Can't remove $chrootlink: not a symbolic link\n";
+}
+
+if (! -f $chrootlink) {
+    if (symlink($target, $chrootlink)) {
+	print "I: sudo chroot configuration linked as $Sbuild::Sysconfig::paths{'SBUILD_SYSCONF_DIR'}/chroot/$chrootname.\n";
+    } else {
+	print STDERR "E: Failed to symlink $target to $chrootlink: $!\n";
+    }
+} else {
+    print "W: Failed to symlink $target to $chrootlink: \n"
+}
+
+my $session = Sbuild::ChrootPlain->new($conf, $target);
+if (defined($session)) {
+    $session->set('Log Stream', \*STDOUT);
+
+    if (!$session->begin_session()) {
+	print STDERR "E: Error creating chroot session: skipping apt update\n";
+    } else {
+	print "I: Setting reference package list.\n";
+	check_packages($session, "set");
+
+	print "I: Updating chroot.\n";
+	my $status = update($session, $conf);
+	print "W: Failed to update APT package lists\n"
+	    if ($status);
+
+	$status = distupgrade($session, $conf);
+	print "W: Failed to upgrade chroot\n"
+	    if ($status);
+	$session->end_session();
+	$session = undef;
+    }
+}
+
+print "I: Successfully set up $suite chroot.\n";
+print "I: Run sbuild-adduser to add new sbuild users.\n";
+
+exit 0;
 
 # Add items to the start of a comma-separated list, and remove the
 # items from later in the list if they were already in the list.
@@ -81,211 +363,3 @@ sub makedir ($$) {
 	print "E: Can't make directory $file: $message\n";
     }
 }
-
-our $bootstrap_arch = $conf->get('HOST_ARCH');
-our $foreign = 0;
-our $include = '';
-our $exclude = '';
-our $components = 'main';
-our $keyring = '';
-our $resolve_deps = 1;
-our $keep_debootstrap_dir = 0;
-our $verbose = 0;
-
-# Default to using the system keyring
-if (!defined($keyring) && -f '/etc/apt/trusted.gpg') {
-    $keyring='/etc/apt/trusted.gpg';
-}
-
-GetOptions (
-    "h|help" => sub { help_text("8", "sbuild-createchroot"); },
-    "V|version" => sub {version_text("sbuild-createchroot"); },
-
-    "foreign" => \$foreign,
-    "resolve-deps" => sub { $resolve_deps = 1; },
-    "no-resolve-deps" => sub { $resolve_deps = 0; },
-    "keep-debootstrap-dir" => \$keep_debootstrap_dir,
-    "arch=s" => \$bootstrap_arch,
-    "verbose" => \$verbose,
-    "exclude=s" => \$exclude,
-    "include=s" => \$include,
-    "components=s" => \$components,
-    "keyring=s" => \$keyring)
-or usage_error("sbuild-createchroot", "Error parsing command-line options");
-
-$include = add_items($include, "fakeroot", "build-essential");
-
-usage_error("sbuild-createchroot",
-	    "Incorrect number of options") if (@ARGV <3 || @ARGV >4);
-
-my $suite = $ARGV[0];
-my $target = $ARGV[1];
-my $mirror = $ARGV[2];
-my $script = undef;
-
-$script = $ARGV[3] if $#ARGV == 3;
-
-if ($verbose) {
-    print "I: SUITE: $suite\n";
-    print "I: TARGET: $target\n";
-    print "I: MIRROR: $mirror\n";
-    print "I: SCRIPT: $script\n" if (defined($script));
-}
-
-my @args = ("--arch=$bootstrap_arch",
-	    "--variant=buildd");
-push @args, "--verbose" if $verbose;
-push @args, "--foreign" if $foreign;
-push @args, "--keep-debootstrap-dir" if $keep_debootstrap_dir;
-push @args, "--include=$include" if $include;
-push @args, "--exclude=$exclude" if $exclude;
-push @args, "--components=$components" if $components;
-push @args, "--keyring=$keyring" if $keyring;
-push @args, $resolve_deps ? "--resolve-deps" : "--no-resolve-deps";
-push @args, "$suite", "$target", "$mirror";
-push @args, "$script" if $script;
-
-if ($verbose) {
-    print "I: Running debootstrap " . join(' ',@args) . "\n";
-}
-
-# Run debootstrap with specified options.
-!system("/usr/sbin/debootstrap", @args) or die "E: Error running debootstrap";
-
-# Set up minimal /etc/hosts.
-my $hosts = "${target}/etc/hosts";
-open(HOSTS, ">$hosts")
-    or die "Can't open $hosts for writing";
-print HOSTS "127.0.0.1 $hostname localhost";
-close HOSTS or die "Can't close $hosts";
-
-# Display /etc/hosts.
-print "I: Configured /etc/hosts:\n";
-dump_file("$hosts");
-
-# Set up minimal /etc/apt/sources.list
-my $sources = "${target}/etc/apt/sources.list";
-my $comps = join(' ',split(/,/,$components));
-open(SOURCES, ">$sources")
-    or die "Can't open $sources for writing";
-print SOURCES "deb $mirror $suite $comps\n";
-print SOURCES "deb-src $mirror $suite $comps\n";
-close SOURCES or die "Can't close $sources";
-
-# Display /etc/apt/sources.list.
-print "I: Configured APT /etc/apt/sources.list:\n";
-dump_file("${target}/etc/apt/sources.list");
-print "I: Please add any additional APT sources to ${target}/etc/apt/sources.list\n";
-
-# Write out schroot chroot configuration.
-my $chrootname = "${suite}-${bootstrap_arch}-sbuild";
-
-if (-d "/etc/schroot/chroot.d") {
-    # TODO: Don't hardcode path
-    my $SCHROOT_CONF =
-	new File::Temp( TEMPLATE => "$chrootname.XXXXXX",
-			DIR => "/etc/schroot/chroot.d",
-			UNLINK => 0)
-	or die "Can't open schroot configuration file: $!\n";
-
-    print $SCHROOT_CONF <<"EOF";
-[$chrootname]
-type=directory
-description=Debian $suite/$bootstrap_arch autobuilder
-location=$target
-priority=3
-groups=root,sbuild
-root-groups=root,sbuild
-run-setup-scripts=true
-run-exec-scripts=true
-EOF
-    # Needed to display file below.
-    $SCHROOT_CONF->flush();
-
-# Display schroot configuration.
-print "I: schroot chroot configuration written to $SCHROOT_CONF.\n";
-dump_file("$SCHROOT_CONF");
-print "I: Please rename and modify this file as required.\n";
-}
-
-if (! -d "$Sbuild::Sysconfig::paths{'SBUILD_SYSCONF_DIR'}/chroot") {
-    makedir("$Sbuild::Sysconfig::paths{'SBUILD_SYSCONF_DIR'}/chroot", 0775);
-}
-
-my $chrootlink = "$Sbuild::Sysconfig::paths{'SBUILD_SYSCONF_DIR'}/chroot/$chrootname";
-if (-l $chrootlink) {
-    unlink($chrootlink) or die "Can't unlink $chrootlink: $!";
-} else {
-    print STDERR "E: Can't remove $chrootlink: not a symbolic link\n";
-}
-
-if (! -f $chrootlink) {
-    if (symlink($target, $chrootlink)) {
-	print "I: sudo chroot configuration linked as $Sbuild::Sysconfig::paths{'SBUILD_SYSCONF_DIR'}/chroot/$chrootname.\n";
-    } else {
-	print STDERR "E: Failed to symlink $target to $chrootlink: $!\n";
-    }
-} else {
-    print "W: Failed to symlink $target to $chrootlink: \n"
-}
-
-if (! -d "$target/build") {
-    print "I: Creating build directory: /build\n";
-    makedir("$target/build", 0775);
-}
-!system("chown", "root:sbuild", "$target/build")
-    or die "E: Failed to set root:sbuild ownership on $target/build";
-!system("chmod", "0775", "$target/build")
-    or die "E: Failed to set 0755 permissions on $target/build";
-
-if (! -d "$target/var/lib/sbuild") {
-    print "I: Creating sbuild directory: /var/lib/sbuild\n";
-    makedir("$target/var/lib/sbuild/srcdep", 02775);
-}
-if (! -d "$target/var/lib/sbuild/srcdep-lock") {
-    print "I: Creating sbuild lock directory: /var/lib/sbuild/srcdep-lock\n";
-    makedir("$target/var/lib/sbuild/srcdep-lock", 02775);
-}
-!system("chown", "-R", "root:sbuild", "$target/var/lib/sbuild")
-    or die "E: Failed to set root:sbuild ownership on $target/var/lib/sbuild";
-!system("chmod", "-R", "02775", "$target/var/lib/sbuild")
-    or die "E: Failed to set 02755 permissions on $target/var/lib/sbuild";
-
-my $session = Sbuild::ChrootPlain->new($conf, $target);
-if (defined($session)) {
-    $session->set('Log Stream', \*STDOUT);
-
-    if (!$session->begin_session()) {
-	print STDERR "E: Error creating chroot session: skipping apt update\n";
-    } else {
-	print "I: Setting reference package list.\n";
-	check_packages($session, "set");
-
-	print "I: Updating chroot.\n";
-	$session->run_apt_command(
-	    { COMMAND => [$conf->get('APT_GET'), 'update'],
-	      ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
-	      USER => 'root',
-	      PRIORITY => 1,
-	      DIR => '/'});
-	print "W: Failed to update APT package lists\n"
-	    if ($?);
-
-
-	$session->run_apt_command(
-	    { COMMAND => [$conf->get('APT_GET'), '-uy', 'upgrade'],
-	      ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
-	      USER => 'root',
-	      PRIORITY => 1,
-	      DIR => '/' });
-	print "W: Failed to upgrade chroot\n"
-	    if ($?);
-	$session->end_session();
-	$session = undef;
-    }
-}
-
-print "I: Successfully set up $suite chroot.\n";
-print "I: Run sbuild-adduser to add new sbuild users.\n";
-
-exit 0;

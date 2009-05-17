@@ -58,12 +58,13 @@ case "$1" in
 
     purge|disappear)
 
-        if [ -z "`getent group sbuild`" ]; then
-            deluser --group sbuild
+        if getent group sbuild > /dev/null; then
+            delgroup --system --quiet sbuild
         fi
 
 	rm_conffile "/etc/sbuild.conf"
 	rm_conffile "/etc/sbuild.conf.local"
+	rm_conffile "/etc/schroot/setup.d/50sbuild"
 
 	rm -f /var/lib/sbuild/apt.conf
 	rm -f /var/lib/sbuild/avg-build-space

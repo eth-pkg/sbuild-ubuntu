@@ -14,6 +14,7 @@ debian/build/config.status: configure
 	  --localstatedir=/var --mandir=\$${prefix}/share/man \
 	  DCMD=/usr/bin/dcmd \
 	  SCHROOT=/usr/bin/schroot \
+	  SSH=/usr/bin/ssh \
 	  SUDO=/usr/bin/sudo
 
 build: debian/build/config.status debian/build-stamp
@@ -55,9 +56,12 @@ binary-indep: build install
 	dh_installexamples -i
 	dh_installman -i
 	dh_installcron -i
+	dh_installinit -i
 	dh_perl -i
 	dh_link -i
 	dh_compress -i
+	mv debian/buildd/usr/share/man/man1/buildd-abort.1 \
+	  debian/buildd/usr/share/man/man1/buildd-abort.1.gz
 	dh_fixperms -i
 	dh_installdeb -i
 	dh_gencontrol -i

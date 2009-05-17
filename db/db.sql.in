@@ -23,6 +23,7 @@
 SET search_path = public;
 
 \i SQL_PATHNAME/language.sql
+\i SQL_PATHNAME/schema.sql
 \i SQL_PATHNAME/archive.sql
 \i SQL_PATHNAME/build.sql
 \i SQL_PATHNAME/functions.sql

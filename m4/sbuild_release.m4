@@ -23,6 +23,6 @@
 # Makefiles.
 AC_DEFUN([SBUILD_RELEASE_DATE],
 [dnl Set package release date
-AC_DEFINE_UNQUOTED([RELEASE_DATE], 1239442207, [Package release date.])
-RELEASE_DATE="11 Apr 2009"
+AC_DEFINE_UNQUOTED([RELEASE_DATE], 1242593250, [Package release date.])
+RELEASE_DATE="17 May 2009"
 AC_SUBST([RELEASE_DATE])])

@@ -1,11 +1,31 @@
 NEWS                                                            -*- outline -*-
 ----
 
-Welcome to sbuild 0.58.2.  Please read these release notes carefully.
+Welcome to sbuild 0.58.3.  Please read these release notes carefully.
 
 Full installation instructions are provided in the INSTALL file.  The
 README file also contains more specific notes regarding building and
 configuration.
+
+* Major changes in 0.58.3:
+
+  1) The broken options --add-depends and --force-depends have been
+     replaced by --add-depends, --add-conflicts, --add-depends-indep
+     and --add-conflicts-indep.  These options each take a single
+     dependency, using the same dependency syntax one would use in
+     debian/control.
+
+  2) The wanna-build configuration has been moved back to
+     /etc/buildd/wanna-build.conf.  However, the option names have
+     been renamed and your configuration will require updating.
+
+  3) When reading configuration files, stricter checking is performed.
+     If you see a "Global symbol "$x" requires explicit package
+     name" error, then the option $x is not valid and should be
+     removed from the configuration file indicated.
+
+  4) The maintainer name no longer defaults to DEBEMAIL as in most
+     cases the maintainer in the .dsc should be used.
 
 * Major changes in 0.58.2:
 

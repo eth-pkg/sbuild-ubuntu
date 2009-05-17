@@ -37,25 +37,27 @@ mv_conffile() {
 case "$1" in
     configure)
 
-	if dpkg --compare-versions "$2" le "0.42"; then
-	    mv_conffile "/etc/sbuild.conf.local" "/etc/sbuild/sbuild.conf"
+	# If sbuild is a user group, migrate to a system group.  Save
+	# a list of group members, then add them back to the new group
+	# once created.
+	SGID="$(grep ^sbuild: /etc/group | sed -r -e 's/([^:]+):([^:]+):([^:]+):.*/\3/')"
+	if [ -n "$SGID" ] && [ "$SGID" -ge "1000" ]; then
+	    SUSR="$(grep ^sbuild: /etc/group | sed -r -e 's/([^:]+):([^:]+):([^:]+):(.*)$/\4/' -e 's/,/ /g')"
+	    delgroup --quiet sbuild
 	fi
 
-        if [ -z "`getent group sbuild`" ]; then
-            adduser --group --quiet sbuild
+        if ! getent group sbuild > /dev/null; then
+            addgroup --system --quiet sbuild
         fi
 
-        chmod 2775 /var/lib/sbuild /var/lib/sbuild/srcdep-lock
-        touch -a /var/lib/sbuild/source-dependencies-stable \
-            /var/lib/sbuild/source-dependencies-testing \
-            /var/lib/sbuild/source-dependencies-unstable
-        chmod 664 /var/lib/sbuild/source-dependencies-*
+	# Restore group membership to users in old user group (if any)
+	for user in $SUSR; do
+	    adduser $user sbuild
+	done
+
+        chmod 2775 /var/lib/sbuild
         # avg-* files from previous purge might have wrong GID
         chown -R :sbuild /var/lib/sbuild
-
-	if dpkg --compare-versions "$2" le-nl "0.34"; then
-	    ln -sf ../share/sbuild /usr/lib/sbuild
-	fi
 
         ;;
 

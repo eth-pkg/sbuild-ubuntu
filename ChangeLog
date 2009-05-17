@@ -1,3 +1,1210 @@
+commit e925e754f84653f4a9291982431eb53ca9166f81
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 21:45:09 2009 +0100
+
+    [debian] changelog: Update for 0.58.3
+
+commit 1a27c42ceded9689131f3c59769f6231a6e0d13d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 21:35:04 2009 +0100
+
+    [TODO] Remove completed items
+
+commit 519b376baa2d52acd15129ac57c7147a10fba0eb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 21:13:58 2009 +0100
+
+    [build] Don't generate man/sbuild-upgrade.1
+
+commit bb874ad9f6a561d5276a62546e0f82e537fc8d5b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 21:13:01 2009 +0100
+
+    [TODO] Add missing features for ChrootSetup to handle
+
+commit 182a64fb01ebc8f8de9c63cfe79892f5c47284ff
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 21:12:29 2009 +0100
+
+    [Sbuild::ChrootSetup] Default priority to avoid unnecessary messages
+
+commit f3e8b060469ba0451c709ceaf1124317e81d613a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 21:11:46 2009 +0100
+
+    [sbuild-stats] Include modules in correct order
+
+commit a820bc90a65d2be6e9792ae759f62cc6e8f27af3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 21:10:18 2009 +0100
+
+    [bin] sbuild-(update|upgrade): Use Sbuild::ChrootSetup
+    
+    Also add sbuild-distupgrade to run apt-get dist-upgrade
+    
+    Merge manual pages for all three commands.
+
+commit 688b82958a878991394fb2003f3fedd266d7201e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 21:06:15 2009 +0100
+
+    [Sbuild::Utility] Don't pass session to open_log
+
+commit 532bbda92f3edc3d5d986d9bbebba30ef2cec927
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 19:24:34 2009 +0100
+
+    [Sbuild::Build] Pass configuration to ChrootSetup functions
+
+commit 75d097f665d998ef152655a3530d739c94014a08
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 19:23:57 2009 +0100
+
+    [debian] sbuild.install: Don't install 50sbuild
+
+commit d5c149db7275e371d81571c453e9c643baa7324f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 19:23:21 2009 +0100
+
+    [debian] sbuild.postinst: Update sbuild group ownership recursively
+
+commit 49cff2a04ddb15f846195f5743c7325b9dbb9437
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 19:22:54 2009 +0100
+
+    [debian] NEWS: Document sbuild system group transition
+
+commit 522bd057f6b002b43cb02c68c46c0ab526ebd63f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 18:03:58 2009 +0100
+
+    [debian] Add libsbuild-perl.install
+    
+    Update .gitignore
+
+commit 751d0c8b7dfef6d8e943a24c9e153b7b64f72017
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 18:02:10 2009 +0100
+
+    [Buildd/*] Update copyrights
+
+commit b8ebb98c37c50c3a37aec835f6b5bee016c9d9be
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:52:21 2009 +0100
+
+    [buildd-watcher] Remove main namespace
+
+commit 762b0da70fa481797482506e1d1fbe8f714cff5a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:52:01 2009 +0100
+
+    [buildd-uploader|watcher] Update copyright
+
+commit a719f63f4877d3905523ff9d7d513015bf11fa7c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:46:30 2009 +0100
+
+    [Buildd] Remove write_stats
+    
+    Now present in Buildd::Base
+
+commit 8040b79eee0f2168c8b037ccac69736556f526b8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:44:46 2009 +0100
+
+    [Sbuild::LogBase] Remove main::LOG
+    
+    Global streams are now not created.  main::LOG, main::SAVED_STDOUT
+    and main::SAVED_STDERR are replaced by IO handles exported by the
+    module ($log, $saved_stdout and $saved_stderr).
+    
+    Code previously outputting directly to LOG uses local logging code or
+    the default stream (which is redirected to the log).
+
+commit e7ddf00b13bc68c01bec3e45c397631cb9f76498
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:40:22 2009 +0100
+
+    [Buildd] Remove logger()
+
+commit 2ec8b32c3edff687262e4386aa7df5c438117d45
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:34:40 2009 +0100
+
+    [Buildd::Watcher] Move from buildd-watcher to Buildd/Watcher.pm
+
+commit 0f599d5d09b3434662c61a0136f8eadb0261fada
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:33:09 2009 +0100
+
+    [buildd-watcher] Split into Buildd::Watcher object
+
+commit e057fce43732dea62b0fe4d70ac41fffda7246ac
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:29:52 2009 +0100
+
+    [Buildd::Mail] Move from buildd-mail to Buildd/Mail.pm
+
+commit ba7c3076aa126af3a1113f30f432c3ac4e1c96e8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:28:16 2009 +0100
+
+    [buildd-mail] Split functionality into Build::Mail object
+
+commit d026d64c190718b2e027b0700ec3550fe0e45b51
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:27:59 2009 +0100
+
+    [Buildd::Base] Include open_log and close_log
+
+commit 5b011e818a5a29fe023966e35c9af4fdb8b9c80d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:17:56 2009 +0100
+
+    [Buildd::Uploader] Move from buildd-uploader to Buildd/Uploader.pm
+
+commit 69fa11e6fbabdf3f6aa94d3ae60f9e63379c8f40
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:15:45 2009 +0100
+
+    [buildd-uploader] Move logic into Buildd::Uploader
+
+commit 7ead14eaeca6207c6f2607953aa141cc3db4f042
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:15:15 2009 +0100
+
+    [Buildd::Daemon] Remove redundant function prototypes
+
+commit 40d6cf166e6f27933e514ded3ec8d429c468bbe1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:05:31 2009 +0100
+
+    [Buildd::Daemon] Move from buildd to Buildd/Daemon.pm
+
+commit beca78d3dcb5f89601414d79da0c209f617656d2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 17:03:05 2009 +0100
+
+    [buildd] Split into object Buildd::Daemon
+
+commit 9df6c9ec196a0940b9c84e2001749ce89d90ac5e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 16:57:53 2009 +0100
+
+    [Buildd::Base] Base functionality for buildd programs
+
+commit cfbdaecd7605a567abfc3edc2d4f637c9a506b7a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 16:19:28 2009 +0100
+
+    [TODO] Use ChrootSetup for sbuild-* commands
+
+commit 6b6b39a788bf299e7e312c45e386293180383f8b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 16:15:25 2009 +0100
+
+    [WannaBuild::Mail] Split new module from wanna-build-mail
+
+commit e3c61bac12e9e86ccf8b2f1de7a6bd650c10ba0a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 16:01:32 2009 +0100
+
+    [wanna-build-mail] Convert into object
+
+commit c000d93b451139ebaffdcb9d216c197225045541
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 16:00:23 2009 +0100
+
+    [wanna-build] Set $| at top level
+
+commit f281c973e21ab03b91fd54889e80e3a22a796f41
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 15:58:35 2009 +0100
+
+    [Sbuild::ChrootSetup] Add comment about root requirement
+
+commit 4c614cc8c38e928fb0ad1469289b5bfda67e3cc3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 15:56:06 2009 +0100
+
+    [debian] Handle migration of sbuild group to a system group
+    
+    Also remove 50sbuild setup script, which is responsible for
+    setting sbuild group ownership in the chroot.  This is now handled
+    by basesetup().
+
+commit e0b9953668fab0c34c4b427ea878c3acd6de68b1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 15:47:18 2009 +0100
+
+    [Sbuild::ChrootSetup] Fix permissions on /build in chroot
+
+commit 1eac3bb417af16049102bd102d7e42dd33ef27eb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 15:02:42 2009 +0100
+
+    [debian] sbuild.postinst|postrm: Use addgroup|delgroup --system
+    
+    Previously, a system sbuild group was not created.
+
+commit eaee2c13510f25c5dcd725b29ffdd6fe348c7541
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 14:58:20 2009 +0100
+
+    [Sbuild::Buildd] open_log: Simplify message formatting
+
+commit 8d3445e46ba4acb308e2a87107e4ca22daf6988d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 14:57:51 2009 +0100
+
+    [TODO] Add option to disable package removal
+
+commit 84e9f32f302982a631151350bca3a9665fdb8d20
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 14:56:49 2009 +0100
+
+    [sbuild-createchroot] Use Sbuild::ChrootSetup during setup
+
+commit ef316bf1e6fbca3f3432f3b65cc192a4e8b6424c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 14:55:16 2009 +0100
+
+    [sbuild-createchroot] Add --setup-only option to skip debootstrap
+
+commit 40eb8e27943878cd3bd4a10cb862819eb3dae651
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 14:53:45 2009 +0100
+
+    [Sbuild::Build] Use ChrootSetup for updating chroots
+
+commit ee71513411468c9363369f08ee17a8dfe8c7e5a8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 14:50:56 2009 +0100
+
+    [Sbuild::Chroot] Use Sbuild::ChrootSetup
+    
+    ChrootSetup::basesetup is used to set up the chroot.
+    
+    Also add additional diagnostics and error handling to _setup_options
+
+commit 0fd597b9829f18577daf338511ad06fbff3afb2f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 14:49:39 2009 +0100
+
+    [Sbuild::ChrootSetup] Add new module containing common chroot setup tasks
+
+commit 9a2c1985c5a8f1343ad7bab9325e15ad1bc031ca
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 14:46:06 2009 +0100
+
+    [Sbuild::Chroot*] Return an error if _setup_options fails
+    
+    This was likely the cause of sbuild-createchroot running apt-get
+    on the host system, since _setup_options bailed out prior to
+    setting up the environment for split apt usage.
+
+commit be9ab94c7dfa5a74b7a8b3651df904e4444b11f5
+Merge: ee19517 fae3496
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 12:16:01 2009 +0100
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit fae34962a3016ac0585fd98b981096f493f1daf6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 12:09:15 2009 +0100
+
+    [buildd-mail] Remove lockfile use for log stream locking
+
+commit 96d6e03977c8ea572e36c7d10414b5f92c87a04c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 12:00:42 2009 +0100
+
+    [Sbuild::Build] Logger ignores fatal signals
+
+commit 686fcc039bee161c3e888afadf8c27bb67d20479
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 11:58:11 2009 +0100
+
+    [TODO] Plan logger removal
+
+commit 89b32ae9fa688aec3bdba6f8e4ceeb6b993e04bf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 11:56:29 2009 +0100
+
+    [buildd-watcher] Remove use of $main::HOME
+
+commit 2c4f6ef873eff2e9b75a6a4593929a9dd7e67cef
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 11:54:38 2009 +0100
+
+    [buildd-uploader] Remove lockfile use for log stream locking
+    
+    The locking was fundamentally broken, and it's not needed due to
+    using O_APPEND in any case.
+
+commit 60a78d36dc93c6f5bcb49525654031742704b919
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 01:17:53 2009 +0100
+
+    [TODO] Update pending buildd tasks
+
+commit e48de595821d84e9b15299164b43839c4a9d2c6a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 01:16:07 2009 +0100
+
+    [Buildd::Uploader] Use Sbuild::ChrootRoot to run wanna-build
+
+commit 0faabb8c54f9a94eaa93716740f39f1937fbe40f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 01:06:55 2009 +0100
+
+    [TODO] Fix buildd-mail statistics reporting
+
+commit 6094e1a56f031f6f5b1603c892e080072574b880
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 01:06:05 2009 +0100
+
+    [TODO] Update
+
+commit 49d51dc932aaf12b3c31074023a7618c3639f8f4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 01:04:01 2009 +0100
+
+    [Buildd] Logging functions use Sbuild::LogBase
+
+commit fd978e40ece184f1e82df05d4a540e41f58f0f91
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 01:02:57 2009 +0100
+
+    [Buildd::Conf] Add NO_DETACH options to prevent CTTY detaching for debugging
+
+commit c583632b65bd9da4561a042ca7c58fcc2ba5ff2d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 00:58:15 2009 +0100
+
+    [Buildd::Conf] SSH_CMD is an ARGV array
+    
+    To avoid quoting issues, and to use the Sbuild::Chroot command
+    executing, piping and logging infrastructure, execute wanna-build
+    within an Sbuild::ChrootRoot context in buildd and buildd-mail.
+    
+    $sshcmd is no longer specified in the configuration file; separate
+    command, user, hostname, options and socket options are provided and
+    are used to construct the real SSH ARGV for wanna-build executing.
+    
+    Buildd::wannabuild_command is used to construct the final
+    wanna-build command with all SSH setup and socket options.
+    
+    Buildd::Conf only sets array variables if set.
+    
+    Buildd::isin is used without namespace prefix in buildd
+
+commit 68a85e04ff3430faad2cea89c3a89ac79d9147e8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 00:41:35 2009 +0100
+
+    [TODO] buildd needs to remove pidfile correctly
+
+commit 6a09f3211d2ba6b384bf5715078ab973e35b46bd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 00:40:58 2009 +0100
+
+    [buildd] Only unlink pidfile if we are actually a daemon
+
+commit 54c096e7f331ac01e9235d33789fb45060acc0ec
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 00:36:10 2009 +0100
+
+    [TODO] Update buildd items
+
+commit 2c6f4d19b5a33cfc286f244f6377ffd64437f21e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 00:35:31 2009 +0100
+
+    [buildd] Execute commands using Sbuild::Chroot interface
+
+commit 0ad2690c5508ceefedafdaae6b70e9f957d1b82b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 00:15:49 2009 +0100
+
+    [Sbuild::Build] Remove completed TODO comment
+
+commit 3a81b73a7f7c2958f5948874a9208b10cebc04bd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 00:14:36 2009 +0100
+
+    [Buildd::Conf] Add BUILD_LOG_FILE to remove hardcoded daemon.log
+
+commit 6ba9a2350306929916f5b6849ca13fed48ebe2a9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 00:04:00 2009 +0100
+
+    [buildd] make buildd pidfile configurable, rather than hardcoded.
+    
+    Also simplify signal handling with shutdown_fast replacing lamba function.
+
+commit 81ac71bb41e451d396121b2f86f584e355a478a9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue May 12 21:11:57 2009 +0100
+
+    [Sbuild::Conf] Rename $setup_hook to $chroot_setup_script
+
+commit 773d1a8e2c45bb138e3c0ae4d4655c37e7716c02
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue May 12 20:00:27 2009 +0100
+
+    [man] Document --setup-hook
+    
+    Also add to example configuration.
+
+commit 6cd6ff09bd1aaeb6a504bf8281664e20ddd1fdcc
+Author: Kees Cook <kees.cook@canonical.com>
+Date:   Tue May 12 19:53:54 2009 +0100
+
+    [Sbuild] Add --setup-hook to run in chroot before build
+    
+    This adds the --setup-hook command line argument that allows a
+    program to be run from inside the chroot just before the build
+    started.  All the scalar build and config settings are exported
+    to the environment so the script can examine them to take any
+    needed actions.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit ee195178b218e216e6807a3797eef986fb6699a8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 3 00:13:30 2009 +0100
+
+    [build] configure.ac: Add WANNA_BUILD_SYSCONF_DIR
+
+commit 65334f06cdf6f633a7ed86659120b20d6fe96f5b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 19:21:24 2009 +0100
+
+    [NEWS] Document DEBEMAIL change
+
+commit 0b64ae5a0900ac943f54a4cda50d4fa2c45da7dc
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 19:16:07 2009 +0100
+
+    [*::Conf] Use eval in place of require
+    
+    Using require means that %INC has to be messed around with in order to
+    read the same configuration file more than once.  It also means that by
+    default any invalid variables in the configuration file are not
+    reported.
+    
+    Also move wanna-build configuration back to wanna-build.conf, but using
+    the new syntax.
+
+commit 5887ce8efd86e39345ff8914302634382563b609
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 19:08:55 2009 +0100
+
+    [build] Distribute Wannabuild::Database
+
+commit d512f3150113fa61da5c091b2b0aa27dcb1661d7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Apr 29 23:42:06 2009 +0100
+
+    [Sbuild::Conf] Remove SRCDEP_LOCK_DIR check
+    
+    This is not needed on the host.  It's already created by the
+    50sbuild setup script and sbuild-createchroot.
+
+commit eec387f67daf5dbba1e5aa7d5ea139ba7c66ffb6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Apr 30 22:16:06 2009 +0100
+
+    [Sbuild::Build] Fix incorrect debug statement
+
+commit a377cccdb7bfe738c2dee5ea4196e40edd243e40
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Apr 30 20:59:03 2009 +0100
+
+    [.gitignore] Ignore generated db.sql
+
+commit b11230c6d41c39110371a87eb60f1c3048008230
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Apr 29 23:41:30 2009 +0100
+
+    [Sbuild::Build] Quote newlines with double quotes
+
+commit 7c031ba8dec7e7473da35c0a822463337e056290
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Apr 29 23:40:28 2009 +0100
+
+    [Sbuild::LogBase] Reopen streams in reverse order to avoid deadlocking
+    
+    Blocking of fatal signals is needed to prevent the parent of the logger
+    getting a SIGPIPE, and to prevent loss of final log messages.
+
+commit 7e0c64243c6fdb2fb1816402fbe6e05b5019190c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Apr 29 23:02:06 2009 +0100
+
+    [Sbuild::LogBase] Don't close STDOUT or STDERR
+    
+    When reopening, we can't guarantee getting the same fd (1 or 2).
+    Therefore just reopen in place.
+    
+    Redirect whether or not in verbose mode (since we might want to log
+    what's printed to STDOUT or STDERR, and the real original fds are
+    still open in the logger coprocess; output to STDOUT or STDERR in the
+    parent will therefore be redirected to the logger and logged both to
+    file and/or standard output depending upon the configuration.
+
+commit fa3da651871b6184518f8140c267a871838c044c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 18:20:02 2009 +0100
+
+    [Sbuild::LogBase] Log to file if NOLOG is not set
+
+commit 9e2c7e13893695f259cbfd3592ca22193c1eaf7e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 15:59:56 2009 +0100
+
+    [debian] Close #520158
+
+commit 5010c78fb4d3306e724aece968add8435e3b0787
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Mar 17 21:18:16 2009 +0000
+
+    [Sbuild::Conf] Don't default MAINTAINER_NAME
+    
+    Set to $DEBEMAIL only if no maintainer, uploader or key-id have
+    been set.
+
+commit ce20dbc27bb76609a4d461c2cfcf7287a9b69177
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 15:39:15 2009 +0100
+
+    [debian] Split common library functions into libsbuild-perl package
+
+commit cbbbee0eb5ddec8635123984d339dfe8aef9f7ab
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Apr 30 20:56:49 2009 +0100
+
+    [debian] Add buildd mail forwarding to buildd-mail
+
+commit bc4b34fcfbd5d4504b21e53a805c9431603d4c63
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Apr 30 20:57:41 2009 +0100
+
+    [man] Add buildd-vlog manual page
+
+commit f5b5db5b4bd01d05c59b04722058a1b9dba16e1f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 14:51:22 2009 +0100
+
+    [TODO] Add wanna-build work
+
+commit 99a0d5b4d932bc65f64682eb270e356c8f5ce1c3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 14:49:42 2009 +0100
+
+    [Wannabuild::Database] New module split from wanna-build
+
+commit bae1d22aab859c20aca301e87b4943dc21b8d8c2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 14:47:30 2009 +0100
+
+    [wanna-build] Move invocation under alternative names to top level
+
+commit 2ad351b786095c54faa65628e66340b034622322
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 14:46:55 2009 +0100
+
+    [wanna-build] Close databases on program termination
+
+commit a2ff64e83be10bd1858690f86ae2a93917ff98bc
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 14:40:14 2009 +0100
+
+    [wanna-build] database variables are class member data
+    
+    'Current Database' replaces $db
+    'Databases' replaces %databases
+
+commit 2702c23fc1ca0275585bc541c0831d3f12df17a1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 14:33:41 2009 +0100
+
+    [wanna-build] value hash variables are class member data
+    
+    'Priority Values' replaces %prioval
+    'Section Values' replaces %sectval
+    'Category Values' replaces %catval
+    
+    These may be later specified in the configuration file.
+
+commit 8cead28c95afa2545114a35e984daf47a5b3c46d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 14:22:32 2009 +0100
+
+    [wanna-build] 'Merge Bin Src' member replaces %merge_binsrc
+
+commit e9786b291bccabeede68bd4c1698f640ce3fa352
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 14:21:08 2009 +0100
+
+    [wanna-build] 'Merge Src Version' member replaces %merge_srcvers
+
+commit 2ff05cc3461e02238b088462db72957e63739e9b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 14:19:13 2009 +0100
+
+    [wanna-build] 'New Version' member replaces %new_vers
+
+commit eb86cb89ab7941587c55685a10fe9f61e3eeeb9f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 13:58:53 2009 +0100
+
+    [wanna-build] Date and time variables are class member data
+    
+    'Current Date' is $curr_date
+    'Short Date' is $short_date
+    'Current Time' is $ctime
+
+commit 70f17b63d6979a3ab94fa1b749c1e4fb7c775c19
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 13:50:05 2009 +0100
+
+    [wanna-build] 'Mail Logs' member replaces $mail_logs
+
+commit 2a5f9c6a187c7b770fb684527bc328ae12a77b43
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 2 13:45:31 2009 +0100
+
+    [wanna-build] Convert to object Wannabuild::Database
+
+commit 1bfb0f16ec76d5213c04fa35aa064ca7d6aa9c51
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 1 19:33:03 2009 +0100
+
+    [Sbuild::Chroot] run_command_internal: Don't create pipe
+    
+    This avoid incorrect interleaving of stdout and stderr due to
+    buffering.
+
+commit f0c94b435e0b3a3b58ccc099cf0f6ef053993a88
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 1 18:15:35 2009 +0100
+
+    [Sbuild::Build] Correctly create log symlinks
+    
+    Remove check for log existence, by creating in the logger
+    coprocess after opening the log.
+
+commit 1e5164c1f6d27248993e352ddcc3a494a5712f53
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 22:38:35 2009 +0100
+
+    [Buildd::Conf] Only be verbose if not detaching from TTY
+    
+    Previously defaulted to verbose mode if initially attached to a
+    terminal before becoming a daemon.
+
+commit e541f3967487dab8b00901f407bd22a3311f8a7b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 22:15:25 2009 +0100
+
+    [Sbuild::LogBase] Default logging function only outputs to single file
+
+commit 2b47351847eb6fede491b5d2b959af2fe2b9cedd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 20:44:06 2009 +0100
+
+    [Buildd::Conf] Default mail addresses to root
+    
+    This is not useful for a real buildd setup, but will allow the
+    package to function until properly configured.
+
+commit 0e1ec956b7938c9a70cb348fa4ede03ddef76305
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 19:29:52 2009 +0100
+
+    [shlibdb] Remove last obsolete sourcedeps components
+    
+    Manual source dependencies are no longer supported.
+
+commit 97b092fef077e91658977c1406a7a88bcd9c0dae
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 19:23:15 2009 +0100
+
+    [wanna-build-merge-*] Remove do-merge-* references
+
+commit 7b32004591c9f2c73c2d6dbc3dc17adc6fbf3d16
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 19:14:59 2009 +0100
+
+    [buildd-clean-upload] Remove
+    
+    Obsolete, and replaced by buildd-mail.
+
+commit ad4ec26b9ee5facc29d44ca7c17ed6204ad950d3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 19:10:31 2009 +0100
+
+    [buildd-clean-upload] Use standard options parsing
+
+commit 174e8364e80e8cd6979ef3433de0da3c53cde8bf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 18:56:52 2009 +0100
+
+    [buildd-vlog] Make it work and distribute with manual page
+
+commit 2d6a48bfe885baa09417d91d0a5b3f2f89acf150
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 18:24:09 2009 +0100
+
+    [Sbuild::Build] Eliminate last uses of main::PLOG
+
+commit 5fb93d1817f285ffe6bce7bb17d757fdf1c382b0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 17:09:45 2009 +0100
+
+    [Sbuild::Log] Split into generic Sbuild::LogBase
+    
+    Retain sbuild-specific log functionality in Sbuild::Log, and
+    move generic logging infrastructure into Sbuild::LogBase for
+    reuse by buildd and wanna-build.
+    
+    Restore --nolog option operation.
+    
+    Unify logging paths for all combinations of verbose/nolog
+    to improve robustness.  All logging is now performed in a
+    separate logging process under all use cases.
+    
+    The logging process uses a user-specified lambda function
+    for doing the logging to enable the addition of timestamps
+    in a general manner.
+    
+    Update copyright.
+
+commit 2f9448d7032c45966d2fc6e954ec7f5e6095fe2b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 11:44:57 2009 +0100
+
+    [Sbuild::Sysconfig] Add SSH
+
+commit 3c630f43f92c0d6b732f63640a1b639f9ba54a6d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 22:19:38 2009 +0100
+
+    [debian] buildd.cron.d: Enable cron jobs
+
+commit 953c51f699f89f548f17a8268fa59877fa1693ed
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 22:17:46 2009 +0100
+
+    [debian] preinst maintainer scripts are executable
+
+commit 6021424441bfd6f8e5834399062034d366fdefa9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 21:54:13 2009 +0100
+
+    [build] Add all buildd directories
+
+commit 071d71538fa600e9da73a4029ae05b1551346a59
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 21:53:38 2009 +0100
+
+    [debian] buildd.postinst: Set ownership and permissions for all buildd dirs
+
+commit 0df118d59e3d38139844a04bf998bd7f26c2b172
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 21:53:08 2009 +0100
+
+    [debian] Correct getent conditional in maintainer scripts
+
+commit 3db3a9cdc0bb50ead3706bcd352dc25c6f5aba4c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 21:52:10 2009 +0100
+
+    [debian] Update buildd init script to work
+
+commit f1d4f027ac2302066f508f8475cf958070ee3889
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 20:56:28 2009 +0100
+
+    [debian] Install buildd-abort symlink compressed and depend on adduser
+
+commit de7dccdf650751af231c11a887be6c6a5ad2c6bd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 20:42:38 2009 +0100
+
+    [debian] Install all directories under /var
+    
+    Remove /var/sbuild/srcdep-lock, since it's only used inside the
+    chroot.
+
+commit c19f53e9da6a0ff0a7de97d76690b6cd07ca02f7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 20:43:25 2009 +0100
+
+    [build] Install /var/lib/buildd and /var/lib/sbuild
+
+commit 2dfd604c42d98021999bcbbdce04a214462245e3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 20:26:17 2009 +0100
+
+    [debian] buildd: Add maintainer scripts
+
+commit ebfdc2f1e3bc73d768c24e104d9952c2ff6287b9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 20:23:47 2009 +0100
+
+    [debian] sbuild: Update maintainer scripts
+
+commit 40607ec5e5290789b4b30adec3b638e0ef54bd29
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 11:42:02 2009 +0100
+
+    [.gitignore] Ignore buildd and debhelper files
+
+commit a4bdc24376d3ab3a62bafe74abc7935ccd28c6e6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Apr 20 22:15:33 2009 +0100
+
+    [debian] Restore buildd package
+
+commit 570cb7754c9b68d9e0cbdf9de998587615cdeb23
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 26 14:14:10 2009 +0100
+
+    [Sbuild::Build] Don't fail on apt-get update error in buildd mode
+
+commit 5a4ec6c3bfb27ef13945f4f3234a04a205587229
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 18 11:16:52 2009 +0100
+
+    [db] Add schema table to track schema change history
+
+commit d568b8df546218b0d949772a9650928f0770a07f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 18 11:16:18 2009 +0100
+
+    [TODO] Update
+
+commit 985579b26f5f8efba31fcfb502697a5e92eceb07
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 18 11:14:50 2009 +0100
+
+    [debian] Close #524564
+
+commit 8951e06623f1a4213aa075590ab3b72bf4fdd79a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 18 11:10:05 2009 +0100
+
+    [Conf] Make $HOME visible in all configuration files
+
+commit e79e71f17396841adc42c4f42c3e4167bca61f89
+Author: James Vega <jamessan@debian.org>
+Date:   Sat Apr 18 11:08:43 2009 +0100
+
+    Sbuild::Conf] Declare $HOME as a global variable.
+    
+    This allows config files to continue using $HOME instead of requiring
+    them to use $ENV{'HOME'}.  (Closes: #524564)
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 552c8ffd7f80c97290c38b461b3a45781aa71e9f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 18 10:52:34 2009 +0100
+
+    [Buildd::Conf] Don't use logger() which isn't available at startup
+    
+    Calling logger() requires open_log to be called, and this hasn't
+    necessarily happened.  Use STDERR for the time being.
+
+commit 3be172608585c4cf745886b0058009ad5a8c46e0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 18 10:51:26 2009 +0100
+
+    [Sbuild::Conf] Only set array and hash variables if used.
+    
+    If set unconditionally, they override the defaults.
+
+commit 109730daccd51ed3711dfa156c6c77241376ff82
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 18 10:50:17 2009 +0100
+
+    [man] Update sbuild-hold description
+
+commit e89bf63dc538faccf22ab75b0a7837f1cb34cf5a
+Merge: d9aae45 4daa9c7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 18 10:32:17 2009 +0100
+
+    Merge branch 'buildd-conf'
+    
+    Conflicts:
+    	lib/Buildd/Conf.pm
+
+commit 4daa9c7281a7508154ea0dc3131f2564f10145f1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Apr 17 00:42:45 2009 +0100
+
+    [buildd] Reflow wanna-build command running over one line
+
+commit f897d9d84c537eeefb627f0e8c13c6b599861bf9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Apr 17 00:42:08 2009 +0100
+
+    [buildd] Force complete configuration reload on SIGUSR1
+
+commit beed360c64902a5317522a882680ad3c7b5af5bf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Apr 17 00:41:21 2009 +0100
+
+    [buildd] Correctly parse PID from buildd.pid on restart
+
+commit 10cbf332c1ef6d436123fb5412391f1ab1cf7890
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Apr 17 00:26:12 2009 +0100
+
+    [buildd] Reimplement configuration file reloading
+
+commit 2b6c544a963467904186d9b899e47db44aea5611
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Apr 17 00:25:45 2009 +0100
+
+    [buildd] Remove redundant use of $conf
+
+commit 3247ed34b00b004d3ea7dc7a4a6ad0a699904f16
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 14 21:46:43 2009 +0100
+
+    [buildd-abort] Remove and replace with a symlink to sbuild-abort
+    
+    sbuild-abort is a perl rewrite of the original buildd-abort imported
+    into sbuild.  buildd-abort is now a symlink to the current
+    sbuild-abort.
+
+commit e14fc0031ba3aa97eea32bcfe8322186ae727ddf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Apr 13 23:11:19 2009 +0100
+
+    [buildd*] Add generic options parsing logic
+
+commit 53fa075c405827550fb5f4da9bd1f8aa46c7ddb5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Apr 13 23:07:16 2009 +0100
+
+    [Buildd::Conf] Derive from Sbuild::ConfBase
+
+commit d9aae4581757dfbb6dc88002b88163ba521a2e96
+Merge: d9359ce 1ba6bf1
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Apr 13 21:14:05 2009 +0200
+
+    Merge commit 'origin/master'
+
+commit d9359ce7f228b4ee0b728ab093eadfe6d7d28131
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Apr 13 12:13:18 2009 +0200
+
+    [buildd] correct invalid function signature
+    
+    And it only took half an hour of debugging to get to that.
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 020576186c6d9d3c3161299be937501f695ebdd4
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Apr 13 11:31:46 2009 +0200
+
+    [Buildd::Conf] fix apt_get, sudo typo; add schroot
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit 1ba6bf1f7a5b6c954adc49ee43e5165bdfed5809
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 12 16:44:09 2009 +0100
+
+    [debian] Close #523670
+
+commit 665d2e95e652d6b80ed9a699f9bb503cb27a763d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 12 16:07:49 2009 +0100
+
+    [Sbuild::Options] Remove unused modules
+
+commit d923a3ddeb17390d8cbe5d47fe324fbf6ed72997
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 12 16:07:09 2009 +0100
+
+    [etc] 50sbuild: Only change directory permissions to 02775
+
+commit 4fb36df7b4cf06a9bbbd132be29acc74e7c8e69c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 12 16:06:22 2009 +0100
+
+    [Sbuild::Conf] Don't automatically check for sbuild group membership
+    
+    bin/*: Add check if appropriate.
+    
+    Also skip check if running as root.
+
+commit 3bb2408846c378b23fd88749de8422aa1976ab33
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 12 16:01:28 2009 +0100
+
+    [bin] All sbuild programs use generic Sbuild::OptionsBase options
+
+commit 72de42c96d0bcfd8664cee9035f5692c162d53a3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 12 02:49:09 2009 +0100
+
+    [Sbuild::Sysconfig] Use double quotes to allow prefix expansion
+
+commit 8297ccbe5e0ec8056b0fc2f7ddce4ba501a1a393
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 12 02:48:16 2009 +0100
+
+    [WannaBuild::Options] Remove options duplicated in Sbuild::OptionsBase
+
+commit ed6c917524e7b9e264f3185f6a1405bd6bea62a2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 12 02:47:28 2009 +0100
+
+    [WannaBuild::Options] Use Sbuild::OptionsBase
+
+commit fc6b07dffd34691616968dbc6910979b2f688701
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 12 00:28:41 2009 +0100
+
+    [Sbuild::OptionsBase] Generic options parsing base class
+    
+    Sbuild::Options derives from Sbuild::OptionsBase, which
+    provides basic --help, --version, --verbose, --quiet and
+    --debug options common to all programs.
+
+commit dcf030bdda12df5018f68ddee9129fb978d23abc
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Apr 12 00:02:42 2009 +0100
+
+    [debian] Close #475777
+
+commit af44d7adf82cf51b7392893a5f11f272f7c9ea6b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 23:57:28 2009 +0100
+
+    [sbuild] Avoid warning if no packages given
+
+commit 6a22249bcc44226e8adffbec4236e6e09e45eabf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 23:56:08 2009 +0100
+
+    [Sbuild::Conf] Move --append-to-version check from Sbuild::Options
+
+commit 623512a078f61e714d6edd33be64c77a76ebd835
+Author: Tim Abbott <tabbott@mit.edu>
+Date:   Sat Apr 11 23:46:46 2009 +0100
+
+    [sbuild] Add support for appending a tag at the end of version numbers
+    
+    Signed-off-by: Tim Abbott <tabbott@mit.edu>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 6434176b3279fdc39d96fb6aca2777c33934aca8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 20:00:37 2009 +0100
+
+    [Sbuild::Build] Add callback trigger for status changes
+    
+    sbuild will rewrite build-progress on status changes.
+
+commit 76bff6f39e965b888265094321f54b3d3c52636f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 20:00:02 2009 +0100
+
+    [buildd-vlog] Use correct build-progress status name
+    
+    Use "building", not "currently building".
+
+commit 71dc4fcbabf45383eceea8d93d49af2b9bf0bd15
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 19:21:05 2009 +0100
+
+    [build] Move all job handling code from Sbuild::Build
+    
+    Sbuild::Build only knows how to build one package.  Managing jobs
+    is not its responsibility, and is a layering violation.  Push all
+    job management, including skipping, error reporting, wanna-build
+    givebacks, etc. right up to the sbuild mainloop.  It can
+    subsequently be moved out of sbuild into buildd.  Unless running in
+    batch mode, none of these features are enabled.
+    
+    Added a JOB_FILE configuration property for the build status
+    reporting.
+
+commit 6598e76dca42b590a5a223997d329e710078d45b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 13:52:12 2009 +0100
+
+    [Sbuild::Build] Remove username from logs, and create build symlinks
+    
+    When in user mode, create a $dsc_$arch.build symlink in place of
+    the current symlink.
+    
+    In the log directory, don't embed the username in the log file name.
+
+commit 817aea8c6dbf7f953765d42a78eb938ae156bdf0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 13:50:19 2009 +0100
+
+    [Sbuild::Build] Simplify binNMU version handling
+    
+    binNMU versions are all now computed at initialisation time,
+    and we distinguish between the orignal version (OVersion), real
+    version with binNMU version added (Version) and real version with
+    epoch removed (SVersion).
+    
+    Old redundant tree checks for binNMU version checking and changelog
+    modification have been removed.
+
+commit 8bf803251bd4c9cda914afd67e397b0cc8d20b73
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 12:43:31 2009 +0100
+
+    [Sbuild] Support manually specified build dependencies
+    
+    Retire parse_manual_srcdeps and --force-depends and --add-depends
+    options.
+    
+    Replace with --add-depends, --add-conflicts, --add-depends-indep
+    and --app-conflicts-indep to fully support modern build dependency
+    handling rather than the old sourcedeps format.  Append directly
+    to package build dependencies.
+
+commit de53710f379b909ee163195383202b4507829cd0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 12:42:23 2009 +0100
+
+    [debian] control: Update to Standards Version 3.8.1
+
+commit 2288703f3b86f469585493b2a684c69da8214101
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 12:39:57 2009 +0100
+
+    [build] Bump version to 0.58.3
+
+commit 6bd7e28467d9973e2d297a2603e4ca3c4d7f1813
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 11:40:06 2009 +0100
+
+    [Sbuild::Build] Move initial setup from sbuild into run method
+
+commit 6baf7247ad7caf8b7361fac40e66adcc0980b961
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Apr 11 10:50:55 2009 +0100
+
+    [Sbuild::Conf] Move check_group_membership from sbuild
+
 commit 2a35efe5454ae358a27a0d632233e9295f9d8aa9
 Merge: 0ed0c0e 6c6c949
 Author: Roger Leigh <rleigh@debian.org>

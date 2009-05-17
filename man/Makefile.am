@@ -25,6 +25,7 @@ man_MANS =				\
 	buildd.1			\
 	buildd-mail.1			\
 	buildd-uploader.1		\
+	buildd-vlog.1			\
 	buildd-watcher.1		\
 	sbuild.1			\
 	sbuild-abort.1			\
@@ -37,7 +38,6 @@ man_MANS =				\
 	sbuild-shell.1			\
 	sbuild-stats.1			\
 	sbuild-update.1			\
-	sbuild-upgrade.1		\
 	wanna-build.1			\
 	wanna-build-catdb.1		\
 	wanna-build-mail.1		\
@@ -46,7 +46,10 @@ man_MANS =				\
 
 install-data-hook:
 	ln -sf sbuild-hold.1 $(DESTDIR)$(man1dir)/sbuild-unhold.1
+	ln -sf sbuild-update.1 $(DESTDIR)$(man1dir)/sbuild-upgrade.1
+	ln -sf sbuild-update.1 $(DESTDIR)$(man1dir)/sbuild-distupgrade.1
 	ln -sf wanna-build-catdb.1 $(DESTDIR)$(man1dir)/wanna-build-catgdbm.1
 	ln -sf wanna-build-catdb.1 $(DESTDIR)$(man1dir)/wanna-build-catmldbm.1
 	ln -sf wanna-build-merge-packages.1 $(DESTDIR)$(man1dir)/wanna-build-merge-quinn.1
 	ln -sf buildd-mail.1 $(DESTDIR)$(man1dir)/buildd-mail-wrapper.1
+	ln -sf sbuild-abort.1 $(DESTDIR)$(man1dir)/buildd-abort.1
