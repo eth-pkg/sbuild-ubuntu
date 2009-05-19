@@ -76,8 +76,7 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(top_srcdir)/scripts/global.mk
 subdir = db
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/sbuild_release.m4 \
-	$(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -150,11 +149,7 @@ RELEASE_DATE = @RELEASE_DATE@
 RM = @RM@
 SBUILD_CONF = @SBUILD_CONF@
 SBUILD_LIBEXEC_DIR = @SBUILD_LIBEXEC_DIR@
-SBUILD_MAJOR_VERSION = @SBUILD_MAJOR_VERSION@
-SBUILD_MICRO_VERSION = @SBUILD_MICRO_VERSION@
-SBUILD_MINOR_VERSION = @SBUILD_MINOR_VERSION@
 SBUILD_SYSCONF_DIR = @SBUILD_SYSCONF_DIR@
-SBUILD_VERSION = @SBUILD_VERSION@
 SCHROOT = @SCHROOT@
 SCHROOT_CONF = @SCHROOT_CONF@
 SCHROOT_SYSCONF_DIR = @SCHROOT_SYSCONF_DIR@

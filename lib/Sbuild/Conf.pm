@@ -1,7 +1,7 @@
 #
 # Conf.pm: configuration library for sbuild
 # Copyright © 2005      Ryan Murray <rmurray@debian.org>
-# Copyright © 2006-2008 Roger Leigh <rleigh@debian.org>
+# Copyright © 2006-2009 Roger Leigh <rleigh@debian.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ use strict;
 use warnings;
 
 use Cwd qw(cwd);
+use POSIX qw(getgroups getgid);
 use Sbuild qw(isin);
 use Sbuild::ConfBase;
 use Sbuild::Sysconfig;
@@ -226,6 +227,19 @@ sub init_allowed_keys {
 	'MAILFROM'				=> {
 	    DEFAULT => "Source Builder <sbuild>"
 	},
+	'PURGE_BUILD_DEPS'			=> {
+	    CHECK => sub {
+		my $self = shift;
+		my $entry = shift;
+		my $key = $entry->{'NAME'};
+
+		die "Bad purge mode \'" .
+		    $self->get('PURGE_BUILD_DEPS') . "\'"
+		    if !isin($self->get('PURGE_BUILD_DEPS'),
+			     qw(always successful never));
+	    },
+	    DEFAULT => 'always'
+	},
 	'PURGE_BUILD_DIRECTORY'			=> {
 	    CHECK => sub {
 		my $self = shift;
@@ -237,7 +251,7 @@ sub init_allowed_keys {
 		    if !isin($self->get('PURGE_BUILD_DIRECTORY'),
 			     qw(always successful never));
 	    },
-	    DEFAULT => 'successful'
+	    DEFAULT => 'always'
 	},
 	'TOOLCHAIN_REGEX'			=> {
 	    DEFAULT => ['binutils$',
@@ -476,6 +490,7 @@ sub read_config {
     my %mailto;
     undef %mailto;
     my $mailfrom = undef;
+    my $purge_build_deps = undef;
     my $purge_build_directory = undef;
     my @toolchain_regex;
     undef @toolchain_regex;
@@ -554,6 +569,7 @@ sub read_config {
     $self->set('MAILTO_HASH', \%mailto)
 	if (%mailto);
     $self->set('MAILFROM', $mailfrom);
+    $self->set('PURGE_BUILD_DEPS', $purge_build_deps);
     $self->set('PURGE_BUILD_DIRECTORY', $purge_build_directory);
     $self->set('TOOLCHAIN_REGEX', \@toolchain_regex)
 	if (@toolchain_regex);
@@ -631,8 +647,22 @@ sub check_group_membership ($) {
     }
 
     if (!$in_group) {
-	print STDERR "User $user is not a member of group $name\n";
+	print STDERR "User $user is not a member of group $name in the system group database\n";
 	print STDERR "See \"User Setup\" in sbuild-setup(7)\n";
+	exit(1);
+    }
+
+    $in_group = 0;
+    my @groups = getgroups();
+    push @groups, getgid();
+    foreach (@groups) {
+	($name, $passwd, $gid, $members) = getgrgid($_);
+	$in_group = 1 if defined($name) && $name eq 'sbuild';
+    }
+
+    if (!$in_group) {
+	print STDERR "User $user is not currently a member of group sbuild, but is in the system group database\n";
+	print STDERR "You need to log in again to gain sbuild group priveleges\n";
 	exit(1);
     }
 

@@ -1,3 +1,219 @@
+commit 65ee49b519a1df4678784bd4eed4f8c8eb7538a7
+Merge: 5420ad3 6e4f2e4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 13 21:06:48 2009 +0100
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit 5420ad3f9746718a66fb6562d8499b8a469e4898
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 13 21:02:36 2009 +0100
+
+    [build] Package versioning uses git release tags
+    
+    Rather than hard-coding the release version in several places,
+    including configure.ac and NEWS as well as the git tags, make the
+    setup simpler and easier to manage for releases since forgetting
+    to update one of the versions or tag is not possible.
+    
+    The version is stored in the NEWS file.  This is used to tag the
+    release with scripts/git-tag-release which creates a tag
+    release/sbuild-<version>.
+    
+    The script ./bootstrap calls the script scripts/git-version which
+    gets the release tag using git and uses this to create a VERSION
+    file containing the release details.  The autotools read this
+    file to get the version to set in the configure script.  The
+    reason for this is to allow rebootstrapping from release tarballs
+    without needing git.
+    
+    Debian releases are tagged with debian/git-tag-debian.
+    
+    The release procedures are documented in HACKING.
+
+commit 6e4f2e44dd933a89078539b9b22ed674083e362d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 4 19:57:40 2009 +0100
+
+    [buildd] Don't use the SysV (and non-POSIX) SIGPWR
+    
+    This makes buildd work on GNU/kFreeBSD.
+    
+    Thanks to Aurelien Jarno.
+
+commit def77a50e479dca25baeddbd43b56e32a5741070
+Merge: 7b0f871 2d7a93b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 4 19:38:48 2009 +0100
+
+    Merge branch 'master' of ssh://git.debian.org/git/buildd-tools/sbuild
+
+commit 2d7a93b856158f5e6c0e7a9736156842386da312
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 31 10:33:13 2009 +0100
+
+    [Sbuild::ChrootSetup] Add list_packages and set_package_status
+    
+    sbuild-hold and sbuild-unhold implementations of these functions
+    are now present in Sbuild::ChrootSetup and are used by these tools.
+
+commit 0f4cff0c3530b848480ce19fe4738b228d8852e1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 31 00:14:11 2009 +0100
+
+    Use dpkg --print-architecture in place of dpkg --print-installation-architecture
+
+commit 3828a48fe6a30ce9c88d8f6749a6523f2865245a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 30 18:02:06 2009 +0100
+
+    [Sbuild::Conf] check_group_membership uses getgroups(2)
+    
+    Check group membership using both group database searching and
+    getgroups(2) with appropriate errors to better diagnose permissions
+    problems.
+
+commit 8f8da84853a8c4f8f9152734d00a1371933b83fc
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 30 16:49:25 2009 +0100
+
+    [Sbuild::ChrootSetup] Move shell invocation from sbuild-shell
+
+commit 6618890fbd36f029b696a35cf052e032dd0e69ba
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 30 16:46:16 2009 +0100
+
+    [Sbuild::Utility] Don't open log file
+    
+    This detaches programs being run from STDIN/STDOUT/STDERR which can
+    cause problems for interactive use of utility programs such as
+    sbuild-shell.
+
+commit 16be96d3dad6804d788fc5381304037762c6f9b1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 30 16:45:04 2009 +0100
+
+    [Sbuild::Chroot] Execute programs using execvp directly
+    
+    This avoids quoting issues and shell expansion of commands
+
+commit 46d4a948b53653cca16d470e839b61a051f4034b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 30 16:18:18 2009 +0100
+
+    [sbuild] Only clean up if there is a valid current job
+
+commit 551909d1890ef786493c0e23145670d0d7cdfcbb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 30 16:07:53 2009 +0100
+
+    [Sbuild::Chroot] Add get_option method to get option value
+    
+    This uses the user-supplied value if present, or else the
+    default value for the chroot.
+
+commit 28ae47ea5c7be652bea3db39c6e07c3baba69e93
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 30 14:50:39 2009 +0100
+
+    [Sbuild::Build] SIGALRM handler calls kill with correct quoting
+
+commit 8f254221933068ae0628f9898a23f4f8bbcf38ee
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat May 30 14:49:18 2009 +0100
+
+    [Sbuild::Chroot] Allow use of setsid when running commands
+    
+    Sbuild::Build sets this when running dpkg-buildpackage to allow
+    termination of the whole process group.
+
+commit 7b0f871a32507c849d5fdfab6b3e6429122c637a
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu May 21 16:24:48 2009 +0100
+
+    [buildd, sbuild] get rid of --no-down-propagation
+    
+    --no-down-propagation is the default on the official wanna-build and
+    it is simply ignored nowadays.
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 53e98edad6e4ac14cc5fd9024aacb324d2906e14
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu May 21 16:15:11 2009 +0100
+
+    [Buildd::Mail] Allow Build-Attempted as a valid current state for retries
+    
+    Ryan Murray's buildd added Build-Attempted and Built as state.  It is
+    perfectly valid to give-back or retry a build in Build-Attempted.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit ce5ef3dabd6a722e8cd515f0694c09343ec49bed
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue May 19 22:18:19 2009 +0100
+
+    [debian] Close #509133
+
+commit 8dc01a896e1b6f1e8a20c15c82ec0e99c8836a33
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue May 19 22:15:41 2009 +0100
+
+    [Sbuild] Use Filesys::Df in place of df
+    
+    Rather than using an external program, use statvfs(2) via the
+    Filesys::Df module.  This saves the need to parse the output of
+    a program since we can just use the results directly.
+
+commit c558cc8b0f7faa7a21077746ed003e364f2725ef
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue May 19 21:35:45 2009 +0100
+
+    [debian] Close #529470
+
+commit 8dd7b7c7e9654aa710ce22a503f8decf2014b10b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue May 19 21:33:54 2009 +0100
+
+    [sbuild] Use isin from Sbuild
+
+commit f7f3f748811b96fac75d52e60742d6b22cac28d3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 23:53:07 2009 +0100
+
+    [debian] Close #528312
+
+commit a82a4b6bf9c61948c7e94053ec000c1ac71ad2f2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 23:51:36 2009 +0100
+
+    [Sbuild::*] Add PURGE_BUILD_DEPS option to control build-dep removal
+
+commit 94f4952004822ea10b0a0ca860ff5beb84fe0581
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 23:46:12 2009 +0100
+
+    [Sbuild::Conf] Always purge packages by default
+
+commit fc253611cd7a78de4405a735a63eb75e5401312d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 23:45:01 2009 +0100
+
+    [debian] Bump version to 0.58.4-1
+
+commit c06dfa8fd454ce5519da32456d0e01f17cb5d924
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 23:44:22 2009 +0100
+
+    [build] Bump version to 0.58.4
+
+commit 50802856b6b4853a21950ea7ad2a975887f75369
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 17 23:24:30 2009 +0100
+
+    [man] Update sbuild.1 references
+
 commit e925e754f84653f4a9291982431eb53ca9166f81
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sun May 17 21:45:09 2009 +0100
