@@ -1,3 +1,43 @@
+commit 98cdf3305f37a6a7ef0c35bd8410004d9126200c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 20 10:50:04 2009 +0100
+
+    [debian] control: Update package descriptions
+    
+    Closes: #531022
+
+commit 3bc203a8d574661d6a80f479613a09f7500ba68d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 20 10:27:43 2009 +0100
+
+    [debian] Close #529786
+    
+    Don't include Epoch in DSC filename.
+
+commit 226569dbee1ed1bb3d61f7baee4d4aa639f4a661
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 20 10:25:04 2009 +0100
+
+    [Sbuild::Build] Don't include epoch in 'DSC File'
+
+commit b41be90949715119e04be3a5a7d750a44f3f7ec1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 15 20:46:24 2009 +0100
+
+    [.gitignore] Ignore VERSION
+
+commit 11dd9e7befad26fb005387b7560e8617af6ff54f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 15 20:45:46 2009 +0100
+
+    [debian] git-tag-debian: Remove echo statement used for testing
+
+commit e6e759f023f3fccb77e06f374cd067cc192035cd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 15 20:45:26 2009 +0100
+
+    [NEWS] Bump version to 0.58.6
+
 commit 43a416e0a52e0a157f26a5dd1eacab8515e5addd
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Mon Jun 15 20:33:10 2009 +0100
