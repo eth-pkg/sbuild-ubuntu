@@ -1,3 +1,20 @@
+sbuild (0.59.0-1) unstable; urgency=low
+
+  [ Roger Leigh ]
+  * New release. 
+  * Use version comparison functions in WannaBuild::Database
+    (Closes: #521486).  Thanks to Florian Weimer. 
+  * WannaBuild::Database: Allow whitespace in Architecture field
+    (Closes: #535415).  Thanks to John Wright for this patch. 
+  * Sbuild::Build, WannaBuild::Database: Add support for architecture
+    aliases/wildcards (Closes: #501230).  Thanks to Andres Mejia for
+    these patches. 
+  * Sbuild::Conf doesn't require STATS_DIR to exist, and
+    Sbuild::Build::write_stats only uses STATS_DIR in batch mode
+    (Closes: #539570).
+
+ -- Roger Leigh <rleigh@debian.org>  Sun, 02 Aug 2009 11:15:26 +0100
+
 sbuild (0.58.6-1) unstable; urgency=low
 
   [ Roger Leigh ]

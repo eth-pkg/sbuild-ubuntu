@@ -24,7 +24,7 @@ use strict;
 use warnings;
 
 use POSIX;
-use Sbuild qw(isin usage_error);
+use Sbuild qw(isin usage_error version_less version_lesseq version_compare);
 use WannaBuild::Conf;
 use Sbuild::Sysconfig;
 use Sbuild::DB::Info;
@@ -80,36 +80,55 @@ sub new {
 	'debian-installer'	=> -199,
 	base			=> -198,
 	devel			=> -197,
-	shells			=> -196,
-	perl			=> -195,
-	python			=> -194,
-	graphics		=> -193,
-	admin			=> -192,
-	utils			=> -191,
-	x11			=> -190,
-	editors			=> -189,
-	net			=> -188,
-	mail			=> -187,
-	news			=> -186,
-	tex			=> -185,
-	text			=> -184,
-	web			=> -183,
-	doc			=> -182,
-	interpreters		=> -181,
-	gnome			=> -180,
-	kde			=> -179,
-	games			=> -178,
-	misc			=> -177,
-	otherosfs		=> -176,
-	oldlibs			=> -175,
-	libdevel		=> -174,
-	sound			=> -173,
-	math			=> -172,
-	science			=> -171,
-	comm			=> -170,
-	electronics		=> -169,
-	hamradio		=> -168,
-	embedded		=> -166
+	kernel			=> -196,
+	shells			=> -195,
+	perl			=> -194,
+	python			=> -193,
+	graphics		=> -192,
+	admin			=> -191,
+	utils			=> -190,
+	x11			=> -189,
+	editors			=> -188,
+	net			=> -187,
+	httpd			=> -186,
+	mail			=> -185,
+	news			=> -184,
+	tex			=> -183,
+	text			=> -182,
+	web			=> -181,
+	vcs			=> -180,
+	doc			=> -179,
+	localizations		=> -178,
+	interpreters		=> -177,
+	ruby			=> -176,
+	java			=> -175,
+	ocaml			=> -174,
+	lisp			=> -173,
+	haskell			=> -172,
+	'cli-mono'		=> -171,
+	gnome			=> -170,
+	kde			=> -169,
+	xfce			=> -168,
+	gnustep			=> -167,
+	database		=> -166,
+	video			=> -165,
+	debug			=> -164,
+	games			=> -163,
+	misc			=> -162,
+	fonts			=> -161,
+	otherosfs		=> -160,
+	oldlibs			=> -159,
+	libdevel		=> -158,
+	sound			=> -157,
+	math			=> -156,
+	'gnu-r'			=> -155,
+	science			=> -154,
+	comm			=> -153,
+	electronics		=> -152,
+	hamradio		=> -151,
+	embedded		=> -150,
+	php			=> -149,
+	zope			=> -148,
     };
     foreach my $i (keys %{$sectval}) {
 	$sectval->{"contrib/$i"} = $sectval->{$i}+40;
@@ -168,7 +187,6 @@ sub run {
 	    while(!eof(STDIN)) {
 		$line = <STDIN>;
 		last if $line eq ".\n";
-		$line = ".\n" if $line eq "\n";
 		$log .= $line;
 	    }
 	    chomp($log);
@@ -1065,7 +1083,7 @@ sub parse_sources {
 	s/\s*$//m;
 	/^Package:\s*(\S+)$/mi and $name = $1;
 	/^Version:\s*(\S+)$/mi and $version = $1;
-	/^Architecture:\s*(\S+)$/mi and $arch = $1;
+	/^Architecture:\s*(.+)$/mi and $arch = $1;
 	/^Section:\s*(\S+)$/mi and $section = $1;
 	/^Priority:\s*(\S+)$/mi and $priority = $1;
 	/^Build-Depends:\s*(.*)$/mi and $builddep = $1;
@@ -1733,7 +1751,7 @@ sub info_packages {
     foreach $name (@_) {
 	$name =~ s/_.*$//; # strip version
 	foreach $dist (@dists) {
-	    my $self->get('Current Database') = $self->get('Databases')->{$dist};
+	    $self->set('Current Database', $self->get('Databases')->{$dist});
 	    my $pname = "$name" . ($self->get_conf('DB_INFO_ALL_DISTS') ? "($dist)" : "");
 
 	    $pkg = $self->get('Current Database')->get_package($name);
@@ -1748,7 +1766,7 @@ sub info_packages {
 		my $val = $pkg->{$key};
 		chomp( $val );
 		$val = "\n$val" if isin( $key, qw(Failed Old-Failed));
-		$val =~ s/\n/\n /g;
+		$val =~ s/\n/\n    /g;
 		printf "  %-20s: %s\n", $key, $val;
 	    }
 	    foreach $key (sort keys %$pkg) {
@@ -1756,7 +1774,7 @@ sub info_packages {
 		my $val = $pkg->{$key};
 		chomp( $val );
 		$val = "\n$val" if isin( $key, qw(Failed Old-Failed));
-		$val =~ s/\n/\n /g;
+		$val =~ s/\n/\n    /g;
 		printf "  %-20s: %s\n", $key, $val;
 	    }
 	}
@@ -1959,9 +1977,6 @@ sub log_ta {
 	"changed from $prevstate to $pkg->{'State'} ".
 	"by " . $self->get_conf('USERNAME'). " as " . $self->get_conf('DB_USER') . ".";
 
-    my $dbbase = $self->get_conf('DB_BASE_NAME');
-    $dbbase =~ m#^([^/]+/)#;
-
     my $transactlog = $self->get_conf('DB_BASE_DIR') . "/$1" .
 	$self->get_conf('DB_TRANSACTION_LOG');
     if (!open( LOG, ">>$transactlog" )) {
@@ -2088,10 +2103,14 @@ sub parse_srcdeplist {
             my @archs = split( /\s+/, $archlist );
             my ($use_it, $ignore_it, $include) = (0, 0, 0);
             foreach (@archs) {
+                # Use 'dpkg-architecture' to support architecture
+                # wildcards.
                 if (/^!/) {
-                    $ignore_it = 1 if substr($_, 1) eq $arch;
+                    $ignore_it = 1 if system($Sbuild::Sysconfig::programs{'DPKG_ARCHITECTURE'},
+                        '-a' . $arch, '-i' . substr($_, 1)) eq 0;
                 } else {
-                    $use_it = 1 if $_ eq $arch;
+                    $use_it = 1 if system($Sbuild::Sysconfig::programs{'DPKG_ARCHITECTURE'},
+                        '-a' . $arch, '-i' . $_) eq 0;
                     $include = 1;
                 }
             }

@@ -1,11 +1,42 @@
 NEWS                                                            -*- outline -*-
 ----
 
-Welcome to sbuild 0.58.6.  Please read these release notes carefully.
+Welcome to sbuild 0.59.0.  Please read these release notes carefully.
 
 Full installation instructions are provided in the INSTALL file.  The
 README file also contains more specific notes regarding building and
 configuration.
+
+* Major changes in 0.59.0:
+
+  1) The wanna-build options --no-propagation and
+     --no-down-propagation have been removed.  These options no longer
+     have any effect, and were only present for backward-compatibility
+     with older versions of buildd.  buildd no longer uses these
+     options, making it safe to remove them.
+
+  2) The wanna-build configuration options used by buildd in
+     buildd.conf have been renamed for better compatibility with future
+     planned sbuild changes.  buildd.conf will require updating with the
+     new option names:
+
+     ┌───────────────────────┬────────────────────────────────────┐
+     │ old                   │ new                                │
+     ├───────────────────────┼────────────────────────────────────┤
+     │ $wanna_build_dbbase   │ $wanna_build_db_name               │
+     │ $wanna_build_user     │ $wanna_build_db_user               │
+     │ $ssh_user             │ $wanna_build_ssh_user              │
+     │ $ssh_host             │ $wanna_build_ssh_host              │
+     │ $ssh_socket           │ $wanna_build_ssh_socket            │
+     │ @ssh_options          │ $wanna_build_ssh_options (hashref) │
+     └───────────────────────┴────────────────────────────────────┘
+
+  3) sbuild will set the "attempted" and "given-back" states for
+     certain failures.  If wanna-build updates are configured with
+     --database and --auto-give-back by buildd, it will set the
+     "built" state on build completion, and "attempted" if the build
+     failed.  As before, "given-back" will be set for most other
+     failure conditions.
 
 * Major changes in 0.58.6:
 

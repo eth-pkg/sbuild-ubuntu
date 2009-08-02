@@ -39,6 +39,8 @@ sbuild \- build debian packages from source
 .RB [ \-m \[or] \-\-maintainer=\fImaintainer\fP ]
 .RB [ \-e \[or] \-\-uploader=\fIuploader\fP ]
 .RB [ \-k \[or] \-\-keyid=\fIkey-id\fP ]
+.RB [ \-\-debbuildopt=\fIoption\fP ]
+.RB [ \-\-debbuildopts=\fIoptions\fP ]
 .RB [ \-\-purge=\fPpurge-mode\fP ]
 .RB [ \-\-purge\-deps=\fPpurge-mode\fP ]
 .RB [ \-b \[or] \-\-batch]
@@ -163,6 +165,14 @@ the .changes file(s).
 Passed to dpkg\-genchanges and is used to set the key to sign the .changes
 file(s).  Default is not using any key.
 .TP
+.BR \-\-debbuildopt=\fIoption\fP
+Pass the specified option directly to dpkg\-buildpackage.
+.TP
+.BR \-\-debbuildopts=\fIoptions\fP
+Pass the specified options directly to dpkg\-buildpackage.  The options should
+be separated by spaces.  If any options contain spaces, use \-\-debbuildopt
+instead.
+.TP
 .BR \-n ", " "\-\-nolog"
 Do not create a package log file in the $log_dir directory and no
 build log file, but print everything to stdout. Also do not send any
@@ -210,7 +220,7 @@ The version number of the binary NMU.  This should be used in conjunction with
 \-\-make\-binNMU.  \fIversion\fP is a single number for the (+b\fIn\fR) format
 used for binary NMUs.
 .TP
-.BR "\-\-append\-to\-version=\fIstring\P"
+.BR "\-\-append\-to\-version=\fIstring\fP"
 This option is similar to --make-binNMU except that it allows the user to
 specify an arbitrary string to be appended to the version number (immediately
 before the '+' in the Debian revision if --make-binNMU is also provided).

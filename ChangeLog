@@ -1,3 +1,328 @@
+commit 843481a1d29878576315ac09921eadc943f61551
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Aug 2 11:17:30 2009 +0100
+
+    Sbuild: Don't require STATS_DIR to be set.
+    
+    Sbuild::Conf doesn't require STATS_DIR to exist.
+    Sbuild::Build::write_stats only uses STATS_DIR in batch mode
+    
+    Closes #539570.
+
+commit 85e36f1f2f67a91935c81c412516a7bb08d436d4
+Author: Bastian Blank <waldi@debian.org>
+Date:   Fri Jul 31 14:58:45 2009 +0000
+
+    [Sbuild::Build] Don't try to access log in nolog operation
+
+commit d0a1c550d0d81cdb371f67d29ec13cc8a59d056d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Aug 1 14:22:53 2009 +0100
+
+    Sbuild: Add user options to dpkg-buildpackage invocation
+
+commit 44810db821299a90591a0429f38bef32f7bde006
+Author: Joachim Breitner <nomeata@debian.org>
+Date:   Sat Jul 25 17:51:21 2009 +0100
+
+    Sbuild::DB::Base: strip newlines on multiline fields in export output correctly
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit ffae5b3023e4e4172a4e735c44e00e339cb7d035
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 17:38:16 2009 +0100
+
+    debian: Add arch wildcard support for wanna-build (#501230)
+
+commit c6127d360f2f5aba6601cb01799e4f16da528d56
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Jul 25 17:34:05 2009 +0100
+
+    WannaBuild::Database: Add support for architecture wildcards
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 2c3249b7a5ae7e008ac4569751c35a8e96f47e03
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Jul 25 17:30:38 2009 +0100
+
+    WannaBuild::Database: Update package sections
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit f7541e9cdfadcda57d1ff1560d35ad33019a4b59
+Author: Luk Claes <luk@debian.org>
+Date:   Sat Jul 25 15:46:31 2009 +0100
+
+    wanna-build-statistics: Fix the distributions
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit c2a849f1c0fa9d250929fcd3fbd15aeb046fd662
+Author: Joachim Breitner <nomeata@debian.org>
+Date:   Sat Jul 25 12:57:38 2009 +0100
+
+    man: wanna-build: Further document --give-back
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 788fb9a018873fe058015b1d0186641a590c4893
+Author: Joachim Breitner <nomeata@debian.org>
+Date:   Sat Jul 25 12:55:14 2009 +0100
+
+    wanna-build: Indent multi-line output of --info more
+    
+    Since the field names are indented by two, make the mult-line fields be
+    indented by 4 instead of 1.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 9fc4eedabaeed61583c94351ffa1d1b4348330fc
+Author: Joachim Breitner <nomeata@debian.org>
+Date:   Sat Jul 25 12:54:47 2009 +0100
+
+    wanna-build: Create valid dctrl-like output
+    
+    Instead of adding the dots for empty lines when reading the input, and
+    adding the extra space when outputting, save the data as is and create
+    the correct format when outputting. This makes sure that multi-line-data
+    passed to -m is also represented correctly.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 58bcfa9614f7a9f0ec4f519fc01cfc03c98f3925
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 12:52:05 2009 +0100
+
+    Sbuild::DB: Remove code duplicated in MLDBM and Postgres modules
+
+commit 324a6c48b5ac0513e79b8b0965255c9d6b31a23e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 12:28:46 2009 +0100
+
+    NEWS: Bump version to 0.59.0
+
+commit f988aa5e040ad6e1acceded5a21d553b86302f72
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 12:28:23 2009 +0100
+
+    Sbuild::ConfBase: Add FULL_NAME from passwd gecos
+
+commit 37bdff44f23b4729deae5f39641c677eec397be3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 12:27:54 2009 +0100
+
+    NEWS: Document sbuild wanna-build changes
+
+commit b9244ad840e84d5fb4c660f380d4e5374c9cbe74
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 12:22:25 2009 +0100
+
+    sbuild: Use wanna-build client interface
+    
+    Drive wanna-build via status trigger
+    Add given-back and attempted build states
+    Set wanna-build built and attempted states
+    Clean up build directory when downloads fail
+    Only use skipped state for SKIP
+
+commit 30faa38c5a225a3a092386e1d2cb8d31caa9bd6b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 11:30:01 2009 +0100
+
+    Buildd: Remove unused wannabuild_command
+
+commit dbe0913ed48abda9eb1bff1d383fee83d87ee8b0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 11:29:15 2009 +0100
+
+    Buildd: Use wanna-build client interface in place of running directly
+
+commit 2c99110efd856518c9e1ef86232ce67dd8b39dab
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 11:25:15 2009 +0100
+
+    Build::Conf: Use common Sbuild::DB::ClientConf configuration
+
+commit db36f486e4447f52b394699ed4f84adad4ef59ff
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 11:22:12 2009 +0100
+
+    Sbuild::DB::Client, Sbuild::DB::ClientConf: Add wanna-build client interface
+    
+    Interface to run wanna-build commands, and for wanna-build client configuration.
+    This is to allow buildd and sbuild to share the common code they use to drive
+    wanna-build.
+
+commit 2d4aa5815cb28f1f8e013d3547e1aeeab09290f2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 01:07:38 2009 +0100
+
+    buildd: Update wanna-build configuration key names
+    
+    Unify wanna-build usage between buildd and sbuild.
+    This initial patch changes the key names and buildd.conf variable names only.
+    
+    Configuration keys:
+    
+    ┌──────────────────────┬───────────────────────────────┬─────────────────────────┐
+    │ buildd               │ sbuild                        │ uniﬁed                  │
+    ├──────────────────────┼───────────────────────────────┼─────────────────────────┤
+    │ WANNA_BUILD_DBBASE   │ WANNABUILD_DATABASE           │ WANNA_BUILD_DB_NAME     │
+    │ WANNA_BUILD_USER     │ AUTO_GIVEBACK_WANNABUILD_USER │ WANNA_BUILD_DB_USER     │
+    │ SSH_USER             │ AUTO_GIVEBACK_USER            │ WANNA_BUILD_SSH_USER    │
+    │ n/a                  │ AUTO_GIVEBACK                 │ n/a                     │
+    │ SSH_HOST             │ AUTO_GIVEBACK_HOST            │ WANNA_BUILD_SSH_HOST    │
+    │ SSH_SOCKET           │ AUTO_GIVEBACK_SOCKET          │ WANNA_BUILD_SSH_SOCKET  │
+    │ SSH_OPTIONS          │ n/a                           │ WANNA_BUILD_SSH_OPTIONS │
+    └──────────────────────┴───────────────────────────────┴─────────────────────────┘
+    
+    buildd.conf:
+    
+    ┌───────────────────┬────────────────────────────────────┐
+    │ old               │ new                                │
+    ├───────────────────┼────────────────────────────────────┤
+    │ $wanna_build_db   │ $wanna_build_db_name               │
+    │ $wanna_build_user │ $wanna_build_db_user               │
+    │ $ssh_user         │ $wanna_build_ssh_user              │
+    │ $ssh_host         │ $wanna_build_ssh_host              │
+    │ $ssh_socket       │ $wanna_build_ssh_socket            │
+    │ @ssh_options      │ $wanna_build_ssh_options (hashref) │
+    └───────────────────┴────────────────────────────────────┘
+    
+    These options may be introduced to sbuild.conf in the future if required.
+
+commit 96eb64a7d0c6e2c8bf8c3975b0f85ce2798542e7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 25 00:07:49 2009 +0100
+
+    Sbuild::ConfBase: Add deprecated warning function
+
+commit 6d9de4c578fb29d625967f8cfdcbfdaa0b77157f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jul 24 23:52:44 2009 +0100
+
+    WannaBuild::Database: Remove unused code
+
+commit f8cb432d1deafa7b7c94ab20c4b9bccf4db0cfc0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jul 24 23:29:26 2009 +0100
+
+    wanna-build: Remove deprecated propagation options and configuration variables
+    
+    * Remove the command-line options --no-propagation and --no-down-propagation
+    * Remove the configuration keys DB_NO_PROPAGATION and DB_NO_DOWN_PROPAGATION
+    * Remove the configuration file variables for the old format configuration
+      which was no longer supported.
+
+commit 14c1788d9507bc924713d608f8717e1eb17718b5
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Jul 4 19:28:34 2009 +0100
+
+    [Sbuild::Build] Add support for architecture aliases/wildcards part two
+
+commit 33caa353d687669bca2a5d61979fc995ecb6d92b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 4 12:01:38 2009 +0100
+
+    [debian] Close #501230
+
+commit 3864d5f2bc8081200c8389901878297c8b5ddf1d
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Jul 4 12:00:07 2009 +0100
+
+    [Sbuild::Build] Add support for architecture aliases/wildcards
+
+commit 6dbc3fade4901e8339f9145a4d79ef6d78633123
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 4 11:59:09 2009 +0100
+
+    [Sbuild::Sysconfig] Add DPKG_ARCHITECTURE
+
+commit d1f7b14dcfb9fddac1ac6c28421ae5875f02c611
+Author: Cyril Brulebois <cyril.brulebois@kerlabs.com>
+Date:   Sat Jul 4 11:38:02 2009 +0100
+
+    [sbuild-createchroot] Suggest reporting usecases to sbuild developers
+
+commit 8c7b0f8f9d5e97f014d67bf2706d4f4320f707e3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 4 11:34:27 2009 +0100
+
+    [sbuild-createchroot] Don't run commands in chroot when chroot arch is not native
+    
+    If the host and chroot arches don't match, don't update the APT
+    package lists or run any other commands, since they most likely won't
+    work.
+
+commit 81b20242f677b73706fc8e718c38a5c393118342
+Author: Cyril Brulebois <cyril.brulebois@kerlabs.com>
+Date:   Sat Jul 4 11:34:11 2009 +0100
+
+    [sbuild-createchroot] Add personality option automatically for some known cases
+
+commit e82456772fb677bb96e0db1a2455d7eb1fa9925d
+Author: Cyril Brulebois <cyril.brulebois@kerlabs.com>
+Date:   Sat Jul 4 11:08:26 2009 +0100
+
+    [sbuild-createchroot] Detect whether a personality option might be needed.
+
+commit d3087b8ef3b72dc63a03272a82d7893ab6db2760
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jul 2 23:04:10 2009 +0100
+
+    [debian] Close #535415
+    
+    WannaBuild::Database: Allow whitespace in Architecture field
+
+commit 69d754a712066962ca2b9861154fa5e1cc37b62b
+Author: John Wright <jsw@debian.org>
+Date:   Thu Jul 2 23:02:21 2009 +0100
+
+    [WannaBuild::Database] Account for multi-valued Architecture field
+    
+    wanna-build complains about $arch being uninitialized in
+    WannaBuild/Database.pm line 1097, because the regexp for the
+    Architecture field assumes no white-space in the value.
+
+commit 6776a7c41709dc6b91821531374aaa7d33ffc135
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 25 23:07:45 2009 +0100
+
+    [man] sbuild.1: Correct roff markup typo in --append-to-version
+
+commit 23974c78a2c09744d1a42676d8c1057e2f408bfc
+Author: Florian Weimer <fweimer@bfk.de>
+Date:   Thu Jun 25 23:00:19 2009 +0100
+
+    [WannaBuild::Database] Remove unneeded "my" use
+
+commit 660a7a909416033d7d85b7fd26ff0606aedbf54a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 25 22:59:52 2009 +0100
+
+    [debian] Close #521486
+
+commit 5f20e24788f70e7ed8e0f866ba08ae4f70085dc3
+Author: Florian Weimer <fweimer@bfk.de>
+Date:   Thu Jun 25 22:58:26 2009 +0100
+
+    [WannaBuild::Database] Use Sbuild version comparison functions
+
+commit ad411295f45d99aa7c6c6f21e7c194965859dec9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jun 21 15:23:24 2009 +0100
+
+    [debian] Bump version to 0.58.7-1
+
+commit 3af11ad67d642e6eb41d4e9610722e6643328024
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jun 21 15:22:45 2009 +0100
+
+    [NEWS] Bump version to 0.58.7
+
 commit 98cdf3305f37a6a7ef0c35bd8410004d9126200c
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sat Jun 20 10:50:04 2009 +0100

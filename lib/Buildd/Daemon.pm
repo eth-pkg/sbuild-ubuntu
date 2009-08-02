@@ -25,13 +25,13 @@ use strict;
 use warnings;
 
 use POSIX;
-use Buildd qw(isin wannabuild_command lock_file unlock_file send_mail
-              exitstatus);
+use Buildd qw(isin lock_file unlock_file send_mail exitstatus);
 use Buildd::Conf;
 use Buildd::Base;
 use Sbuild qw($devnull df);
 use Sbuild::Sysconfig;
 use Sbuild::ChrootRoot;
+use Sbuild::DB::Client;
 use Cwd;
 
 BEGIN {
@@ -63,6 +63,10 @@ sub run {
     my $host = Sbuild::ChrootRoot->new($self->get('Config'));
     $host->set('Log Stream', $self->get('Log Stream'));
     $self->set('Host', $host);
+
+    my $db = Sbuild::DB::Client->new($self->get('Config'));
+    $db->set('Log Stream', $self->get('Log Stream'));
+    $self->set('DB', $db);
 
     my @distlist = qw(oldstable-security stable-security testing-security stable testing unstable);
     my $my_binary = $0;
@@ -141,14 +145,8 @@ sub run {
 	    $self->check_restart();
 	    $self->read_config();
 	    my %givenback = $self->read_givenback();
-	    my $pipe = $self->get('Host')->pipe_command(
-		{ COMMAND => [wannabuild_command($self->get('Config')),
-			      '--list=needs-build',
-			      "--dist=$dist"],
-		  USER => $self->get_conf('USERNAME'),
-		  CHROOT => 1,
-		  PRIORITY => 0,
-		});
+	    my $pipe = $self->get('DB')->pipe_query('--list=needs-build',
+						    "--dist=$dist");
 	    if (!$pipe) {
 		$self->log("Can't spawn wanna-build --list=needs-build: $!\n");
 		next MAINLOOP;
@@ -157,7 +155,7 @@ sub run {
 	    my(@todo, $total, $nonex, @lowprio_todo, $max_build);
 	    $max_build = $self->get_conf('MAX_BUILD');
 	    while( <$pipe> ) {
-		my $socket = $self->get_conf('SSH_SOCKET');
+		my $socket = $self->get_conf('WANNA_BUILD_SSH_SOCKET');
 		if ($socket &&
 		    (/^Couldn't connect to $socket: Connection refused[\r]?$/ ||
 		     /^Control socket connect\($socket\): Connection refused[\r]?$/)) {
@@ -334,15 +332,7 @@ sub do_wanna_build {
 
     $self->block_signals();
 
-    my $pipe = $self->get('Host')->pipe_command(
-	{ COMMAND => [wannabuild_command($self->get('Config')),
-		      '-v', 
-		      "--dist=$dist",
-		      @_],
-	  USER => $self->get_conf('USERNAME'),
-	  CHROOT => 1,
-	  PRIORITY => 0,
-	});
+    my $pipe = $self->get('DB')->pipe_query('-v', "--dist=$dist", @_);
     if (!$pipe) {
 	while( <$pipe> ) {
 	    next if /^wanna-build Revision/;
@@ -425,22 +415,22 @@ sub do_build {
 			"--stats-dir=" . $self->get_conf('HOME') . "/stats",
 			"--dist=$dist" );
     my $sbuild_gb = '--auto-give-back';
-    if ($self->get_conf('SSH_CMD')) {
+    if ($self->get_conf('WANNA_BUILD_SSH_CMD')) {
 	$sbuild_gb .= "=";
-	$sbuild_gb .= $self->get_conf('SSH_SOCKET') . "\@"
-	    if $self->get_conf('SSH_SOCKET');
-	$sbuild_gb .= $self->get_conf('WANNA_BUILD_USER') . "\@"
-	    if $self->get_conf('WANNA_BUILD_USER');
-	$sbuild_gb .= $self->get_conf('SSH_USER') ."\@" if $self->get_conf('SSH_USER');
-	$sbuild_gb .= $self->get_conf('SSH_HOST');
+	$sbuild_gb .= $self->get_conf('WANNA_BUILD_SSH_SOCKET') . "\@"
+	    if $self->get_conf('WANNA_BUILD_SSH_SOCKET');
+	$sbuild_gb .= $self->get_conf('WANNA_BUILD_DB_USER') . "\@"
+	    if $self->get_conf('WANNA_BUILD_DB_USER');
+	$sbuild_gb .= $self->get_conf('WANNA_BUILD_SSH_USER') ."\@" if $self->get_conf('WANNA_BUILD_SSH_USER');
+	$sbuild_gb .= $self->get_conf('WANNA_BUILD_SSH_HOST');
     } else {
 	# Otherwise newer sbuild will take the package name as an --auto-give-back
 	# parameter (changed from regexp to GetOpt::Long parsing)
 	$sbuild_gb .= "=yes"
     }
     push ( @sbuild_args, $sbuild_gb );
-    push ( @sbuild_args, "--database=" . $self->get_conf('WANNA_BUILD_DBBASE') )
-	if $self->get_conf('WANNA_BUILD_DBBASE');
+    push ( @sbuild_args, "--database=" . $self->get_conf('WANNA_BUILD_DB_NAME') )
+	if $self->get_conf('WANNA_BUILD_DB_NAME');
 
     if (scalar(@_) == 1 and $_[0] =~ s/^!(\d+)!//) {
 	$binNMUver = $1;
@@ -548,15 +538,7 @@ sub handle_prevfailed {
     $self->log("$pkgv previously failed -- asking admin first\n");
     ($pkg = $pkgv) =~ s/_.*$//;
 
-    my $pipe = $self->get('Host')->pipe_command(
-	{ COMMAND => [wannabuild_command($self->get('Config')),
-		      '--info',
-		      "--dist=$dist",
-		      $pkg],
-	  USER => $self->get_conf('USERNAME'),
-	  CHROOT => 1,
-	  PRIORITY => 0,
-	});
+    my $pipe = $self->get('DB')->pipe_query('--info', "--dist=$dist", $pkg);
     if (!$pipe) {
 	$self->log("Can't run wanna-build: $!\n");
 	return;
@@ -802,8 +784,8 @@ sub unblock_signals {
 sub check_ssh_master {
     my $self = shift;
 
-    return 1 if (!$self->get_conf('SSH_SOCKET'));
-    return 1 if ( -S $self->get_conf('SSH_SOCKET') );
+    return 1 if (!$self->get_conf('WANNA_BUILD_SSH_SOCKET'));
+    return 1 if ( -S $self->get_conf('WANNA_BUILD_SSH_SOCKET') );
 
     if ($main::ssh_pid)
     {
@@ -812,14 +794,14 @@ sub check_ssh_master {
     }
 
     ($main::ssh_pid = fork)
-	or exec (@{$self->get_conf('SSH_CMD')}, "-MN");
+	or exec (@{$self->get_conf('WANNA_BUILD_SSH_CMD')}, "-MN");
 
     if (!defined $main::ssh_pid) {
 	$self->log("Cannot fork for ssh master: $!\n");
 	return 0;
     }
 
-    while ( ! -S $self->get_conf('SSH_SOCKET') )
+    while ( ! -S $self->get_conf('WANNA_BUILD_SSH_SOCKET') )
     {
 	sleep 1;
 	my $wpid = waitpid ( $main::ssh_pid, WNOHANG );

@@ -53,8 +53,9 @@ sub dump {
 	my $pkg = $self->get_package($name);
 	foreach $key (keys %{$pkg}) {
 	    my $val = $pkg->{$key};
-	    chomp( $val );
-	    $val =~ s/\n/\n /g;
+	    $val =~ s/\n*$//;
+	    $val =~ s/^/ /mg;
+	    $val =~ s/^ $/ ./mg;
 	    print F "$key: $val\n";
 	}
 	print F "\n";
@@ -66,8 +67,9 @@ sub dump {
 	    if (!defined($ui->{'User'}));
 	foreach $key (keys %{$ui}) {
 	    my $val = $ui->{$key};
-	    chomp($val);
-	    $val =~ s/\n/\n /g;
+	    $val =~ s/\n*$//;
+	    $val =~ s/^/ /mg;
+	    $val =~ s/^ $/ ./mg;
 	    print F "$key: $val\n";
 	}
 	print F "\n";

@@ -192,7 +192,7 @@ sub run {
     if ($self->get('Invalid Source')) {
 	$self->log("Invalid source: " . $self->get('DSC') . "\n");
 	$self->log("Skipping " . $self->get('Package') . " \n");
-	$self->set_status('skipped');
+	$self->set_status('failed');
 	goto cleanup_skip;
     }
 
@@ -210,7 +210,7 @@ sub run {
     if (!$session->begin_session()) {
 	$self->log("Error creating chroot session: skipping " .
 		   $self->get('Package') . "\n");
-	$self->set_status('skipped');
+	$self->set_status('failed');
 	goto cleanup_close;
     }
 
@@ -256,7 +256,7 @@ sub run {
 	    # error when not in buildd mode.
 	    $self->log("apt-get update failed\n");
 	    if ($self->get_conf('SBUILD_MODE') ne 'buildd') {
-		$self->set_status('skipped');
+		$self->set_status('failed');
 		goto cleanup_close;
 	    }
 	}
@@ -264,7 +264,7 @@ sub run {
 
     $self->set('Pkg Fail Stage', 'fetch-src');
     if (!$self->fetch_source_files()) {
-	goto cleanup_close;
+	goto cleanup_packages;
     }
 
     # Run setup-hook before processing deps and build
@@ -277,8 +277,8 @@ sub run {
 	      CHROOT => 1 });
 	if ($?) {
 	    $self->log("setup-hook failed\n");
-	    $self->set_status('skipped');
-	    goto cleanup_close;
+	    $self->set_status('failed');
+	    goto cleanup_packages;
 	}
     }
 
@@ -534,11 +534,20 @@ sub fetch_source_files {
     $self->log_subsubsection("Check arch");
     if (!$dscarchs) {
 	$self->log("$dsc has no Architecture: field -- skipping arch check!\n");
-    }
-    else {
-	if ($dscarchs ne "any" && $dscarchs !~ /\b$arch\b/ &&
+    } else {
+	my $valid_arch;
+	for my $a (split(/\s+/, $dscarchs)) {
+	    if (system($Sbuild::Sysconfig::programs{'DPKG_ARCHITECTURE'},
+		       '-a' . $arch, '-i' . $a) eq 0) {
+		$valid_arch = 1;
+		last;
+	    }
+	}
+	if ($dscarchs ne "any" && !($valid_arch) &&
 	    !($dscarchs eq "all" && $self->get_conf('BUILD_ARCH_ALL')) )  {
-	    $self->log("$dsc: $arch not in arch list: $dscarchs -- skipping\n");
+	    my $msg = "$dsc: $arch not in arch list or does not match any arch ";
+	    $msg .= "wildcards: $dscarchs -- skipping\n";
+	    $self->log($msg);
 	    $self->set('Pkg Fail Stage', "arch-check");
 	    return 0;
 	}
@@ -780,6 +789,11 @@ sub build {
 
     push (@{$buildcmd}, $binopt) if $binopt;
     push (@{$buildcmd}, "-r" . $self->get_conf('FAKEROOT'));
+
+    if (defined($self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')) &&
+	$self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')) {
+	push (@{$buildcmd}, @{$self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')});
+    }
 
     my $buildenv = {};
     $buildenv->{'PATH'} = $self->get_conf('PATH');
@@ -2010,11 +2024,15 @@ sub parse_one_srcdep {
 		my @archs = split( /\s+/, $archlist );
 		my ($use_it, $ignore_it, $include) = (0, 0, 0);
 		foreach (@archs) {
+			# Use 'dpkg-architecture' to support architecture
+			# wildcards.
 		    if (/^!/) {
-			$ignore_it = 1 if substr($_, 1) eq $self->get('Arch');
+			$ignore_it = 1 if system($Sbuild::Sysconfig::programs{'DPKG_ARCHITECTURE'},
+						 '-a' .	$self->get('Arch'), '-i' . substr($_, 1)) eq 0;
 		    }
 		    else {
-			$use_it = 1 if $_ eq $self->get('Arch');
+			$use_it = 1 if system($Sbuild::Sysconfig::programs{'DPKG_ARCHITECTURE'},
+					      '-a' . $self->get('Arch'), '-i' . $_) eq 0;
 			$include = 1;
 		    }
 		}
@@ -2391,6 +2409,8 @@ sub unlock_file {
 sub write_stats {
     my $self = shift;
 
+    return if (!$self->get_conf('BATCH_MODE'));
+
     my $stats_dir = $self->get_conf('STATS_DIR');
 
     return if not defined $stats_dir;
@@ -2516,12 +2536,15 @@ sub open_build_log {
 	}
 
 	while (<STDIN>) {
-	    if (!$self->get_conf('NOLOG') &&
-		$self->get_conf('LOG_DIR_AVAILABLE')) {
-		print CPLOG $_;
-	    }
-	    if ($self->get_conf('NOLOG') || $self->get_conf('VERBOSE')) {
+	    if ($self->get_conf('NOLOG')) {
 		print $saved_stdout $_;
+	    } else {
+		if ($self->get_conf('LOG_DIR_AVAILABLE')) {
+		    print CPLOG $_;
+		}
+		if ($self->get_conf('VERBOSE')) {
+		    print $saved_stdout $_;
+		}
 	    }
 	}
 
