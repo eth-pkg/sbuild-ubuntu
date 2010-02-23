@@ -46,23 +46,6 @@ sub set_options {
 		       "A|arch-all" => sub {
 			   $self->set_conf('BUILD_ARCH_ALL', 1);
 		       },
-		       "auto-give-back=s" => sub {
-			   $self->set_conf('AUTO_GIVEBACK', 1);
-			   if ($_[1]) {
-			       my @parts = split( '@', $_[1] );
-			       $self->set_conf('WANNA_BUILD_SSH_SOCKET',
-					  $parts[$#parts-3])
-				   if @parts > 3;
-			       $self->set_conf('WANNA_BUILD_DB_USER',
-					  $parts[$#parts-2])
-				   if @parts > 2;
-			       $self->set_conf('WANNA_BUILD_SSH_USER',
-					  $parts[$#parts-1])
-				   if @parts > 1;
-			       $self->set_conf('WANNA_BUILD_SSH_HOST',
-					  $parts[$#parts]);
-			   }
-		       },
 		       "add-depends=s" => sub {
 			   push(@{$self->get_conf('MANUAL_DEPENDS')}, $_[1]);
 		       },
@@ -75,7 +58,7 @@ sub set_options {
 		       "add-conflicts-indep=s" => sub {
 			   push(@{$self->get_conf('MANUAL_CONFLICTS_INDEP')}, $_[1]);
 		       },
-		       "check-depends-algorithm=s" => sub {
+		       "C|check-depends-algorithm=s" => sub {
 			   $self->set_conf('CHECK_DEPENDS_ALGORITHM', $_[1]);
 		       },
 		       "b|batch" => sub {
@@ -95,11 +78,17 @@ sub set_options {
 		       "c|chroot=s" => sub {
 			   $self->set_conf('CHROOT', $_[1]);
 		       },
-		       "database=s" => sub {
-			   $self->set_conf('WANNA_BUILD_DB_NAME', $_[1]);
+		       "apt-clean" => sub {
+			   $self->set_conf('APT_CLEAN', $_[1]);
 		       },
 		       "apt-update" => sub {
 			   $self->set_conf('APT_UPDATE', $_[1]);
+		       },
+		       "apt-upgrade" => sub {
+			   $self->set_conf('APT_UPGRADE', $_[1]);
+		       },
+		       "apt-distupgrade" => sub {
+			   $self->set_conf('APT_DISTUPGRADE', $_[1]);
 		       },
 		       "d|dist=s" => sub {
 			   $self->set_conf('DISTRIBUTION', $_[1]);
@@ -135,6 +124,10 @@ sub set_options {
 			   push(@{$self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')},
 				$_[1]);
 		       },
+		       "mail-log-to=s" => sub {
+			   $self->set_conf('MAILTO', $_[1]);
+			   $self->set_conf('MAILTO_FORCED_BY_CLI', "yes");
+		       },
 		       "n|nolog" => sub {
 			   $self->set_conf('NOLOG', 1);
 		       },
@@ -164,7 +157,10 @@ sub set_options {
 			   $self->set_conf('PATH',
 					   '/usr/lib/gcc-snapshot/bin' .
 					   $self->get_conf('PATH') ne '' ? ':' . $self->get_conf('PATH') : '');
-		       }
+		       },
+		       "build-dep-resolver=s" => sub {
+			   $self->set_conf('BUILD_DEP_RESOLVER', $_[1]);
+		       },
 	);
 }
 

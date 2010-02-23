@@ -1,9 +1,7 @@
-#!/usr/bin/perl
+#!/bin/sh
 #
-# buildd-watcher:
-# Copyright © 1998 Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
-# Copyright © 2009 Roger Leigh <rleigh@debian.org>
 # Copyright © 2005 Ryan Murray <rmurray@debian.org>
+# Copyright © 2009 Thibaut VARÈNE <varenet@debian.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,22 +19,24 @@
 #
 #######################################################################
 
-use strict;
-use warnings;
+cleanup() {
+        rm -f ~/NO-DAEMON-PLEASE
+}
 
-use Buildd::Conf;
-use Buildd::Watcher;
-use Sbuild::OptionsBase;
+touch ~/NO-DAEMON-PLEASE
+trap cleanup 0
 
-my $conf = Buildd::Conf->new();
-exit 1 if !defined($conf);
-my $options = Sbuild::OptionsBase->new($conf, "buildd-watcher", "1");
-exit 1 if !defined($options);
-my $watcher = Buildd::Watcher->new($conf);
-exit 1 if !defined($watcher);
+touch ~/EXIT-DAEMON-PLEASE
+echo -n Waiting for sbuild and buildd to exit...
+while [ -f ~/EXIT-DAEMON-PLEASE ]; do
+        sleep 10
+done
+echo .
 
-my $status = $watcher->run();
+schroot -a -u root -d /root -- apt-get update
+echo Upgrading chroots:
+schroot -a -u root -d /root -- apt-get dist-upgrade -y
+echo Cleaning chroots:
+schroot -a -u root -d /root -- apt-get autoremove -y
+schroot -a -u root -d /root -- debfoster -f
 
-$watcher->close_log();
-
-exit $status;

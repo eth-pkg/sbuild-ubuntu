@@ -24,13 +24,11 @@
 use strict;
 use warnings;
 
-use Buildd qw(open_log close_log);
 use Buildd::Conf;
 use Buildd::Daemon;
 use Sbuild::OptionsBase;
 
 sub shutdown_fast ($);
-sub shutdown($);
 sub reread_config ($);
 sub reopen_log ($);
 
@@ -40,9 +38,6 @@ my $options = Sbuild::OptionsBase->new($conf, "buildd", "1");
 exit 1 if !defined($options);
 my $daemon = Buildd::Daemon->new($conf);
 exit 1 if !defined($daemon);
-
-my $log = open_log($daemon->get('Config'));
-$daemon->set('Log Stream', $log);
 
 # Global signal handling
 foreach (qw(QUIT ILL TRAP ABRT BUS FPE USR2 SEGV PIPE XCPU XFSZ)) {
@@ -66,35 +61,9 @@ sub shutdown_fast ($) {
 sub shutdown ($) {
     my $signame = shift;
 
-    $daemon->log("buildd ($$) received SIG$signame -- shutting down\n")
-	if defined($daemon);
-
-    if (defined $main::ssh_pid) {
-	kill ( 15, $main::ssh_pid );
+    if ($daemon) {
+	$daemon->shutdown($signame);
     }
-    if (defined $main::sbuild_pid) {
-	$daemon->log("Killing sbuild (pid=$main::sbuild_pid)\n")
-	    if defined($daemon);
-	kill( 15, $main::sbuild_pid );
-	$daemon->log("Waiting max. 2 minutes for sbuild to finish\n")
-	    if defined($daemon);
-	$SIG{'ALRM'} = sub ($) { die "timeout\n"; };
-	alarm( 120 );
-	eval "waitpid( $main::sbuild_pid, 0 )";
-	alarm( 0 );
-	if ($@) {
-	    $daemon->log("sbuild did not die!")
-		if defined($daemon);
-	}
-	else {
-	    $daemon->log("sbuild died normally")
-		if defined($daemon);
-	}
-	unlink( "SBUILD-REDO-DUMPED" );
-    }
-    unlink( $conf->get('PIDFILE') );
-    $daemon->log("exiting now\n");
-    close_log($conf);
     exit 1;
 }
 
@@ -113,7 +82,7 @@ sub reopen_log ($) {
     $daemon->log("buildd ($$) received SIG$signame -- reopening logfile\n")
 	if defined($daemon);
 
-    Buildd::reopen_log($conf);
+    $daemon->reopen_log();
 }
 
 END {

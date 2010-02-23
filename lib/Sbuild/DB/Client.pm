@@ -25,6 +25,7 @@ use strict;
 use warnings;
 
 use Sbuild qw($devnull);
+use Sbuild::ChrootRoot;
 
 BEGIN {
     use Exporter ();
@@ -61,9 +62,12 @@ sub setup {
 sub get_query {
     my $self = shift;
 
-    my @command = ($self->get_conf('WANNA_BUILD_SSH_CMD'), 'wanna-build');
-    push(@command, "--database=" . $self->get_conf('WANNA_BUILD_DB_NAME'))
-	if $self->get_conf('WANNA_BUILD_DB_NAME');
+    my @command = (@{$self->get_conf('WANNA_BUILD_SSH_CMD')}, 'wanna-build');
+    if ($self->get_conf('WANNA_BUILD_DB_NAME')) {
+	push(@command, "--database=" . $self->get_conf('WANNA_BUILD_DB_NAME'));
+    } elsif ($self->get_conf('BUILT_ARCHITECTURE')) {
+	push(@command, "--arch=" . $self->get_conf('BUILT_ARCHITECTURE'));
+    }
     push(@command, "--user=" . $self->get_conf('WANNA_BUILD_DB_USER'))
 	if $self->get_conf('WANNA_BUILD_DB_USER');
     push(@command, @_);
@@ -81,7 +85,7 @@ sub run_query {
     my $pipe = $self->get('Host')->run_command(
 	{ COMMAND => [@command],
 	  USER => $self->get_conf('USERNAME'),
-	  CHROOT => 1,
+	  CHROOT => 0,
 	  PRIORITY => 0,
 	});
 }
@@ -96,7 +100,7 @@ sub pipe_query {
     my $pipe = $self->get('Host')->pipe_command(
 	{ COMMAND => [@command],
 	  USER => $self->get_conf('USERNAME'),
-	  CHROOT => 1,
+	  CHROOT => 0,
 	  PRIORITY => 0,
 	});
 
@@ -115,7 +119,7 @@ sub pipe_query_out {
 	  USER => $self->get_conf('USERNAME'),
 	  PIPE => 'out',
 	  STREAMOUT => $devnull,
-	  CHROOT => 1,
+	  CHROOT => 0,
 	  PRIORITY => 0,
 	});
 

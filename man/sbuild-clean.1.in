@@ -13,27 +13,19 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program.  If not, see
 .\" <http://www.gnu.org/licenses/>.
-.TH SBUILD\-UPDATE 1 "@RELEASE_DATE@" "Version @VERSION@" "Debian sbuild"
+.TH SBUILD\-CLEAN 1 "@RELEASE_DATE@" "Version @VERSION@" "Debian sbuild"
 .SH NAME
-sbuild\-update \- update and upgrade an sbuild chroot with apt-get
+sbuild\-clean \- clean an sbuild chroot with apt-get
 .SH SYNOPSIS
-.BR sbuild\-update
-.RB [ \-h \[or] \-\-help " \[or] " \-V \[or] \-\-version ]
+.BR sbuild\-clean
+.BR [ \-h \[or] \-\-help ] " " [ \-V \[or] \-\-version ]
+.BR [ \-c \[or] \-\-clean ] " " [ \-a \[or] \-\-autoclean ] " "
+.BR [ \-r \[or] \-\-autoremove ]
 .BR CHROOT1 " [" CHROOT2 " [" CHROOT\f[BI]n\fP... ]]
-.BR sbuild\-upgrade
-.RB [ \-h \[or] \-\-help " \[or] " \-V \[or] \-\-version ]
-.BR CHROOT1 " [" CHROOT2 " [" CHROOT\f[BI]n\fP... ]]
-.BR sbuild\-distupdate
-.RB [ \-h \[or] \-\-help " \[or] " \-V \[or] \-\-version ]
-.BR CHROOT1 " [" CHROOT2 " [" CHROOT\f[BI]n\fP... ]]
-.BR buildd\-update\-chroots
 .SH DESCRIPTION
-\fBsbuild\-update\fR runs \f[CB]apt\-get update\fP inside the specified chroot.
-\fBsbuild\-upgrade\fR and \fBsbuild\-distupgrade\fR run \f[CB]apt\-get
-upgrade\fP and \f[CB]apt\-get dist-upgrade\fP, respectively.
-\fBbuildd\-update\-chroots\fP does the equivalent (update, dist-upgrade,
-autoremove and debfoster) but for buildd systems where it will stop the buildd
-prior to updating and will act on all schroot-managed chroots.
+\fBsbuild\-clean\fR runs \f[CB]apt\-get\fP inside the specified chroot
+performing \f[CB]clean\fP, \f[CB]autoclean\fP, and/or \f[CB]autoremove\fP
+depending on the options specified on the command line.
 .SH OPTIONS
 .SS Actions
 .TP
@@ -42,6 +34,16 @@ Display this manual.
 .TP
 .BR \-V ", " \-\-version
 Print version information.
+.TP
+.BR \-c ", " \-\-clean
+Perform an \f[CB]apt\-get clean\fP. This is the default if no options are
+specified.
+.TP
+.BR \-a ", " \-\-autoclean
+Perform an \f[CB]apt\-get autoclean\fP.
+.TP
+.BR \-r ", " \-\-autoremove
+Perform an \f[CB]apt\-get autoremove\fP.
 .SS Chroot selection
 .TP
 .B CHROOT
@@ -50,10 +52,18 @@ The chroot to use.  Note that \[oq]o\[cq], \[oq]s\[cq],
 \[oq]oldstable\[cq], \[oq]stable\[cq], \[oq]testing\[cq], \[oq]unstable\[cq]
 and \[oq]experimental\[cq], respectively.
 .SH EXAMPLES
-To update the \fIunstable\fP chroot:
+To clean the \fIunstable\fP chroot:
 .PP
-\f[CR]% \f[CB]sbuild\-update unstable\fP\fP
-.br
+\f[CR]% \f[CB]sbuild\-clean \-\-clean unstable\fP\fP
+.PP
+To perform an autoremove on the \fIunstable\fP chroot:
+.PP
+\f[CR]% \f[CB]sbuild\-clean \-\-autoremove unstable\fP\fP
+.PP
+To perform both n clean and an autoremove for the
+\fIunstable\fP chroot:
+.PP
+\f[CR]% \f[CB]sbuild\-clean \-cr unstable\fP\fP
 .SH AUTHORS
 .nf
 Roger Leigh.
@@ -65,7 +75,6 @@ Copyright \[co] 2006\[en]2009 Roger Leigh <rleigh@debian.org>.
 .SH "SEE ALSO"
 .BR sbuild (1),
 .BR sbuild\-apt (1),
-.BR sbuild\-upgrade (1).
 .\"#
 .\"# The following sets edit modes for GNU EMACS
 .\"# Local Variables:

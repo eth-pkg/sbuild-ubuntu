@@ -23,6 +23,8 @@ package Sbuild::Base;
 use strict;
 use warnings;
 
+use Sbuild qw(debug);
+
 BEGIN {
     use Exporter ();
     our (@ISA, @EXPORT);
@@ -55,6 +57,12 @@ sub set {
     my $self = shift;
     my $key = shift;
     my $value = shift;
+
+    if (defined($value)) {
+	debug("Setting $key=$value\n");
+    } else {
+	debug("Setting $key=undef\n");
+    }
 
     return $self->{$key} = $value;
 }

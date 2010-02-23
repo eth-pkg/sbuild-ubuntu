@@ -82,6 +82,12 @@ sub init_allowed_keys {
 	    # See <http://bugs.debian.org/475777> for details
 	    die "The --append-to-version option is incompatible with a source upload\n";
 	}
+
+	if ($self->get('BUILD_SOURCE') &&
+	    $self->get('BIN_NMU')) {
+	    print STDERR "Not building source package for binNMU\n";
+	    $self->_set_value('BUILD_SOURCE', 0);
+	}
     };
 
     our $HOME = $self->get('HOME');
@@ -224,6 +230,9 @@ sub init_allowed_keys {
 	    },
 	    DEFAULT => ""
 	},
+	'MAILTO_FORCED_BY_CLI'			=> {
+	    DEFAULT => 0
+	},
 	'MAILTO_HASH'				=> {
 	    DEFAULT => {}
 	},
@@ -258,6 +267,7 @@ sub init_allowed_keys {
 	},
 	'TOOLCHAIN_REGEX'			=> {
 	    DEFAULT => ['binutils$',
+			'dpkg-dev$',
 			'gcc-[\d.]+$',
 			'g\+\+-[\d.]+$',
 			'libstdc\+\+',
@@ -303,6 +313,9 @@ sub init_allowed_keys {
 	'APT_POLICY'				=> {
 	    DEFAULT => 1
 	},
+	'CHECK_SPACE'				=> {
+	    DEFAULT => 1
+	},
 	'CHECK_WATCHES'				=> {
 	    DEFAULT => 1
 	},
@@ -346,7 +359,16 @@ sub init_allowed_keys {
 	'SIGNING_OPTIONS'			=> {
 	    DEFAULT => ""
 	},
+	'APT_CLEAN'				=> {
+	    DEFAULT => 0
+	},
 	'APT_UPDATE'				=> {
+	    DEFAULT => 0
+	},
+	'APT_UPGRADE'				=> {
+	    DEFAULT => 0
+	},
+	'APT_DISTUPGRADE'			=> {
 	    DEFAULT => 0
 	},
 	'APT_ALLOW_UNAUTHENTICATED'		=> {
@@ -424,7 +446,8 @@ sub init_allowed_keys {
 	    DEFAULT => undef
 	},
 	'BIN_NMU'				=> {
-	    DEFAULT => undef
+	    DEFAULT => undef,
+	    CHECK => $validate_append_version
 	},
 	'BIN_NMU_VERSION'			=> {
 	    DEFAULT => undef
@@ -438,7 +461,21 @@ sub init_allowed_keys {
 	},
 	'JOB_FILE'				=> {
 	    DEFAULT => 'build-progress'
-	}
+	},
+	'BUILD_DEP_RESOLVER'			=> {
+	    DEFAULT => 'internal',
+	    CHECK => sub {
+		my $self = shift;
+		my $entry = shift;
+		my $key = $entry->{'NAME'};
+
+		die '$key: Invalid build-dependency resolver \'' .
+		    $self->get($key) .
+		    "'\nValid algorthms are 'internal' and 'aptitude'\n"
+		    if !isin($self->get($key),
+			     qw(internal aptitude));
+	    },
+	},
     );
 
     $self->set_allowed_keys(\%sbuild_keys);
@@ -489,6 +526,7 @@ sub read_config {
     my $max_lock_trys = undef;
     my $lock_interval = undef;
     my $apt_policy = undef;
+    my $check_space = undef;
     my $check_watches = undef;
     my @ignore_watches_no_build_deps;
     undef @ignore_watches_no_build_deps;
@@ -498,6 +536,7 @@ sub read_config {
     my $chroot_split = undef;
     my $sbuild_mode = undef;
     my $debug = undef;
+    my $build_source = undef;
     my $force_orig_source = undef;
     my $chroot_setup_script = undef;
     my %individual_stalled_pkg_timeout;
@@ -507,7 +546,10 @@ sub read_config {
     my $maintainer_name = undef;
     my $uploader_name = undef;
     my $key_id = undef;
+    my $apt_clean = undef;
     my $apt_update = undef;
+    my $apt_upgrade = undef;
+    my $apt_distupgrade = undef;
     my $apt_allow_unauthenticated = undef;
     my %alternatives;
     undef %alternatives;
@@ -518,6 +560,8 @@ sub read_config {
     my $build_arch_all = undef;
     my $arch = undef;
     my $job_file = undef;
+    my $build_dir = undef;
+    my $build_dep_resolver = undef;
 
     foreach ($Sbuild::Sysconfig::paths{'SBUILD_CONF'}, "$HOME/.sbuildrc") {
 	if (-r $_) {
@@ -569,6 +613,7 @@ sub read_config {
     $self->set('LOCK_INTERVAL', $lock_interval);
     $self->set('APT_POLICY', $apt_policy);
     $self->set('CHECK_WATCHES', $check_watches);
+    $self->set('CHECK_SPACE', $check_space);
     $self->set('IGNORE_WATCHES_NO_BUILD_DEPS',
 	       \@ignore_watches_no_build_deps)
 	if (@ignore_watches_no_build_deps);
@@ -578,6 +623,7 @@ sub read_config {
     $self->set('CHROOT_SPLIT', $chroot_split);
     $self->set('SBUILD_MODE', $sbuild_mode);
     $self->set('FORCE_ORIG_SOURCE', $force_orig_source);
+    $self->set('BUILD_SOURCE', $build_source);
     $self->set('CHROOT_SETUP_SCRIPT', $chroot_setup_script);
     $self->set('INDIVIDUAL_STALLED_PKG_TIMEOUT',
 	       \%individual_stalled_pkg_timeout)
@@ -587,7 +633,10 @@ sub read_config {
     $self->set('MAINTAINER_NAME', $maintainer_name);
     $self->set('UPLOADER_NAME', $uploader_name);
     $self->set('KEY_ID', $key_id);
+    $self->set('APT_CLEAN', $apt_clean);
     $self->set('APT_UPDATE', $apt_update);
+    $self->set('APT_UPGRADE', $apt_upgrade);
+    $self->set('APT_DISTUPGRADE', $apt_distupgrade);
     $self->set('APT_ALLOW_UNAUTHENTICATED', $apt_allow_unauthenticated);
     $self->set('ALTERNATIVES', \%alternatives)
 	if (%alternatives);
@@ -596,7 +645,9 @@ sub read_config {
 
     $self->set('MAILTO',
 	       $self->get('MAILTO_HASH')->{$self->get('DISTRIBUTION')})
-	if $self->get('MAILTO_HASH')->{$self->get('DISTRIBUTION')};
+	if defined($self->get('DISTRIBUTION')) &&
+	   $self->get('DISTRIBUTION') &&
+	   $self->get('MAILTO_HASH')->{$self->get('DISTRIBUTION')};
 
     $self->set('SIGNING_OPTIONS',
 	       "-m".$self->get('MAINTAINER_NAME')."")
@@ -609,6 +660,8 @@ sub read_config {
 	if defined $self->get('KEY_ID');
     $self->set('MAINTAINER_NAME', $self->get('UPLOADER_NAME')) if defined $self->get('UPLOADER_NAME');
     $self->set('MAINTAINER_NAME', $self->get('KEY_ID')) if defined $self->get('KEY_ID');
+    $self->set('BUILD_DIR', $build_dir);
+    $self->set('BUILD_DEP_RESOLVER', $build_dep_resolver);
 
     if (!defined($self->get('MAINTAINER_NAME')) &&
 	$self->get('BIN_NMU')) {

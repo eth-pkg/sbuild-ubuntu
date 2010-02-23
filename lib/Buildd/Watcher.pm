@@ -22,7 +22,7 @@ package Buildd::Watcher;
 
 use strict;
 use warnings;
-use Buildd;
+use Buildd qw(send_mail lock_file unlock_file unset_env);
 use Buildd::Conf;
 use Buildd::Base;
 
@@ -57,6 +57,8 @@ sub new {
 	'time-per-build'	=> 10*60*60,
 	'build-time-percent'	=> 1,
 	'idle-time-percent'	=> 1});
+
+    $self->open_log();
 
     return $self;
 }
@@ -233,15 +235,13 @@ sub run {
 	    system "gzip -9 old-logs/daemon-$d.log";
 	}
 
-	lock_file( $self->get_conf('DAEMON_LOG_FILE') );
 	rename( $self->get_conf('DAEMON_LOG_FILE'),
 		$self->get_conf('DAEMON_LOG_FILE') . ".old" );
 	my $old_umask = umask 0007;
 	system "touch " . $self->get_conf('DAEMON_LOG_FILE');
 	umask $old_umask;
 	kill( 1, $daemon_pid ) if $daemon_pid;
-	reopen_log($self->get('Config'));
-	unlock_file( $self->get_conf('DAEMON_LOG_FILE') );
+	$self->reopen_log();
 
 	if ($self->get_conf('DAEMON_LOG_SEND')) {
 	    my $text;
@@ -285,17 +285,13 @@ sub run {
 	    $self->log("NO-DAEMON-PLEASE exists, not starting daemon\n");
 	}
 	else {
-	    defined(my $pid = fork) or die "$0: can't fork to restart buildd: $!\n";
-	    if ($pid == 0) {
-		# Use curly braces to avoid a warning about unreachable
-		# statements.  See manpage of Perl's exec for details.
-		{ exec ("buildd"); }
-		$self->log("Failed to start daemon: $!\n");
-		exit( 1 );
-	    }
+	    $self->close_log();
+	    unlink ("watcher-running");
+	    exec "buildd";
 	}
     }
 
+    unlink ("watcher-running");
     return 0;
 }
 

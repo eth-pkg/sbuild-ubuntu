@@ -60,7 +60,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ])
 
 dnl Initialise automake stuff.
-AM_INIT_AUTOMAKE([1.9 gnu check-news tar-pax])
+AM_INIT_AUTOMAKE([1.10 gnu check-news tar-pax])
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 AM_MAINTAINER_MODE
 RELEASE_DATE='sbuild_m4_esyscmd_s([sed -ne '/^Release-Date:/{s/Release-Date:[[:space:]][[:space:]]*//p;q}' VERSION])'
 RELEASE_DATE_S='sbuild_m4_esyscmd_s(date --date='sbuild_m4_esyscmd_s([sed -ne '/^Release-Date:/{s/Release-Date:[[:space:]][[:space:]]*//p;q}' VERSION])' '+%s')'
@@ -260,7 +261,7 @@ if test "x${sysconfdir}" = 'x${prefix}/etc'; then
 else
   WANNA_BUILD_SYSCONF_DIR="${sysconfdir}"
 fi
-WANNA_BUILD_SYSCONF_DIR="${WANNA_BUILD_SYSCONF_DIR}/wanna_build"
+WANNA_BUILD_SYSCONF_DIR="${WANNA_BUILD_SYSCONF_DIR}/buildd"
 AC_DEFINE_UNQUOTED([WANNA_BUILD_SYSCONF_DIR], ["$WANNA_BUILD_SYSCONF_DIR"])
 AC_SUBST([WANNA_BUILD_SYSCONF_DIR])
 
@@ -313,6 +314,7 @@ AC_CONFIG_FILES([man/sbuild-setup.7])
 AC_CONFIG_FILES([man/sbuild-shell.1])
 AC_CONFIG_FILES([man/sbuild-stats.1])
 AC_CONFIG_FILES([man/sbuild-update.1])
+AC_CONFIG_FILES([man/sbuild-clean.1])
 AC_CONFIG_FILES([man/wanna-build.1])
 AC_CONFIG_FILES([man/wanna-build-catdb.1])
 AC_CONFIG_FILES([man/wanna-build-mail.1])
