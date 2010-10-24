@@ -75,6 +75,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+build_triplet = @build@
+host_triplet = @host@
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(top_srcdir)/scripts/global.mk
 subdir = etc
@@ -109,8 +111,7 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(schrootsetupdir)" \
 	"$(DESTDIR)$(builddsysconfdir)" "$(DESTDIR)$(exampleconfdir)" \
-	"$(DESTDIR)$(sbuildsysconfdir)" \
-	"$(DESTDIR)$(schrootsysconfdir)"
+	"$(DESTDIR)$(sbuildsysconfdir)"
 SCRIPTS = $(schrootsetup_SCRIPTS)
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
@@ -120,12 +121,12 @@ am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
 am__v_at_0 = @
 SOURCES =
 DIST_SOURCES =
-DATA = $(builddsysconf_DATA) $(exampleconf_DATA) $(sbuildsysconf_DATA) \
-	$(schrootsysconf_DATA)
+DATA = $(builddsysconf_DATA) $(exampleconf_DATA) $(sbuildsysconf_DATA)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+APTITUDE = @APTITUDE@
 APT_CACHE = @APT_CACHE@
 APT_GET = @APT_GET@
 AUTOCONF = @AUTOCONF@
@@ -161,7 +162,6 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
-MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MAN = @MAN@
 MD5SUM = @MD5SUM@
@@ -176,6 +176,7 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL_MODULE_DIR = @PERL_MODULE_DIR@
 PGP = @PGP@
+PLATFORM = @PLATFORM@
 PS = @PS@
 RELEASE_DATE = @RELEASE_DATE@
 RM = @RM@
@@ -206,14 +207,22 @@ am__leading_dot = @am__leading_dot@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
+build = @build@
 build_alias = @build_alias@
+build_cpu = @build_cpu@
+build_os = @build_os@
+build_vendor = @build_vendor@
 builddir = @builddir@
 datadir = @datadir@
 datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
+host = @host@
 host_alias = @host_alias@
+host_cpu = @host_cpu@
+host_os = @host_os@
+host_vendor = @host_vendor@
 htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
@@ -241,26 +250,33 @@ top_srcdir = @top_srcdir@
 # Global options for use in all Makefiles.
 perlmoddir = $(PERL_MODULE_DIR)
 sbuildsysconfdir = $(SBUILD_SYSCONF_DIR)
-sbuildsysconf_DATA = sbuild.conf nssdatabases-defaults
+sbuildsysconf_DATA = sbuild.conf
 builddsysconfdir = $(BUILDD_SYSCONF_DIR)
 builddsysconf_DATA = buildd.conf wanna-build.conf
 exampleconfdir = $(docdir)/examples
 exampleconf_DATA = example.sbuildrc
-schrootsysconfdir = $(SCHROOT_SYSCONF_DIR)
-schrootsysconf_DATA = mount-defaults.buildd script-defaults.buildd
+COMPAT_SETUP = 25nssdatabases
+SETUP = 99builddsourceslist
 schrootsetupdir = $(SCHROOT_SYSCONF_DIR)/setup.d
-schrootsetup_SCRIPTS = 25nssdatabases 99builddsourceslist
+@SBUILD_COMPAT_FALSE@schrootsetup_SCRIPTS = $(SETUP)
+@SBUILD_COMPAT_TRUE@schrootsetup_SCRIPTS = $(COMPAT_SETUP) $(SETUP)
+PROFILES = \
+	buildd
+
 EXTRA_DIST = \
 	$(sbuildsysconf_DATA)	\
 	$(builddsysconf_DATA)	\
 	$(exampleconf_DATA)	\
-	$(schrootsysconf_DATA)	\
-	$(schrootsetup_SCRIPTS)
+	$(COMPAT_SETUP)		\
+	$(SETUP)		\
+	apt-keys		\
+	genprofile		\
+	profile-templates
 
 all: all-am
 
 .SUFFIXES:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/scripts/global.mk $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(top_srcdir)/scripts/global.mk $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -285,9 +301,9 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 
-$(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
+$(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
+$(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 install-schrootsetupSCRIPTS: $(schrootsetup_SCRIPTS)
@@ -384,26 +400,6 @@ uninstall-sbuildsysconfDATA:
 	test -n "$$files" || exit 0; \
 	echo " ( cd '$(DESTDIR)$(sbuildsysconfdir)' && rm -f" $$files ")"; \
 	cd "$(DESTDIR)$(sbuildsysconfdir)" && rm -f $$files
-install-schrootsysconfDATA: $(schrootsysconf_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(schrootsysconfdir)" || $(MKDIR_P) "$(DESTDIR)$(schrootsysconfdir)"
-	@list='$(schrootsysconf_DATA)'; test -n "$(schrootsysconfdir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(schrootsysconfdir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(schrootsysconfdir)" || exit $$?; \
-	done
-
-uninstall-schrootsysconfDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(schrootsysconf_DATA)'; test -n "$(schrootsysconfdir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(schrootsysconfdir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(schrootsysconfdir)" && rm -f $$files
 tags: TAGS
 TAGS:
 
@@ -443,9 +439,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(SCRIPTS) $(DATA)
+all-am: Makefile $(SCRIPTS) $(DATA) all-local
 installdirs:
-	for dir in "$(DESTDIR)$(schrootsetupdir)" "$(DESTDIR)$(builddsysconfdir)" "$(DESTDIR)$(exampleconfdir)" "$(DESTDIR)$(sbuildsysconfdir)" "$(DESTDIR)$(schrootsysconfdir)"; do \
+	for dir in "$(DESTDIR)$(schrootsetupdir)" "$(DESTDIR)$(builddsysconfdir)" "$(DESTDIR)$(exampleconfdir)" "$(DESTDIR)$(sbuildsysconfdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -475,7 +471,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic mostlyclean-am
+clean-am: clean-generic clean-local mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
@@ -494,9 +490,9 @@ info: info-am
 info-am:
 
 install-data-am: install-builddsysconfDATA install-exampleconfDATA \
-	install-sbuildsysconfDATA install-schrootsetupSCRIPTS \
-	install-schrootsysconfDATA
-
+	install-sbuildsysconfDATA install-schrootsetupSCRIPTS
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 install-dvi: install-dvi-am
 
 install-dvi-am:
@@ -540,27 +536,50 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-builddsysconfDATA uninstall-exampleconfDATA \
-	uninstall-sbuildsysconfDATA uninstall-schrootsetupSCRIPTS \
-	uninstall-schrootsysconfDATA
+	uninstall-sbuildsysconfDATA uninstall-schrootsetupSCRIPTS
 
-.MAKE: install-am install-strip
+.MAKE: install-am install-data-am install-strip
 
-.PHONY: all all-am check check-am clean clean-generic distclean \
-	distclean-generic distdir dvi dvi-am html html-am info info-am \
-	install install-am install-builddsysconfDATA install-data \
-	install-data-am install-dvi install-dvi-am \
+.PHONY: all all-am all-local check check-am clean clean-generic \
+	clean-local distclean distclean-generic distdir dvi dvi-am \
+	html html-am info info-am install install-am \
+	install-builddsysconfDATA install-data install-data-am \
+	install-data-hook install-dvi install-dvi-am \
 	install-exampleconfDATA install-exec install-exec-am \
 	install-html install-html-am install-info install-info-am \
 	install-man install-pdf install-pdf-am install-ps \
 	install-ps-am install-sbuildsysconfDATA \
-	install-schrootsetupSCRIPTS install-schrootsysconfDATA \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-generic pdf pdf-am ps ps-am uninstall uninstall-am \
+	install-schrootsetupSCRIPTS install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
+	pdf-am ps ps-am uninstall uninstall-am \
 	uninstall-builddsysconfDATA uninstall-exampleconfDATA \
-	uninstall-sbuildsysconfDATA uninstall-schrootsetupSCRIPTS \
-	uninstall-schrootsysconfDATA
+	uninstall-sbuildsysconfDATA uninstall-schrootsetupSCRIPTS
 
+
+profiles: profiles-stamp
+profiles-stamp: genprofile
+	$(MKDIR_P) profiles
+	for profile in $(PROFILES); do 					\
+	  $(srcdir)/genprofile "$$profile" "$(PLATFORM)" "$(srcdir)/profile-templates" "profiles/$$profile";	\
+	done
+	touch $@
+
+all-local: profiles
+
+install-data-hook:
+	for profile in $(PROFILES); do 						\
+	  $(MKDIR_P) "$(DESTDIR)$(SCHROOT_SYSCONF_DIR)/$$profile";			\
+	  for file in "profiles/$$profile"/*; do						\
+	    $(INSTALL_DATA) "$$file" "$(DESTDIR)$(SCHROOT_SYSCONF_DIR)/$$profile";	\
+	  done;									\
+	done
+
+clean-local:
+	$(RM) -rf profiles
+	$(RM) -f profiles-stamp
+
+.PHONY: profiles
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

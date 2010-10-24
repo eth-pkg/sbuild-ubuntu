@@ -118,30 +118,35 @@ sub run {
 	$self->check_restart();
 	$self->read_config();
 
-	my $done = 0;
-	my $thisdone;
-	my %binNMUlog;
-	do {
-	    $thisdone = 0;
-	    foreach my $dist_config (@{$self->get_conf('DISTRIBUTIONS')}) {
-		$self->check_restart();
-		$self->read_config();
-		my $pkg_ver = $self->get_from_REDO( $dist_config, \%binNMUlog );
-		next if !defined($pkg_ver);
-		$self->do_build( $dist_config, \%binNMUlog, $pkg_ver);
-		++$done;
-		++$thisdone;
-	    }
-	} while( $thisdone );
+        my ( $dist_config, $pkg_ver) = get_next_REDO($self);
+        $self->do_build( $dist_config, $pkg_ver) if $pkg_ver;
+        next MAINLOOP if $pkg_ver;
 
+        ( $dist_config, $pkg_ver) = get_next_WANNABUILD($self);
+        $self->do_build( $dist_config, $pkg_ver) if $pkg_ver;
+        next MAINLOOP if $pkg_ver;
+
+	# sleep a little bit if there was nothing to do this time
+	    $self->log("Nothing to do -- sleeping " .
+		       $self->get_conf('IDLE_SLEEP_TIME') . " seconds\n");
+	    my $idle_start_time = time;
+	    sleep( $self->get_conf('IDLE_SLEEP_TIME') );
+	    my $idle_end_time = time;
+	    $self->write_stats("idle-time", $idle_end_time - $idle_start_time);
+    }
+
+    return 0;
+}
+
+sub get_next_WANNABUILD {
+    my $self = shift;
 	foreach my $dist_config (@{$self->get_conf('DISTRIBUTIONS')}) {
-	    $self->check_restart();
-	    $self->read_config();
 	    $self->check_ssh_master($dist_config);
 	    my $dist_name = $dist_config->get('DIST_NAME');
 	    my %givenback = $self->read_givenback();
 		my $db = $self->get_db_handle($dist_config);
 	    my $pipe = $db->pipe_query(
+                ($dist_config->get('WANNA_BUILD_API') ? '--api '.$dist_config->get('WANNA_BUILD_API') : ''),
 		'--list=needs-build',
 		'--dist=' . $dist_name);
 	    if (!$pipe) {
@@ -149,7 +154,7 @@ sub run {
 		next MAINLOOP;
 	    }
 
-	    my(@todo, $total, $nonex, @lowprio_todo);
+	    my($pkg_ver, $total, $nonex, $lowprio_pkg_ver);
 	    while( <$pipe> ) {
 		my $socket = $dist_config->get('WANNA_BUILD_SSH_SOCKET');
 		if ($socket &&
@@ -166,7 +171,7 @@ sub run {
 		    $nonex = 1;
 		}
 		next if $nonex;
-		next if @todo >= 1; #we only want one!
+		next if defined($pkg_ver); #we only want one!
 		my @line = (split( /\s+/, $_));
 		my $pv = $line[0];
 		my $no_build_regex = $dist_config->get('NO_BUILD_REGEX');
@@ -179,10 +184,13 @@ sub run {
 		next if isin( $p, @{$dist_config->get('NO_AUTO_BUILD')} );
 		next if $givenback{$pv};
 		if (isin( $p, @{$dist_config->get('WEAK_NO_AUTO_BUILD')} )) {
-		    push( @lowprio_todo, $pv );
+		    # only consider the first lowprio item if there are
+		    # multiple ones
+		    next if defined($lowprio_pkg_ver);
+		    $lowprio_pkg_ver = $pv;
 		    next;
 		}
-		push( @todo, $pv );
+		$pkg_ver = $pv;
 	    }
 	    close( $pipe );
 	    next if $nonex;
@@ -194,37 +202,32 @@ sub run {
 	    $self->log("${dist_name}: total $total packages to build.\n") if defined($total);
 
 	    # Build weak_no_auto packages before the next dist
-	    if (!@todo && @lowprio_todo) {
-		push @todo, $lowprio_todo[0];
+	    if (!defined($pkg_ver) && defined($lowprio_pkg_ver)) {
+		$pkg_ver = $lowprio_pkg_ver;
 	    }
 
 	    next if !@todo;
-	    @todo = $self->do_wanna_build( $dist_config, \%binNMUlog, @todo );
-	    next if !@todo;
-	    $self->do_build( $dist_config, \%binNMUlog, $todo[0] );
-	    ++$done;
-	    last;
+	    my $todo = $self->do_wanna_build( $dist_config, @todo );
+	    last if !$todo;
+	    return ( $dist_config, $todo );
 	}
-
-	# sleep a little bit if there was nothing to do this time
-	if (!$done) {
-	    $self->log("Nothing to do -- sleeping " .
-		       $self->get_conf('IDLE_SLEEP_TIME') . " seconds\n");
-	    my $idle_start_time = time;
-	    sleep( $self->get_conf('IDLE_SLEEP_TIME') );
-	    my $idle_end_time = time;
-	    $self->write_stats("idle-time", $idle_end_time - $idle_start_time);
-	}
-    }
-
-    return 0;
 }
+
+sub get_next_REDO {
+    my $self = shift;
+    my ( $dist_config, $pkg_ver);
+    foreach $dist_config (@{$self->get_conf('DISTRIBUTIONS')}) {
+	$pkg_ver = $self->get_from_REDO( $dist_config );
+        last if defined($pkg_ver);
+    }
+    return ( $dist_config, $pkg_ver);
+}
+
 
 sub get_from_REDO {
     my $self = shift;
     my $wanted_dist_config = shift;
-    my $binNMUlog = shift;
-    my $pkg_ver = undef;
+    my $ret = undef;
     local( *F );
 
     lock_file( "REDO" );
@@ -248,12 +251,11 @@ sub get_from_REDO {
 	    next;
 	}
 	my($pkg, $dist, $binNMUver, $changelog) = ($1, $2, $3, $4);
-	if ($dist eq $wanted_dist_config->get('DIST_NAME') && !defined($pkg_ver)) {
+	if ($dist eq $wanted_dist_config->get('DIST_NAME') && !defined($ret)) {
+            $ret = {'pv' => $pkg };
 	    if (defined $binNMUver) {
-		$binNMUlog->{$pkg} = $changelog;
-		$pkg_ver = "!$binNMUver!$pkg";
-	    } else {
-		$pkg_ver = $pkg;
+		$ret->{'changelog'} = $changelog;
+		$ret->{'binNMU'} = $binNMUver;
 	    }
 	} else {
 	    print F $_;
@@ -264,7 +266,7 @@ sub get_from_REDO {
   end:
     unlock_file( "REDO" );
     $self->unblock_signals();
-    return $pkg_ver;
+    return $ret;
 }
 
 sub add_given_back ($$) {
@@ -322,23 +324,69 @@ sub do_wanna_build {
     my $self = shift;
 
     my $dist_config = shift;
-    my $binNMUlog = shift;
+    my $pkgver = shift;
     my @output = ();
+    my $ret = undef;
     my $n = 0;
 
     $self->block_signals();
 
     my $db = $self->get_db_handle($dist_config);
+    if ($dist_config->get('WANNA_BUILD_API') >= 1) {
+        use YAML::Tiny;
+        my $pipe = $db->pipe_query(
+	'--api '.$dist_config->get('WANNA_BUILD_API'),
+	'--dist=' . $dist_config->get('DIST_NAME'),
+       	$pkgver);
+        unless ($pipe) {
+            $self->unblock_signals();
+            $self->log("Can't spawn wanna-build: $!\n");
+            return undef;
+        }
+        local $/ = undef;
+        my $yaml = <$pipe>;
+        $yaml =~ s,^update transactions:.*$,,m; # get rid of simulate output in case simulate is specified above
+        $self->log($yaml);
+        $yaml = YAML::Tiny->read_string($yaml);
+        $yaml = $yaml->[0];
+        foreach my $pkgv (@$yaml) {
+            my $pkg = (keys %$pkgv)[0];
+            my $pkgd;
+            foreach my $k (@{$pkgv->{$pkg}}) {
+                foreach my $l (keys %$k) { 
+                    $pkgd->{$l} = $k->{$l}; 
+                } 
+            };
+            if ($pkgd->{'status'} ne 'ok') {
+                $self->log("Can't take $pkg: $pkgd->{'status'}\n");
+                next;
+            }
+            $ret = { 'pv' => $pkgver };
+            # fix SHOULD_BUILD_MSGS
+#              if ($self->get_conf('SHOULD_BUILD_MSGS')) {
+#                  $self->handle_prevfailed( $dist_config, grep( /^\Q$pkg\E_/, @_ ) );
+#              } else {
+#                  push( @output, grep( /^\Q$pkg\E_/, @_ ) );
+            my $fields = { 'changelog' => 'extra-changelog', 'binNMU' => 'binNMU', 'extra-depends' => 'extra-depends', 'extra-conflicts' => 'extra-conflicts' };
+            for my $f (keys %$fields) {
+                $ret->{$f} = $pkgd->{$fields->{$f}} if $pkgd->{$fields->{$f}};
+            }
+            last;
+        }
+        close( $pipe );
+        $self->unblock_signals();
+        $self->write_stats("taken", $n) if $n;
+        return $ret;
+    }
     my $pipe = $db->pipe_query(
 	'-v', 
 	'--dist=' . $dist_config->get('DIST_NAME'),
-       	@_);
+       	$pkgver);
     if ($pipe) {
 	while( <$pipe> ) {
 	    next if /^wanna-build Revision/;
 	    if (/^(\S+):\s*ok/) {
-		my $pkg = $1;
-		push( @output, grep( /^\Q$pkg\E_/, @_ ) );
+                $ret = { 'pv' => $pkgver };
 		++$n;
 	    }
 	    elsif (/^(\S+):.*NOT OK/) {
@@ -352,9 +400,9 @@ sub do_wanna_build {
 		my $pkg = $1;
 		++$n;
 		if ($self->get_conf('SHOULD_BUILD_MSGS')) {
-		    $self->handle_prevfailed( $dist_config, grep( /^\Q$pkg\E_/, @_ ) );
+		    $self->handle_prevfailed( $dist_config, $pkgver );
 		} else {
-		    push( @output, grep( /^\Q$pkg\E_/, @_ ) );
+                    $ret = { 'pv' => $pkgver };
 		}
 		# skip until ok line
 		while( <$pipe> ) {
@@ -369,8 +417,9 @@ sub do_wanna_build {
 		++$n;
 
 		push( @output, grep( /^\Q$pkg\E_/, @_ ) );
-		$binNMUlog->{$output[$#output]} = $changelog;
-		$output[$#output] = "!$binNMUver!" . $output[$#output];
+                $ret = { 'pv' => $pkgver };
+                $ret->{'changelog'} = $changelog;
+                $ret->{'binNMU'} = $binNMUver;
 		# skip until ok line
 		while( <$pipe> ) {
 		    last if /^\Q$pkg\E:\s*aok/;
@@ -380,20 +429,20 @@ sub do_wanna_build {
 	close( $pipe );
 	$self->unblock_signals();
 	$self->write_stats("taken", $n) if $n;
-	return @output;
+	return $ret;
     }
     else {
 	$self->unblock_signals();
 	$self->log("Can't spawn wanna-build: $!\n");
-	return ();
+	return undef;
     }
 }
 
 sub do_build {
     my $self = shift;
     my $dist_config = shift;
-    my $binNMUlog = shift;
-    my $pkg_ver = shift;
+    my $todo = shift;
+    # $todo = { 'pv' => $pkg_ver, 'changelog' => $binNMUlog->{$pkg_ver}, 'binNMU' => $binNMUver; };
 
     my $free_space;
 
@@ -405,9 +454,10 @@ sub do_build {
 	$self->write_stats("idle-time", $idle_end_time - $idle_start_time);
     }
 
-    $self->log("Starting build (dist=" . $dist_config->get('DIST_NAME') . ") of $pkg_ver\n");
+    $self->log("Starting build (dist=" . $dist_config->get('DIST_NAME') . ") of "
+        .($todo->{'binNMU'} ? "!".$todo->{'binNMU'}."!" : "")
+        ."$todo->{'pv'}\n");
     $self->write_stats("builds", 1);
-    my $binNMUver;
 
     my @sbuild_args = ( 'nice', '-n', $self->get_conf('NICE_LEVEL'), 'sbuild',
 			'--apt-update',
@@ -431,12 +481,11 @@ sub do_build {
 	if $dist_config->get('SBUILD_CHROOT');
 
 
-    if ($pkg_ver =~ s/^!(\d+)!//) {
-	$binNMUver = $1;
-
-	push ( @sbuild_args, "--binNMU=$binNMUver", "--make-binNMU=" . $binNMUlog->{$pkg_ver});
-    }
-    push @sbuild_args, $pkg_ver;
+    push ( @sbuild_args, "--binNMU=$todo->{'binNMU'}") if $todo->{'binNMU'};
+    push ( @sbuild_args, "--make-binNMU=$todo->{'changelog'}") if $todo->{'changelog'};
+    push ( @sbuild_args, "--add-conflicts=$todo->{'extra-conflicts'}") if $todo->{'extra-conflicts'};
+    push ( @sbuild_args, "--add-depends=$todo->{'extra-depends'}") if $todo->{'extra-depends'};
+    push @sbuild_args, $todo->{'pv'};
     $self->log("command line: @sbuild_args\n");
 
     $main::sbuild_pid = open(SBUILD_OUT, "-|");
@@ -488,33 +537,31 @@ sub do_build {
 	if ($status == 0) {
 	    $failed = 0;
 	    $giveback = 0;
-	    $self->log("sbuild of $pkg_ver succeeded -- marking as built in wanna-build\n");
-	    $db->run_query('--built', '--dist=' . $dist_config->get('DIST_NAME'), $pkg_ver);
+	    $self->log("sbuild of $todo->{'pv'} succeeded -- marking as built in wanna-build\n");
+	    $db->run_query('--built', '--dist=' . $dist_config->get('DIST_NAME'), $todo->{'pv'});
 	} elsif ($status ==  2) {
 	    $giveback = 0;
-	    $self->log("sbuild of $pkg_ver failed with status $status (build failed) -- marking as attempted in wanna-build\n");
-	    $db->run_query('--attempted', '--dist=' . $dist_config->get('DIST_NAME'), $pkg_ver);
+	    $self->log("sbuild of $todo->{'pv'} failed with status $status (build failed) -- marking as attempted in wanna-build\n");
+	    $db->run_query('--attempted', '--dist=' . $dist_config->get('DIST_NAME'), $todo->{'pv'});
 	    $self->write_stats("failed", 1);
 	} else {
-	    $self->log("sbuild of $pkg_ver failed with status $status (local problem) -- giving back\n");
+	    $self->log("sbuild of $todo->{'pv'} failed with status $status (local problem) -- giving back\n");
 	}
     } elsif (WIFSIGNALED($sbuild_exit_code)) {
 	my $sig = WTERMSIG($sbuild_exit_code);
-	$self->log("sbuild of $pkg_ver failed with signal $sig (local problem) -- giving back\n");
+	$self->log("sbuild of $todo->{'pv'} failed with signal $sig (local problem) -- giving back\n");
     } else {
-	$self->log("sbuild of $pkg_ver failed with unknown reason (local problem) -- giving back\n");
+	$self->log("sbuild of $todo->{'pv'} failed with unknown reason (local problem) -- giving back\n");
     }
 
     if ($giveback) {
-	$db->run_query('--give-back', '--dist=' . $dist_config->get('DIST_NAME'), $pkg_ver);
-	$self->add_given_back($pkg_ver);
+	$db->run_query('--give-back', '--dist=' . $dist_config->get('DIST_NAME'), $todo->{'pv'});
+	$self->add_given_back($todo->{'pv'});
 	$self->write_stats("give-back", 1);
     }
 
     # Check if we encountered some local error to stop further building
     if ($giveback) {
-	delete $binNMUlog->{$pkg_ver} if defined $binNMUver;
-
 	if (!defined $main::sbuild_fails) {
 	    $main::sbuild_fails = 0;
 	}

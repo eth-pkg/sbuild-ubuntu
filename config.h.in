@@ -45,6 +45,9 @@
 /* Package release date. */
 #undef RELEASE_DATE
 
+/* Enable compatibility features */
+#undef SBUILD_COMPAT
+
 /* sbuild config file path */
 #undef SBUILD_CONF
 
@@ -54,11 +57,26 @@
 /* Enable debugging */
 #undef SBUILD_DEBUG
 
+/* Host GNU architecture triplet */
+#undef SBUILD_HOST
+
+/* Host CPU */
+#undef SBUILD_HOST_CPU
+
+/* Host OS */
+#undef SBUILD_HOST_OS
+
+/* Host vendor */
+#undef SBUILD_HOST_VENDOR
+
 /* Package libexec directory */
 #undef SBUILD_LIBEXEC_DIR
 
 /* Package module directory */
 #undef SBUILD_MODULEDIR
+
+/* Platform type, used to modify run-time platform-specific behaviour */
+#undef SBUILD_PLATFORM
 
 /* Package system configuration directory */
 #undef SBUILD_SYSCONF_DIR

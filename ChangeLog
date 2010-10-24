@@ -1,3 +1,830 @@
+commit 2b2336347a1a9f747f0216eddf84831016a6cf21
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 24 20:05:43 2010 +0100
+
+    debian: Maintainer scripts use NMU-safe version numbers
+
+commit 0b31eb82acc2e41e493ef4b3d922b862ad5d963d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 24 19:57:39 2010 +0100
+
+    debian: Upgrade to standards version 3.9.1
+
+commit 93ad8d1a3321d4069f82c93003a892c3ce191453
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 24 19:57:16 2010 +0100
+
+    debian: Migrate renamed conffiles to new locations
+
+commit 31feb5475608ced12e038fc6ad3e1d3b539f18fd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 24 19:33:27 2010 +0100
+
+    build: Add --enable-compat option to configure
+    
+    This allows compatibility features to be selectively enabled,
+    which is intended to allow sbuild to build with support for
+    current features when build for unstable, and with support for
+    stable releases when build for stable (which includes buildds).
+    This will allow both uses from a single source base.
+
+commit 9f70d48d71aab89ace43a98751782e5ee7842f08
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 24 19:25:13 2010 +0100
+
+    build: Drop AM_MAINTAINER_MODE
+
+commit 657e9d8b432efed49f4d67f15f2c16a0aaebf0be
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 24 19:17:10 2010 +0100
+
+    debian: Install schroot configuration into /etc/schroot
+
+commit b2ce1a79dcf4f934d5892690a4600c28b412fee9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 24 19:12:31 2010 +0100
+
+    etc: Add support for profile templates
+    
+    Current buildd chroot script-config files don't use current
+    schroot script-config layout and naming conventions, and do
+    not support non-Linux architectures.  Copy profile-templates
+    template tree and genprofile profile generator from schroot,
+    and create "buildd" profile templates for linux and freebsd.
+    
+    Update sbuild-createchroot to use sbuild/config profile, and
+    create-chroot to use buildd/profile.
+    
+    Update buildd chroot configuration to use new script-config
+    name in buildd postinst.
+    
+    Delete old profile files from etc, since these are now generated
+    from the profile templates.
+
+commit 30ef387e5a0da926a735341ff0b19a110939dbf0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 24 13:28:25 2010 +0100
+
+    debian: create-chroot is installed into libexecdir automatically
+
+commit 1d7050f68d7bd1198c2051202fbadb9560dca4bb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Oct 23 14:05:51 2010 +0100
+
+    Sbuild::Conf: Only validate APTITUDE if being used
+
+commit f0644d8b3186027767d1b031958f782e9d1a0aca
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Oct 23 14:05:37 2010 +0100
+
+    build: Distribute apt-keys
+
+commit 0067918798447eee2a27dcd4456ed4a108012a5e
+Merge: b8bb15e 4a7fb7f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 10 20:07:15 2010 +0100
+
+    Merge branch 'buildd' into buildd-merge
+
+commit b8bb15e7c0de8925e19fcb3fb876c94fd28d7528
+Merge: 35de096 52d1331
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 10 20:06:55 2010 +0100
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit 35de09692116a053245a5a26c1bb82b61ac156bd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 10 20:03:43 2010 +0100
+
+    debian: Close #588818
+
+commit 4a7fb7f1fdf8386f27df6d77be845278c9c036ff
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Oct 10 16:59:53 2010 +0200
+
+    etc/99builddsourceslist: backports/buildd has slightly different semantics
+
+commit e8cc34b073fbed8ee5f5be8f51bd91d2902b2802
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Oct 10 16:36:03 2010 +0200
+
+    etc/99builddsourceslist: correct off-by-one in sloppy detection
+
+commit cd031089f2d8481dec7505b61cfa05ac1b2be31f
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Oct 10 16:31:04 2010 +0200
+
+    etc/script-defaults.buildd: support variants with one dash in them
+
+commit eabd4aa861a8e353d00f860bd7a94cd2ac5be036
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Oct 10 16:23:56 2010 +0200
+
+    bin/sbuild: remove bogus Jobs File unlink
+
+commit 48a57289f474d6bb8dc588d195ad878d688c38fd
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Oct 10 16:19:52 2010 +0200
+
+    etc/99builddsourceslist: fix backports URLs
+
+commit 1128e40b3f290e88c2b7264c6b15a718d6f8f1ac
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Oct 10 16:19:23 2010 +0200
+
+    etc/99builddsourceslist: fix debian-edu URL
+
+commit 66ae451b4753de7d451b58453600e1f9170b9040
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Oct 9 11:32:51 2010 +0200
+
+    Switch from www.backports.org to backports-master.debian.org.
+
+commit e7a75141919b8789acd99a5fbf4a3b333f0292b7
+Author: Philipp Kern <pkern@debian.org>
+Date:   Wed Oct 6 15:56:17 2010 +0200
+
+    etc/99builddsourceslist: use normal string equals
+
+commit e4bc25aea0f75940870c249151ef41b8f873fb47
+Author: Philipp Kern <pkern@debian.org>
+Date:   Wed Oct 6 15:55:42 2010 +0200
+
+    etc/99builddsourceslist: add support for backports-sloppy
+
+commit 12f167389048c03646c4609039cfa31c41f902d8
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Oct 4 12:14:21 2010 +0200
+
+    etc/99builddsourceslist: fix up the indentation
+
+commit 52d13315dd1e2762e0616899012c363ab3e7ea64
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Aug 31 11:14:12 2010 +0200
+
+    man/buildd.1.in: Ryan Murray does not maintain a fork of sbuild anymore
+
+commit e058334813faaf8a5000ffafbc091a2bf0b9f8b3
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Aug 28 22:49:39 2010 +0200
+
+    bin/sbuild-createchroot: fix the schroot template
+    
+    Dots are no longer allowed in schroot config snippets, to comply with the
+    run-parts regexp.
+
+commit aa08f1aa63a0b46d5ea78a89f4397c6e7186f0ce
+Merge: 3426a61 b336ccb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Aug 19 21:46:46 2010 +0100
+
+    Merge remote branch 'ceros/sbuild-update'
+
+commit 3426a619aa9069bb88be72ea1c454acd9467c879
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Aug 19 21:18:50 2010 +0100
+
+    Sbuild::ChrootInfoSchroot: Add find function which copes with chroot namespaces
+    
+    schroot >= 1.4.8 adds chroot: and source: namespaces.  This
+    function copes with the -source compatibility names so that
+    sbuild-update etc. can work with source chroots.
+
+commit 45fa88fd3b213719c33233eff20de1a71b900bc5
+Merge: d89ed77 2cd9937
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Aug 18 22:07:39 2010 +0100
+
+    Merge branch 'buildd'
+
+commit b336ccb407a95ff95f5c06901bb97c06a60f82da
+Merge: ebd0a35 d89ed77
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Mon Aug 16 03:01:27 2010 -0400
+
+    Merge branch 'master' into sbuild-update
+
+commit 2cd9937b3100f05991ce153a211d475880df4abf
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Thu Aug 5 19:04:48 2010 +0200
+
+    no functional changes: cleanup lib/Buildd/Daemon.pm again
+
+commit 9d0e838624e0c6c02c2b4899382737e2368e0566
+Merge: 3f99f62 83eb51a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Aug 4 23:11:39 2010 +0100
+
+    Merge branch 'buildd' of ssh+git://git.debian.org/git/buildd-tools/sbuild into buildd
+
+commit d89ed7745d8b03dc59fe07e3e4eb05155c4f8076
+Merge: 27d9e40 8c0ec0e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Aug 4 23:10:34 2010 +0100
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit 27d9e4080ec16395826ccce9b3e8e80d27df44c6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Aug 4 23:09:35 2010 +0100
+
+    debian: Close #591620
+
+commit 3f99f62b7ba0ed1426e9bfbfe1b7d2e8ff8a3033
+Author: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Date:   Wed Aug 4 10:35:21 2010 +0200
+
+    buildd-uploader: don't kill the lock if not the owner
+    
+    The following happens to people which have to upload quite a lot on a
+    slow uplink:
+    - buildd-uploader is invoked, starts the upload process and creats a
+      lock named buildd-uploader.lock
+    - a second buildd-uploader instance is invoked. It notices the lock,
+      doesn't do a thing except it kills the lock due to the following
+      END statement:
+      |if (defined($conf) &&
+      |      defined($uploader) &&
+      |      defined($uploader->get('Uploader Lock')));
+    
+      'Uploader Lock' is defined at this point but it is 0 because this
+      instance does not own the lock
+    - a third instance of buildd-uploader is invoked which will upload
+      packages.
+    
+    Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+
+commit b85bf91ba12df6600c3a5531055db5a8a5e2242a
+Author: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Date:   Wed Aug 4 10:35:21 2010 +0200
+
+    buildd-uploader: don't kill the lock if not the owner
+    
+    The following happens to people which have to upload quite a lot on a
+    slow uplink:
+    - buildd-uploader is invoked, starts the upload process and creats a
+      lock named buildd-uploader.lock
+    - a second buildd-uploader instance is invoked. It notices the lock,
+      doesn't do a thing except it kills the lock due to the following
+      END statement:
+      |if (defined($conf) &&
+      |      defined($uploader) &&
+      |      defined($uploader->get('Uploader Lock')));
+    
+      'Uploader Lock' is defined at this point but it is 0 because this
+      instance does not own the lock
+    - a third instance of buildd-uploader is invoked which will upload
+      packages.
+    
+    Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+
+commit 83eb51acea1a360813267969c324a8305213a8fb
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Jul 30 16:58:41 2010 +0200
+
+    etc/99builddsourceslist: support debian-edu
+
+commit e6ee015d8b64e62bcc20722175093d159fdcac9c
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Jul 30 03:58:35 2010 +0200
+
+    [Buildd::Mail] accept BD-Uninstallable state for transition to Failed
+
+commit 465f892f5eae977cc920127f81d4b832d00e4d77
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Jul 30 01:24:44 2010 +0200
+
+    bin/create-chroot: also pass linux32 on powerpc
+
+commit 362abd93d5326cd7083246133c6ce83941a3fec0
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Jul 29 23:27:36 2010 +0200
+
+    bin/create-chroot: correct two typos
+
+commit 8c0ec0e5827b679e4bed2e461466fb45a86f1b38
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Jul 30 03:58:35 2010 +0200
+
+    [Buildd::Mail] accept BD-Uninstallable state for transition to Failed
+
+commit f10351dd144a7f22f6b284ab906d03f226586c23
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Jul 30 01:24:44 2010 +0200
+
+    bin/create-chroot: also pass linux32 on powerpc
+
+commit b9974544de626ef5bd0b9f4e9b576d3135a212b3
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Jul 29 23:27:36 2010 +0200
+
+    bin/create-chroot: correct two typos
+
+commit ebd0a350f84d284135aad8de878c91a5827f803f
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Jul 20 15:01:52 2010 -0400
+
+    Have sbuild-upgrade and sbuild-distupgrade exec sbuild-update with appropriate options.
+
+commit 89a8e35a9fa18a256eba022a29f7d4b72b6aee0d
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Jul 20 15:01:41 2010 -0400
+
+    Update man page for sbuild-update for new options.
+
+commit a8c82a10bede6c31d6325cf6ebc674387cf046f4
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Jul 20 15:00:25 2010 -0400
+
+    Allow sbuild-update to perform update, upgrade, and distupgrade.
+    This also allows sbuild-update to perform the various commands all at once.
+
+commit 16c7c88a80b6a377f0e1aaa604cccffd9c1cae59
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Mon Jul 19 20:13:00 2010 +0200
+
+    no functional changes: cleanup lib/Buildd/Daemon.pm
+
+commit d123d670099623ea9989ab3a3350f567b2b20af5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 14 20:04:48 2010 +0100
+
+    Sbuild: Add support for aptitude in chroot code
+
+commit ad46454722d93c0f12096c8cd71fc5f92a660ed0
+Author: Cyril Brulebois <kibi@debian.org>
+Date:   Wed Jul 14 19:36:13 2010 +0200
+
+    Fix FTBFS at dh_install step.
+    
+    Renaming create-chroot in 18512e3303f56a55841719e393c3e5a4653c9b70
+    wasn't sufficient, its name in sbuild.install had to be updated as well.
+    Fix that.
+
+commit 750a0270c81531754c1bf99c3086571a9d459e67
+Author: Cyril Brulebois <kibi@debian.org>
+Date:   Sun Jul 11 23:28:02 2010 +0200
+
+    man: Document --build-dep-resolver for sbuild.
+
+commit 3a90456aa0cf2d1e3406bf06a55476608f06fa1e
+Merge: 5e7c3c4 2ee8048
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jul 12 22:52:32 2010 +0100
+
+    Merge branch 'buildd'
+    
+    Conflicts:
+    	lib/Buildd/Daemon.pm
+
+commit 5e7c3c45915f1d1865337632557ab93a9b42ae71
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jul 12 22:46:46 2010 +0100
+
+    build: Install create-chroot
+
+commit 136a34343120beb29a9dbeac191d5a1c0f0b9ab6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jul 11 22:29:22 2010 +0100
+
+    debian: Require schroot 1.4.x
+
+commit fcfea2516fd3abf3f100e1bc82db37928b780788
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jul 11 22:26:41 2010 +0100
+
+    sbuild-createchroot: Document need for abs_path workaround
+
+commit d61a655101c3008d17bd56274b5d1da3c8fcb28e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jul 11 21:44:39 2010 +0100
+
+    sbuild-createchroot: Fix abs_path and remove deprecated keys
+    
+    Remove deprecated schroot configuration keys, and change
+    location to directory.
+    Create the bootstrap directory prior to calling abs_path, or
+    else it returns an undefined value.
+
+commit 2ee8048bdf4df07d4ff0047a7fb24ff0e1d5b5b6
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Jun 20 18:37:48 2010 +0200
+
+    buildd-mail: accept a signed changes if the package is in build-attempted
+
+commit 85c94c699370f378d728d8e212918620c2c16dde
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sat Jun 19 20:37:50 2010 +0200
+
+    wanna-build interface: use api=1 for take, and accept extra-depends/conflicts
+
+commit 4e5d142f89a6239ab8b6c1313a3ba5414b5e972d
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Fri Jun 18 18:36:49 2010 +0200
+
+    no functional change: restructure interfaces within lib/Buildd/Daemon.pm
+
+commit d42b53055641fe29a17e5d6bf2ad905e16ea95f4
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Fri Jun 18 00:02:28 2010 +0200
+
+    to ease upgrades to squeeze: drop the irrelevant options run-setup-scripts / run-exec-scripts
+
+commit 18512e3303f56a55841719e393c3e5a4653c9b70
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 12 17:29:30 2010 +0100
+
+    bin: Install create-chroot in same location as dobuildlog
+
+commit d331072762d30c305716123da89dbe3207b1a73a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 12 17:16:16 2010 +0100
+
+    NEWS: Update for 0.60.1
+
+commit 7594a18ca7b7612af3f81a637cc378d484d642c7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 12 16:58:43 2010 +0100
+
+    Sbuild::Build: Don't use '-sn' with 'dpkg-buildpackage -x'
+    
+    -sn is not supported by newer source formats.  Removing
+    it also makes the code more robust for non-binary builds
+    if the source isn't in the build directory at some future
+    point.
+
+commit 630086f9514d9561f8b8a5abf51e35a3bd0be3ee
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 12 16:58:21 2010 +0100
+
+    debian: Close #559533
+
+commit 7208b117f4e483121c763b56049264605f390d0d
+Merge: 9858095 70519bd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 12 16:33:13 2010 +0100
+
+    Merge branch 'buildd'
+
+commit 70519bdfe52251cb4aa5f80936b11ed371442dba
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Mon May 24 10:49:33 2010 +0200
+
+    drop run-setup-scripts and run-exec-scripts from create-chroot.sh for
+    lvm-type chroots: they only confirmed the default in lenny, and produce
+    warnings in squeeze. Related to #579926
+
+commit 5a10d3be7d8f29fa3259fbefa574becad1dce808
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Thu May 20 22:58:15 2010 +0200
+
+    add copyfiles-defaults to sbuild
+    set schroots COPYFILES NSSDATABASES to sbuild-specific values via 99buildd*
+    put the network part in copyfiles, and the system part in nssdatabases
+
+commit a73fd03cee260a02ae12a1a067f96ba8178030e6
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Thu May 13 00:23:10 2010 +0200
+
+    add $defaults to .builddrc which contains default values
+    if they're not overriden within $distributions
+
+commit 9858095784235f8e4edddd4e4304f426638d9979
+Merge: ba4113f 56a7d63
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon May 3 13:59:28 2010 +0100
+
+    Merge remote branch 'origin/buildd'
+
+commit ba4113ff5f1a38f4d694fcb1b5e79da0d4bd9718
+Merge: ba54dd6 46367f9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon May 3 13:57:01 2010 +0100
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit ba54dd628d1f5a3c72286242e5e6c6731fe3367a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon May 3 13:55:48 2010 +0100
+
+    Sbuild::Build: Remove DSC filename assumptions breaking new source formats
+
+commit 56a7d6379ab880f118c8f4e38c1ea81bda0148d1
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun May 2 15:15:39 2010 +0200
+
+    name the experimental chroots correct
+
+commit 35e899379c71928e139f38ee8ff2e049fd317cc9
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun May 2 13:00:19 2010 +0200
+
+    funny things break with /bin/sh=dash
+
+commit ed1f8e3fafa1fc4a20052cf219aa0ae23c1d6cb4
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Apr 25 13:18:54 2010 +0200
+
+    add explicit apt-key for backports.org
+    as security already has unauthenticated explicitly set, this allows to
+    remove Aptitude::CmdLine::Ignore-Trust-Violations
+    (means one needs to add the bpo key by hand once for an non-snapshot-chroot)
+
+commit 2e59bb2eba4c11b11f6d000a6b1354a3a0eb6d73
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Thu Apr 22 22:51:26 2010 +0200
+
+    partly revert 99builddsourceslist:
+    + remove apt-get update, as this is not needed with the right options
+
+commit c3c1c30592e38815ac4335415a6774b26ef5faec
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Thu Apr 22 22:14:56 2010 +0200
+
+    fix 99builddsourceslist:
+    + proposed-updates: no incoming with debian_incoming=no
+    + apt-get update after adding new sources
+    + don't fail with lenny on exit if there is no apt.cfg
+
+commit 2e6dadf1f9061e67dff45e01edbcc212038ed36a
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Thu Apr 22 09:32:25 2010 +0200
+
+    fix typo for backports
+
+commit 77ee089cf60bf42d00207d73ab97e38735a64d51
+Author: Marc Brockschmidt <marc@marcbrockschmidt.de>
+Date:   Tue Apr 20 16:56:43 2010 +0200
+
+    AptitudeBuildDepSatisfier: Make compatible with new aptitude
+
+commit 6c6a12a53b31832fc9e369abc0df5ef2faefb841
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Tue Apr 20 00:24:20 2010 +0200
+
+    write /etc/schroot/conf.buildd as root
+
+commit efb72d2f7ac7bc33470167ffdc74532306f1d58f
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Apr 18 20:49:09 2010 +0200
+
+    auto-add personality=linux32 for mips, sparc, i386
+
+commit 06b1a24cecc98c359be273cf9698cb3f388ca9b2
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Apr 18 20:32:33 2010 +0200
+
+    allow to specify another arch
+
+commit 1d254f5d9b5b9caf7bd807e216b55dafa42d2572
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Apr 18 20:30:13 2010 +0200
+
+    allow to not specify the mirror
+
+commit 1f6ee50a9d141053f4c7a4801bd2fc0e7051c485
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Apr 18 20:19:20 2010 +0200
+
+    add local mirror to /etc/schroot/conf.buildd if file doesn't exist
+
+commit dae7a5359ff85af4c5313cbe70f26264e00de49f
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Mon Apr 5 19:50:20 2010 +0200
+
+    cleanup: use SUITE at a few more places in 99builddsourceslist
+
+commit 653a0a30299e958f8edddbaf4878ef8a64c14a6d
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Mon Apr 5 19:21:48 2010 +0200
+
+    don't add incoming / p-u to >= lenny chroots on lvm devices
+
+commit 5eff43ed067b7418528fe0fea61697c0e3ff07f1
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Mon Apr 5 18:58:27 2010 +0200
+
+    automatic sources.list and apt.conf setup as discussed in
+    http://lists.debian.org/20100405111635.GR19557@mails.so.argh.org
+
+commit ab5117c4cf75b8dccc43ff62ed8ff2ca22e1a6e7
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Mon Apr 5 14:00:19 2010 +0200
+
+    Don't copy files from netbase to the chroot. Closes: #576508
+
+commit 8955f1532f246fb78180d0f22d7196ce21bd47a1
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Apr 4 10:25:50 2010 +0200
+
+    cron: buildd watcher runs every 15 minutes
+
+commit d514d3149b27d7de2c5498c90200213cbd3f3e44
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Apr 4 10:17:22 2010 +0200
+
+    create-chroot.sh, if newer than lenny:
+    + set force-confnew for dpkg
+    + always disable pdiffs, installation of recommends
+
+commit 8bae7dacbb9eba791dd13ea9b7cc4cdc0f5ad8fe
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sat Mar 20 19:47:21 2010 +0100
+
+    allow to create stable chroots if unstable on already exist
+
+commit 46367f915467e6939211c81d68e7abd4fe5a16f2
+Author: Philipp Kern <pkern@debian.org>
+Date:   Wed Mar 10 14:31:52 2010 +0000
+
+    sbuild: implement build log mail compression
+
+commit 476f992d0029b33a8bd18735b9413aa880713d89
+Author: Philipp Kern <pkern@debian.org>
+Date:   Wed Mar 10 14:25:13 2010 +0000
+
+    debian/changelog: add missing entries
+
+commit 894af0424be1b0597c3335ded746434c09ecd62f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Mar 8 12:42:10 2010 +0000
+
+    Revert "Revert "99buildsourceslist: allow removal of the chroot if the extra file isn't found""
+    
+    This reverts commit 1d969e2050ecfdca72d8edc97bbf7aa2ba13a1ce.
+
+commit c63a488c1bd36aaac50e4c9a30c956a9afe29516
+Merge: 4124e45 170622d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Mar 7 23:10:09 2010 +0000
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit 4124e45186307836b2bd67a9a6a51f268f7f6fc3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Mar 7 23:09:32 2010 +0000
+
+    Sbuild::ChrootSetup: Move man-db debconf settings from Build to basesetup
+
+commit 1d969e2050ecfdca72d8edc97bbf7aa2ba13a1ce
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Mar 7 19:05:28 2010 +0000
+
+    Revert "99buildsourceslist: allow removal of the chroot if the extra file isn't found"
+    
+    This reverts commit c8bd70d844dd8659542abad5bf59f31b58447975.
+
+commit f2eca1e70de128734f6a473ac551c46105a6bb73
+Merge: c20024a f0b742b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Mar 7 19:05:19 2010 +0000
+
+    Merge branch 'buildd'
+
+commit f0b742b634683a3aff4e6f1c603719783e1e719e
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Mar 7 19:02:54 2010 +0100
+
+    create-chroot.sh:
+    + check if schroot chroot already exist
+    + in case of lvm-snapshot chroot, add variants security, volatile, backports
+      respective experimental unless such a variant chroot already exists
+
+commit c8bd70d844dd8659542abad5bf59f31b58447975
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Mar 7 18:59:49 2010 +0100
+
+    99buildsourceslist: allow removal of the chroot if the extra file isn't found
+
+commit d8a0e29aec56565f1b045247e686e854324e009c
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Mar 7 11:35:17 2010 +0100
+
+    use "git log" as upstream changelog
+
+commit f835668346d9040ac4c7e14446e98c223f188a30
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Mar 7 11:30:23 2010 +0100
+
+    install create-chroot.sh in package sbuild
+
+commit e7d87c8b9af552b534a5dfbc24dae4aa9136086b
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sat Mar 6 22:50:40 2010 +0100
+
+    create-chroot: create build-trees, avoid cd-ing to ~buildd/chroots for snapshot-chroots
+
+commit 2f0ec61551206d969e15dd33f7119de6cbbe0e41
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sat Mar 6 20:41:31 2010 +0100
+
+    99builddsourceslist: add dynamic lists as well for backports and experimental
+
+commit a27178d046a98bd703b852c5bd88532393b26d89
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sat Mar 6 20:27:05 2010 +0100
+
+    99builddsourceslist: fix typo (wrong variable) in volatile-parts
+
+commit 88a3e9be291c35ddf2b7d4c1ba2c56593efb7e26
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sat Mar 6 20:19:06 2010 +0100
+
+    script-defaults.buildd: verify that we use snapshots before enabling variants
+    99builddsourceslist:
+     + source /etc/schroot/conf.buildd if it exists
+     + auto-create apt sources for security and volatile in variant mode
+       unless there are specific sources. Allow additional mirrors
+
+commit 3b52bd19ad774761c1581518cc650e3da169ca36
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sat Mar 6 18:54:05 2010 +0100
+
+    script-defaults.buildd: prepare for auto-cloning chroots (still needs an seperate sources.list)
+
+commit 170622d76dc24a0c5036b7f28b0bf2db36bb98d3
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 5 13:44:16 2010 +0000
+
+    [Buildd::Daemon] fix @todo length check
+    
+    Signed-off-by: Philipp Kern <pkern@debian.org>
+
+commit ec22f30fad76a3be4be4b36dadcdf9bc0839330d
+Merge: ecf644a c20024a
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 5 13:09:31 2010 +0000
+
+    Merge branch 'master' of ssh://git.debian.org/git/buildd-tools/sbuild
+
+commit c20024a54d3f25a68761d87984cc73729a2917b7
+Merge: c888e79 2a73fcf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 3 23:36:13 2010 +0000
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit c888e79c37784c1f680e72d2301cfd56cf858f57
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 3 23:35:42 2010 +0000
+
+    debian: Bump version to 0.60.1-1 and close #571726
+
+commit ef227924a1fbe406b294cb8594e51c8f31a67d4a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 3 23:35:28 2010 +0000
+
+    NEWS: Bump version to 0.60.1
+
+commit 53fa1270b80eab42fbd1b84a47549eac92f3267d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 3 23:30:51 2010 +0000
+
+    Sbuild::Options: Add --no-source option
+
+commit ecf644adceb5321108f1da6edef6db77679e54e8
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Feb 28 13:56:15 2010 +0000
+
+    [Buildd::Daemon] only try to build one package at a time
+
+commit 2a73fcf72511a26cca3d231384bef0487bbf7318
+Merge: 3a7ad7e 7fb8924
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Feb 28 12:18:39 2010 +0000
+
+    Merge branch 'buildd'
+
+commit 3a7ad7ebe2656b1651d4e9eaa5136b1bfa2b6fdb
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Feb 27 14:42:57 2010 +0000
+
+    [Sbuild::DB::ClientConf] search programs in PATH
+
+commit 7fb8924e9d93442245cd2185c66032e2dc0e2bcb
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Feb 27 12:36:59 2010 +0000
+
+    [Buildd::Conf] ssh: make the space after -l optional
+    
+    The configuration compatibility code tries to parse the SSH invocation
+    line to retrieve host, username etc.  This change allows both "-luser"
+    and "-l user".
+
+commit 1cc61ee264ef31865b8dba39638369b4340af90a
+Author: Dan White <dwhite@olp.net>
+Date:   Fri Feb 26 21:50:04 2010 +0000
+
+    WannaBuild::Database: Add missing import of version_eq
+
+commit 00e9807bb24af2e5ad778a060af050b19b6d131c
+Merge: b8b4f24 597dcb3
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Feb 25 11:54:55 2010 +0000
+
+    Merge branch 'buildd' of ssh://git.debian.org/git/buildd-tools/sbuild into buildd
+
 commit 597dcb36cff438fe98358e708cfa12dfd4498585
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Tue Feb 23 22:25:11 2010 +0000
@@ -24,6 +851,44 @@ Author: Roger Leigh <rleigh@debian.org>
 Date:   Tue Feb 23 21:39:25 2010 +0000
 
     Merge branch 'buildd'
+
+commit b8b4f2461796b1cd82050e4bce5be7d6eb18ddbc
+Author: Modestas Vainius <modax@debian.org>
+Date:   Tue Feb 23 09:00:39 2010 +0000
+
+    [Sbuild::BuildDepSatisfierBase] sort apt policy versions by priority first
+    
+    In my opinion, it makes sense to sort package versions by priority first
+    (versions with greater priority will be prefered over versions with lower
+    priority if they both satify the dependency). If priority is the same, then
+    higher versions will be prefered over lower ones (i.e. like previous behaviour
+    for all versions).
+    
+    This change allows buildd administrators to configure preferences for multiple
+    repositories via standard apt_preferences(5) file in the chroot. What is more,
+    this is similar to how aptitude 0.6 orders solutions in the same tier.
+    
+    Closes: #570465
+    Signed-off-by: Modestas Vainius <modax@debian.org>
+
+commit 95d14803e00e74aef5f6bab7e4e9cae7177423c9
+Author: Modestas Vainius <modax@debian.org>
+Date:   Tue Feb 23 08:57:47 2010 +0000
+
+    [Sbuild::AptitudeBuildDepSatisfier] produce better solutions
+    
+    Configure aptitude (0.6) to:
+    
+    * Refuse solutions which involve removal of the dummy build depends package.
+      This is done by adding a respective resolver hint.
+    * Move "cancel all user's actions" (Keep-All-Tier) tier after Non-Default-Tier.
+      Generally, we want aptitude to try solutions with non-default versions before
+      refusing to do anything.
+    * Refuse solutions which involve removal of essential packages. The source
+      packages that need this are not worth building anyway.
+    
+    Closes: #570463
+    Signed-off-by: Modestas Vainius <modax@debian.org>
 
 commit 6b4cfb784a314e425e3139cbdd3d6f5f9227c3c1
 Author: Philipp Kern <pkern@debian.org>

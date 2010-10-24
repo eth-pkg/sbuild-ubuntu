@@ -521,7 +521,7 @@ sub prepare_for_upload ($$) {
 	    if !$self->check_state(
 			$pkg, 
 			$self->get_dist_config_by_name($d),
-		   	qw(Building Built Install-Wait Reupload-Wait));
+		   	qw(Building Built Install-Wait Reupload-Wait Build-Attempted));
     }
     if (@wrong_dists) {
 	$self->set('Mail Short Error',
@@ -967,7 +967,7 @@ sub set_to_failed ($$$) {
 
     $text =~  s/^\.$/../mg;
     $is_bugno = 1 if $text =~ /^\(see #\d+\)$/;
-    return if !$self->check_state( $pkg, $dist_config, $is_bugno ? "Failed" : qw(Built Building Build-Attempted) );
+    return if !$self->check_state( $pkg, $dist_config, $is_bugno ? "Failed" : qw(Built Building Build-Attempted BD-Uninstallable) );
 
     my $db = $self->get_db_handle($dist_config);
     my $pipe = $db->pipe_query_out('--failed', "--dist=$dist_name", $pkg);

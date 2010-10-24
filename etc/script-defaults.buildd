@@ -1,6 +1,0 @@
-# Default settings for buildd chroots: usual defaults, differing fstab:
-. /etc/schroot/script-defaults
-
-# Filesystems to mount inside the chroot.
-FSTAB="/etc/schroot/mount-defaults.buildd"
-
