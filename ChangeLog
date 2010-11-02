@@ -1,3 +1,507 @@
+commit 53db4e7d88f05aa7aa7ef0a1aed5bb022b8c7944
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 13:53:24 2010 +0000
+
+    Sbuild::InternalBuildDepSatisfier: Reinstall all removed packages
+
+commit 0b96d99af1468120a2ce981d5c36e7f5b129e84a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 13:39:53 2010 +0000
+
+    NEWS: Document major changes
+
+commit 09dcb6bbb516f56881ed2bb4182f85b72b477d76
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 13:31:31 2010 +0000
+
+    Sbuild::Build: Move package/version parsing debugging to where set
+
+commit 2ca4acfd9ec9250eafd5310e07b5b18a12ec6bfd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 13:03:50 2010 +0000
+
+    debian: Document build-conflicts changes
+
+commit fff1497d356d503e119e1da905fb3229bc4115fc
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 13:02:19 2010 +0000
+
+    Sbuild::BuildDepSatisfierBase: Correctly reinstall build conflicts
+
+commit 8b5e4087f522c1937144522a9181354b8e0ed884
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 12:52:50 2010 +0000
+
+    debian: Tidy changelog
+
+commit 3b235d765c2be95f91aa4b20ae8d8f7537770aa3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 12:44:53 2010 +0000
+
+    Sbuild::BuildDepSatisfierBase: Move Sbuild::Build::format_deps here
+
+commit bbbc0d7939b6e5c4ee9b9b1439e5c601f219dba5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 12:39:43 2010 +0000
+
+    Sbuild::Build: Remove unused and broken code from merge_pkg_build_deps
+    
+    Remove essential package processing; now done in install_essential
+    Remove virtual package processing; now done in BuildDepInternalSatisfier
+    Move toolchain reporting to BuildDepSatisfierBase
+    Remove expand_virtuals
+    Remove cmp_dep_lists
+    Remove Build object members 'Toolchain Packages' and 'Additional Deps'
+    (both now unused)
+    Remove 'Additional Deps' usage from prepare_watches
+    Install core packages after fetching sources, and before installing
+    essential packages
+
+commit 640b5c734b3ddffe0864561ea3b76836ec15a78b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 11:26:57 2010 +0000
+
+    Sbuild::BuildDepSatisfierBase: Move Sbuild::Build::run_apt here
+    
+    run_apt is only used by the internal and aptitude resolvers,
+    so move into the base class.
+
+commit 039a29e3fe7f63e6fe3579ba352a353fd22ba049
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 11:26:27 2010 +0000
+
+    Sbuild::Build: Do all DSC parsing in a single place
+
+commit 1cb8285fb0ed3cc3b90d4fdeb4714d84fd3d8d69
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 11:23:23 2010 +0000
+
+    Sbuild::Chroot: Use debug2 for logging chroot operations
+    
+    Unless debugging schroot/sudo command execution, this debug
+    output is not needed normally, so log at lower priority.
+
+commit 2a3854a5cce57497d23f55afcc0a3bc9b5672cd5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 11:22:26 2010 +0000
+
+    Sbuild: Add debug2 function
+    
+    This logs only when debug_level == 2, to avoid swamping normal
+    debug output with irrelevant details.
+
+commit d3d685fef59e02e5eb4bd63fc93ef84d5cf05f57
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 21:46:22 2010 +0000
+
+    debian: Close #595934
+
+commit 4f83985c0280d09767ab1384f0e3e262d575067e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 21:35:24 2010 +0000
+
+    Sbuild::Conf: Add RESOLVE_VIRTUAL option to disable virtual package resolving
+    
+    Defaults to enabled.
+
+commit 9bd583320f1acab840c5b2c122f83947a30fa78d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 21:03:55 2010 +0000
+
+    Sbuild::InternalBuildDepSatisfier: Resolve simple virtual dependencies
+    
+    get_virtual gets a list of packages providing a given package
+    (or a single concrete package if it's not virtual), using
+    "apt-cache --names-only search '^$pkg$'".  This appears, at
+    present, to be the most efficient way of finding virtual
+    package providers.  Packages are listed in alphabetical order.
+    
+    virtual_dependencies uses get_virtual to expand all virtual
+    dependencies.  It currently picks the first returned package,
+    which is the first sorted alphabetically.
+
+commit 485d0062e39aa6a91d5103e9d19a4dd5bf90fb9d
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Nov 1 10:37:42 2010 +0100
+
+    bin/create-chroot: add testing-edu
+
+commit 9b8e2c224ece13b08dae8d5d4992a795d439b6a4
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Nov 1 13:17:14 2010 +0100
+
+    [Buildd::Daemon] get rid of @todo entirely
+
+commit 65aaeface5507e5442c652cb1cfc1642dbdd8209
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Nov 1 13:17:27 2010 +0100
+
+    bin/sbuild: fixup_pkgv apparently not needed, according to rleigh
+
+commit 0e5a5970ced13dcf9b63c78ec048e85c189820cd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 19:09:33 2010 +0000
+
+    debian: Close #590153
+
+commit e5dcc2d88de715ac7d382ddc1ad572e317de4304
+Author: Lorenzo De Liso <blackz@ubuntu.com>
+Date:   Mon Nov 1 17:44:34 2010 +0000
+
+    debian: buildd Replaces and Breaks ubuntu-dev-tools <= 0.83
+    
+    Apparently, ubuntu-dev-tools also shipped a buildd program.
+
+commit 1e5814804ee26e99b2faa559aab128a1ca65dcf2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 17:28:36 2010 +0000
+
+    debian: Close #599350
+
+commit ee144f81240e2d2cb8fcd95796262b7db09c10e9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 17:26:15 2010 +0000
+
+    Sbuild::Conf: Check sbuild group membership using gid and supplementary groups
+    
+    Previously, we checked if the user was a group member by looking
+    at the membership of the sbuild group in the system group database.
+    Now actually check for active posession of group privileges by
+    looking at the process' gid and supplementary groups.
+
+commit 0cd659422d758223b8681cfc56189d3ab1737799
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 17:19:15 2010 +0000
+
+    man: Document sudo chroot symlink details
+
+commit 42c41b9a065dc6b5c566dc62d94f6bd5352343e0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 17:10:25 2010 +0000
+
+    debian: Close #598054
+
+commit b3d1efb66c521016dcfdc3a817c76465233dabfb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 17:08:56 2010 +0000
+
+    man: .sbuildrc is no longer required
+
+commit b685f317b78a7a06a44fda2a1f0132023addb2ec
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 16:58:46 2010 +0000
+
+    debian: Close #599348
+
+commit a9c8a91eb829b9bc217572e49d126ab1bfbc1295
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 16:57:42 2010 +0000
+
+    man: Remove obsolete parts of the sbuild man page
+
+commit 860529f85472c22bb9ec9f9cdc91e6447316098d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 1 16:32:11 2010 +0000
+
+    etc/25nssdatabases: Update from schroot 20nssdatabases
+    
+    Skip comments and blank lines in nssdatabases file
+    Skip copying if source and destination are identical, preventing
+    blanking the file if it's hardlinked or bind mounted.
+    Use strict POSIX shell.
+
+commit 7d14ca461db2c29429f305fcd4021660ce90faed
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 21:59:48 2010 +0000
+
+    Sbuild::Build: Update copyright
+
+commit 81f82ef44da792a9d905bc6bf87f3181b5768c14
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 21:59:08 2010 +0000
+
+    Sbuild::Build: Drop pointless log message
+    
+    Package-provided build-dependencies are no longer optional.
+
+commit 9afe76e03d758172a8225d5c2e0d6f2d77ff7e91
+Merge: 69957b4 f195fa2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 20:45:51 2010 +0000
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit 69957b43a7dd7893c0be17226ae07b7400f9bfce
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 20:45:16 2010 +0000
+
+    Sbuild::Conf: Remove ALTERNATIVES support
+
+commit 5d22c9fd9d89ec7bd07e37e1033d4f11fed94b40
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 20:45:08 2010 +0000
+
+    debian: Close #571806
+
+commit aeafdd9c1ab56f42e99903a7458afab8e6bb4d63
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 20:39:52 2010 +0000
+
+    Sbuild::Build: Remove support for stderr parsing in run_apt
+    
+    STDERR wasn't being piped back by pipe_apt_command for some time,
+    so this code was not actually being used.
+    Diagnosing causes of failure in the build environment was pointless,
+    since it was logged anyway, and if the messages changed would be
+    missed.
+    Virtual dependency resolving using the static ALTERNATIVES list has
+    been removed.  This was also broken, and the aptitude resolver can
+    do a proper job if this is required.
+
+commit f195fa21612547491c17416e8ff824cb3ee218fd
+Author: Cyril Brulebois <kibi@debian.org>
+Date:   Sun Oct 31 17:28:18 2010 +0100
+
+    Fix shell script comparison.
+    
+    The proper operator to compare strings is =, not ==. On dash for
+    example, one gets:
+        $ [ "a" == "b" ]
+        [: 1: a: unexpected operator
+
+commit be7e91ade3ad799b4d0229aed160e837a28e378d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 11:35:21 2010 +0000
+
+    debian: Close #567506
+
+commit 498e3a4671725b3b356182f5f853fe638bd45e95
+Author: Jan-Marek Glogowski <glogow@fbihome.de>
+Date:   Sun Oct 31 11:32:30 2010 +0000
+
+    Sbuild::Build: Allow skipping ending of session on failure
+    
+    Allows investigation of build failures where otherwise the
+    schroot session (including build tree) would be deleted.
+
+commit 829471628cfaf6e31cde3295e652630fb690c5b4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 11:27:37 2010 +0000
+
+    Sbuild::Build: Cache resolver to avoid repeated lookups
+
+commit b942c93315cfa052e7dd0429b27d8eaa2821766a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 01:39:29 2010 +0100
+
+    debian: Close #567821
+
+commit cd3e456fdec4badb49ac3e28bca1ea7c784b0a0c
+Author: Samuel Thibault <sthibault@debian.org>
+Date:   Sun Oct 31 01:37:13 2010 +0100
+
+    Buildd::Daemon: Use loop when reading from pipes
+    
+    Fixes hurd-i386 breakage, likely due to differing buffer sizes
+    or message lengths.  This ensures the entire pipe contents are
+    read.
+
+commit 2418a896cca6d6c8ca38994644df03e0797faa8e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 01:35:41 2010 +0100
+
+    debian: Close #567822
+
+commit 2d31f10815748be72ce8ce90aa2d01a3a4b5322e
+Author: Samuel Thibault <sthibault@debian.org>
+Date:   Sun Oct 31 01:33:20 2010 +0100
+
+    buildd-vlog: Fix breakage
+    
+    sleep statements are not optimal, but avoid most problems.
+
+commit 4099778007839788eb72dc6cf798a835ebd19618
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 01:31:20 2010 +0100
+
+    Sbuild::Build: Remove srcdep lock in cleanup_close failure path
+
+commit 0eb9bafbe2bee6b90d61768f268b50da39354a18
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 31 01:29:06 2010 +0100
+
+    Sbuild::Build: Add and handle additional failure stages
+
+commit 77179b7848de62d94cfb7a05b86b21fc21dbaf1a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Oct 30 18:08:52 2010 +0100
+
+    debian: Close #579971
+
+commit 96013d4908bbb95d12f210780d3d78f9ccb3a447
+Author: Salvatore Bonaccorso <salvatore.bonaccorso@gmail.com>
+Date:   Sat Oct 30 18:07:47 2010 +0100
+
+    man: Remove trailing q from sbuild-createchroot(8)
+
+commit bf23702b4ca1eabf3a01d298834a1aa4e946296d
+Merge: ad4d401 1c8e016
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Oct 30 17:17:03 2010 +0100
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit ad4d401756401b3b3d3dabd8de909c6979f6ddf6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Oct 30 17:13:55 2010 +0100
+
+    Sbuild::Build: Install core packages from CORE_DEPENDS
+
+commit efc4055bed439649f3b9f55bb617fe5fff40804b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Oct 30 17:13:19 2010 +0100
+
+    Sbuild:BuildDepSatisfierBase: remove_srcdep_lock_file decrements lock count
+
+commit 8184bf1b9ac20830bb116c8866b90c91f3a4209f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Oct 30 17:12:27 2010 +0100
+
+    Sbuild::Conf: Add CORE_DEPENDS key
+    
+    A list of core packages which must be installed for sbuild
+    to function.  Currently defaults to build-essential and fakeroot.
+
+commit 1c8e01677735335c31c55f942406a6fbde55dd22
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Oct 30 17:16:41 2010 +0200
+
+    configure.ac: drop DPKG_ARCHITECTURE check
+
+commit 6ce363aeffb9aa52955c747cbf0021aa70cad7a8
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Oct 30 17:15:42 2010 +0200
+
+    [Sbuild::Build] use Dpkg::Arch::debarch_is instead of dpkg-architecture
+
+commit 1eae88b781de3bc54e62a69810ec7166237c0132
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Oct 30 17:13:19 2010 +0200
+
+    [WannaBuild::Database] use Dpkg::Arch::debarch_is instead of dpkg-architecture
+
+commit c29a57c35aa44085426f4b6039c566d7f4b38345
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Oct 30 15:58:27 2010 +0100
+
+    debian: Close #380113
+
+commit 768e9694db5d392cd435ee1321ba9f0f2c13e3a9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Oct 30 15:49:01 2010 +0100
+
+    Sbuild::Build: Install ESSENTIAL packages before build deps
+    
+    Modify the BuildDepSatisfiers to allow installation of package
+    sets other than the current package build-deps.  Install/remove
+    both the ESSENTIAL packages and the current package build dependencies.
+
+commit e7dc24488c5c941639b0bab46e247a5bd3d96da4
+Merge: 320cc46 f6090b6
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Oct 30 14:13:08 2010 +0200
+
+    Merge branch 'buildd'
+
+commit f6090b672f6c8f24520c0e0ab365bf8bab06ca48
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Oct 30 13:58:11 2010 +0200
+
+    bin/create-chroot.sh: support lenny-backports-sloppy creation
+
+commit 320cc468031f066946b181e539c3473fd4b30484
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Oct 28 22:13:24 2010 +0100
+
+    debian: Close #569823
+
+commit fe31bd6fbb92d5bf48c111b68ee3697356808398
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Oct 28 22:12:19 2010 +0100
+
+    Sbuild::Build: Log source version as well as binary version
+
+commit b483eff070d709dc9bed65f1411e72130b588789
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Oct 28 22:00:40 2010 +0100
+
+    debian: Close #586275, #578810, #591187, #591188, #591189, #595863, #595866, #595872
+
+commit dffa5884a0df0821ce21d62ac535b1b6a1f95d11
+Author: Ansgar Burchardt <ansgar@43-1.org>
+Date:   Mon Jul 5 17:35:27 2010 +0900
+
+    Sbuild::InternalBuildDepSatisfier: Do not try other alternatives if installing default version is enough
+    
+    When we encounter
+    
+      Build-Depends: pkg-a (>= 2) | pkg-b (>= 3)
+    
+    and a lower version of pkg-a is already installed (or provided by
+    another package), sbuild would try to upgrade pkg-b as well.
+    
+    This patch changes the behaviour of sbuild to not try satisfying
+    alternative dependencies if the dependency can be satisfied by
+    installing the default version.
+    
+    Bug-Debian: http://bugs.debian.org/586275
+    Signed-off-by: Ansgar Burchardt <ansgar@43-1.org>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 51d8b818c65101ec0145fb5bc53baf1c4a12aa7d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Oct 26 23:01:33 2010 +0100
+
+    debian: Close #588035
+
+commit 96e37214fe8a2d36bee96b1a7d2d37c796b04e26
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Oct 26 22:59:36 2010 +0100
+
+    debian: Bump version to 0.60.2-1
+
+commit cc5907e0938d773a4e77e2b67eb69eeda56e2611
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Oct 26 22:59:02 2010 +0100
+
+    NEWS: Bump version to 0.60.2
+
+commit b572872e0ef8a26c4ab174a79304323ac9118338
+Author: Ansgar Burchardt <ansgar@43-1.org>
+Date:   Tue Oct 26 22:58:32 2010 +0100
+
+    Sbuild::AptitudeBuildDepSatisfier: Do not ignore trust violations
+    
+    Set the value of Aptitude::CmdLine::Ignore-Trust-Violations depending on
+    the $apt_allow_unauthenticated option.
+    
+    Bug-Debian: http://bugs.debian.org/588035
+    Signed-off-by: Ansgar Burchardt <ansgar@43-1.org>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 7ac00d6608e54c9a7365451701ee12af73ba8303
+Author: Ansgar Burchardt <ansgar@43-1.org>
+Date:   Tue Oct 26 22:53:34 2010 +0100
+
+    Sbuild::AptitudeBuildDepSatisfier: Do not pass -o Apt::Install-Recommends=false to aptitude
+    
+    The option --without-recommends corresponds to the configuration options
+    Apt::Install-Recommends and Apt::AutoRemove::InstallRecommends.  There
+    is no need to pass the option explicitly.
+    
+    Signed-off-by: Ansgar Burchardt <ansgar@43-1.org>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
 commit 2b2336347a1a9f747f0216eddf84831016a6cf21
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sun Oct 24 20:05:43 2010 +0100
