@@ -1,3 +1,696 @@
+commit 413577ce20a7c10b4fce3b1d2ca5ea3f408d28a8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 22:33:26 2010 +0000
+
+    debian: Correct version
+
+commit af4232baa8cfdcb3d095cda75d8775c15422e184
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 22:32:39 2010 +0000
+
+    NEWS: Document new features
+
+commit 3761738a1f04ba481b5cbc697264bd4a081f197b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 22:32:22 2010 +0000
+
+    debian: Fix typo
+
+commit 5a1a17b974ccecbf09298de8697197fe7aeca9ec
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 21:59:12 2010 +0000
+
+    Sbuild: Update copyright
+
+commit f7d4c087cff579778da86e9567075c1c470fb46e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 21:56:49 2010 +0000
+
+    Sbuild::ResolverBase: Don't log Build-Depends/Conflicts by default
+
+commit 453b13890f99d87cebd187642667cb073e7eacaf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 21:56:34 2010 +0000
+
+    sbuild.conf: Document $build_dep_resolver
+
+commit 88f049b81d1b080204bfef34acf7c7895988bc27
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 21:42:51 2010 +0000
+
+    Sbuild::ChrootInfo: Support namespaces properly with sudo
+
+commit bc11b8c21979b4f952f951411847ce6e1f36c796
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 21:33:17 2010 +0000
+
+    debian: Close #567505
+
+commit 6daaf332f3cf5aada99bd68e373d39ba4c50de50
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 21:25:47 2010 +0000
+
+    Sbuild::ChrootInfo: Add support for namespaces
+    
+    Support schroot namespaces properly.  Read in all chroots in the
+    'chroot' and 'source' namespaces.  Add a namespace argument to the
+    ChrootInfo find function, and get_info functions create namespaces.
+    create() also takes a namespace parameters, used by Sbuild::Build
+    and Sbuild::Utility.  Utility programs operate in the 'source'
+    namespace by default, falling back to the 'chroot' namespace if
+    a source chroot does not exist.  Sudo chroots use only the 'chroot'
+    namespace.
+    
+    schroot namespace support had been added previously by overriding
+    the find() function and stripping namespaces, but this had several
+    issues, and did not permit good use of the 'source' namespace.
+
+commit b0a838371974cac59bdd9493d72dff668dd46cc1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 15:34:28 2010 +0000
+
+    Sbuild::Conf: Log external command output by default
+
+commit bf2873f3c7be181b11d630efdcc8d146242d016f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 15:34:05 2010 +0000
+
+    Sbuild::ChrootInfoSchroot: Parse chroot namespaces
+    
+    Don't use yet.
+
+commit 072312d39b15eac008e82c713bf31a1ab05c664d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 15:28:38 2010 +0000
+
+    AUTHORS: Add lintian/external commands authorship
+
+commit 5288ab4eb2f9b18869d3ec02e7bdf9fd7c0aefeb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 12:21:22 2010 +0000
+
+    Sbuild::Build: Log summary statistics
+
+commit 0586e64d0d00af7c5d3f380b0429289aa728e0f4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 10:59:09 2010 +0000
+
+    Sbuild::Build: run_external_commands: Don't log section if no commands specified
+
+commit b432f6b85db9e08c3a85b05f0eac1e4732f43895
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 01:42:41 2010 +0000
+
+    debian: Close #551311 and document lintian and external commands
+
+commit 6101a5f3f68ecefc71c30042c55ca7eb7475a269
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 01:36:16 2010 +0000
+
+    Sbuild::Build: Log source package creation
+
+commit 1dfc1a12c4040fb872386c1a081af3c56ed25fb8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 01:31:00 2010 +0000
+
+    Sbuild::Build: Rearrange order of external commands
+
+commit b06cc3d0c9634b230925301d5e57c3b7948698de
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 01:25:12 2010 +0000
+
+    Sbuild::Base: Don't warn about undefined log streams unless debugging
+
+commit 0827a4aab6c3082a31bee53ad97a48f31b0fae27
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 01:24:21 2010 +0000
+
+    Sbuild::Build: Install core build dependencies separately
+    
+    build-essential needs to be installed before we can read its files
+    Separate handling of gcc-snapshot and manual source dependencies
+
+commit 527b434c67e92a1b871a09cb1275c9fa11ef3038
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 00:57:22 2010 +0000
+
+    Sbuild::ResolverBase: Move get_dpkg_status here
+
+commit 9faaef5868adf06734a882d2cc92245938e2c07c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 00:50:50 2010 +0000
+
+    man: external_commands is a hashref
+
+commit 9ce701f64bad5bac002e9e703dd6a06dd1934efc
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 00:46:55 2010 +0000
+
+    sbuild.conf: Remove obsolete %alternatives
+
+commit 60daffd606d3f4db195ce6088a1dff690fb5fd1f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 00:46:38 2010 +0000
+
+    Sbuild::Conf: external_commands is a hashref
+
+commit d017dc360df2b68470297bbc2df294ed9ed519f1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 00:02:19 2010 +0000
+
+    Sbuild::Build::run_external_commands: Initialise $chroot to 0
+
+commit e58a592e6992c979a7adc5122ffd34b392599269
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 7 00:01:50 2010 +0000
+
+    Sbuild::Build: Only log to build log during a package build
+
+commit 0a1b0ed05bac8bbb4b6ac48fb3cd0871c6f515e8
+Merge: bbdaf88 63a8944
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 6 23:46:15 2010 +0000
+
+    Merge branch 'master' into debuild-functionality
+
+commit 63a89444ff7b4d1e872c73825d3567d7bc6e6545
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 6 23:37:03 2010 +0000
+
+    debian: Default $resolve_virtual to 0
+
+commit 0e30f1b871ad5e2016c13203b1b42410fcf27396
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 6 23:36:27 2010 +0000
+
+    Sbuild::Conf: Default RESOLVE_VIRTUAL to off
+    
+    Avoids changing the historical behaviour of the internal resolver.
+
+commit 1b7c460d2421f6808708b733d1391a6beb1a4f23
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 6 22:51:35 2010 +0000
+
+    Sbuild::InternalResolver: Move get_dpkg_status and get_apt_policy here
+
+commit 8e39171a98e06e927ccba2f8831d78b458a1460d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 6 21:01:05 2010 +0000
+
+    Sbuild: Handle failure paths better
+
+commit bbdaf8862cdb66fe4cd77776772c25da2d0b6206
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 6 16:47:56 2010 +0000
+
+    Sbuild::Build: Don't strip epoch before calling set_version
+
+commit 09cf6bcf76822593e2f713d4cb91076e0bf86ca3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 6 16:17:14 2010 +0000
+
+    Sbuild::Build: Remove removed install_core function call and reindent
+
+commit ba0bd584c81b42379ca3291c0f051c365d7dd822
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 6 15:43:03 2010 +0000
+
+    Sbuild::Build: Create Host ChrootRoot object in constructur
+    
+    Initialise streams later, once they get initialised for us.
+
+commit 7e9de9242aa91c7f97cc4ea46a4802745e5e8ce0
+Merge: dffb5a3 0c205b4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Nov 5 18:38:50 2010 +0000
+
+    Merge branch 'master' into debuild-functionality
+    
+    Conflicts:
+    	lib/Sbuild/Build.pm
+
+commit 0c205b407e3446d3c6c2006e320d59b13544b821
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Nov 5 18:33:05 2010 +0000
+
+    sbuild-update: Lock chroot to block if a build is running
+
+commit 379d92e3cecfdef1770c67dbf913c2ed59c7036c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Nov 5 18:32:36 2010 +0000
+
+    Sbuild::Chroot: Move chroot locking here
+
+commit 9a1dda3d947e1f4aff608f0871cb02a1077eda60
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Nov 5 16:29:58 2010 +0000
+
+    Sbuild::InternalResolver: Remove obsolete sourcedeps override support
+
+commit 797cdca708196c1dfd9b1923f2cd2a607f70c020
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Nov 5 16:20:21 2010 +0000
+
+    Sbuild::InternalResolver: Remove use of obsolete $conf::srcdep_over
+    
+    Source dependencies and overrides are no longer available.
+
+commit 8990787975f051d7c098071eea5f157bce6e2e60
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Nov 5 08:40:31 2010 +0000
+
+    Sbuild: Internal resolver uses AptDependencies
+    
+    Simplify the internal resolver by using AptDependencies in place of
+    Dependencies, and computing Dependencies at package install time.
+    
+    Allow installation of multiple package lists by merging during install.
+    
+    Old unused Dependencies code removed.
+
+commit dffb5a37243c0476016196349e1dd70fb54711da
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Nov 4 02:50:47 2010 -0400
+
+    Now really fix builds for debianized source directories.
+
+commit 37497268dadadf446ceccdf38efbe4e3ce0591a9
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Nov 4 02:01:01 2010 -0400
+
+    Fix where logging begins/ends.
+
+commit e4189fa5c36f0e6be6d25e5b388780e29fb98167
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Nov 4 01:49:07 2010 -0400
+
+    Fix builds from debianized source directories.
+
+commit 9ad8f45c5c0fa9b8f62de6bd2f8e759f5e78a1a0
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Nov 4 00:52:25 2010 -0400
+
+    Fix addition of lintian options to command to run.
+
+commit 9c1fe3521c87fbd560c36249163ad2f5319469ae
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Nov 4 00:47:04 2010 -0400
+
+    Fix logging of external commands, only logging when specified to log stdout or stderr of commands.
+
+commit a7c64d8b1b28c87179327530f465f2e05a7de4ee
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Nov 4 00:45:30 2010 -0400
+
+    Do not ignore options that are set to undef.
+
+commit 66c5efd7afc35c4c9a0e76a019c3d9921b9d2988
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Nov 4 00:17:34 2010 -0400
+
+    Setup host session with reasonable defaults.
+    This fixes issue where commands run on the host would not be logged.
+
+commit 4030d93a0de80ac58686bb023c398e535360ffde
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Nov 3 17:26:53 2010 -0400
+
+    Fix permissions on generated sbuild tarball.
+
+commit dfbd9768d7518f229fc481e58d535dffbbff2483
+Merge: c923e9e bc5ff1a
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Nov 3 16:49:15 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
+
+commit 0c4da880a762a023339ecb0a58f5c85cee663111
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 20:00:30 2010 +0000
+
+    debian: Close #545215
+
+commit bc5ff1a4b75ede1989da475996e952ea2771a61e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 19:58:19 2010 +0000
+
+    NEWS: Document sbuild-createchroot tarball creation
+
+commit 1d5af24d07b8d5924942042580e3df42efb098a5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 19:55:57 2010 +0000
+
+    debian: Document tarball creation by sbuild-createchroot
+
+commit ba5124996d4bb5cda1a6be66b0a8b0af7b99ab8d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 19:50:55 2010 +0000
+
+    debian: Close #602318
+
+commit 60ef668af2f5cbca0c8d4c0dad936b257ab77c29
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 19:46:52 2010 +0000
+
+    Sbuild::ConfBase: Never set Sbuild::debug_level to undef
+
+commit f5d757113b57dbdba056c9ef70a2e78148cf4890
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 19:32:29 2010 +0000
+
+    sbuild-createchroot: Correct message to print .tar.gz rather than .tgz
+
+commit c923e9e06c032e9a41dead7e5759088de88dbc50
+Merge: 085d088 cc96c84
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Nov 3 15:30:22 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
+
+commit cc96c841441b5c143ca44c7691be9d149f0bc9dd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 19:15:22 2010 +0000
+
+    sbuild-createchroot: Default to .tar.gz rather than .tgz
+
+commit 085d088757bc9db0e1cc0b8f8d8a580f9106d5b7
+Merge: 1c157a2 1382875
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Nov 3 15:00:51 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
+
+commit 1382875de3feba3f6ba35026ed04d379f6c79151
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 18:40:30 2010 +0000
+
+    sbuild-createchroot: Rename --keep-sbuildchroot-dir to --keep-sbuild-chroot-dir
+
+commit ac0789bc8a3eed723404136d4a86390c2d9a60b3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 18:38:49 2010 +0000
+
+    man: Add Andres Mejia to AUTHORS/COPYRIGHT
+
+commit aa0df78ea06ed142664eca2003c848b95c164e71
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 18:37:26 2010 +0000
+
+    AUTHORS: Add Andres Mejia and also document in sbuild-createchroot(8)
+
+commit 07a46ffd442c55b6a7e108d2f2874b788786dfab
+Merge: a583b9a 0f3af4f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 17:58:54 2010 +0000
+
+    Merge branch 'master' into sbuild-createchroot
+
+commit 0f3af4f654e61b539f8d0689c96f136b7374bbff
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 17:47:55 2010 +0000
+
+    debian: aptitude is the default resolver
+
+commit fdd4055a8c97d60483bff461fb9f13a1f304b8bc
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 17:47:42 2010 +0000
+
+    NEWS: aptitude is the default resolver
+
+commit ee16cdfc1853e6716bb344b7bb21bb5d03d4b3a9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 17:47:27 2010 +0000
+
+    Sbuild::Conf: Make aptitude the default resolver
+
+commit a6a655bb749d50a0bf8758414e294bccb802ec73
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Nov 3 17:39:25 2010 +0000
+
+    Sbuild: Fix uninitalised value warning in debug2
+
+commit 1c157a27d4a149a35eeccf0e358eed2bc27cb524
+Merge: 7d804de bc009a2
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Nov 3 12:53:32 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
+
+commit 6fb4da4fa3b7ec3ce049dc13d9b07cd80e21c140
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 16:38:10 2010 +0000
+
+    debian: Close #464376
+
+commit 75814733be9c1a70f18bb1bfb44d532364b160b6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 16:28:41 2010 +0000
+
+    debian: Close #403246
+
+commit bc009a29f782936a23d488ca97e0ec243fc75f5c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 14:04:14 2010 +0000
+
+    debian: Bump version to 0.60.3-1
+
+commit 9adb397b46fa9a2da0c09b64fbebd7515bbe7f6b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 14:03:57 2010 +0000
+
+    NEWS: Bump version to 0.60.3
+
+commit ccddc5a6fbe7d8de40cd14a7a05747a0ae9eb5bb
+Merge: 4f9f5f4 a994d14
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 13:53:09 2010 +0000
+
+    Merge branch 'master' into sbuild-update
+
+commit a994d14ad90167930a5fd3eca7e3a1d35b722a6a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 13:09:31 2010 +0000
+
+    Sbuild::Build: Use Dpkg::Control to parse .dsc
+
+commit 4f9f5f459e3b431ff33a9af5702175588a79f692
+Merge: 230b576 920182c
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 2 21:56:54 2010 -0400
+
+    Merge branch 'master' into sbuild-update
+
+commit a583b9a6369de967aca30ac8f850f6605a220688
+Merge: 4505089 920182c
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 2 21:56:41 2010 -0400
+
+    Merge branch 'master' into sbuild-createchroot
+
+commit 7d804de33daccb2dcdd3161cd2439a34b11e6aaf
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 2 21:55:27 2010 -0400
+
+    Fix breakage of commands that are run in root filesystem.
+
+commit 1865adc92eb13ff15937b9fc47d3eaca0390e3f8
+Merge: 1d96785 920182c
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 2 20:39:37 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
+    
+    Conflicts:
+    	lib/Sbuild/Build.pm
+
+commit 920182c6ffb67ea39c640434d1a7cf5b3a101c73
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 00:23:51 2010 +0000
+
+    Sbuild: Rename BuildDepSatisfier classes to Resolver
+    
+    Sbuild::AptitudeBuildDepSatisfier is AptitudeResolver
+    Sbuild::InternalBuildDepSatisfier is InternalResolver
+    Sbuild::BuildDepSatisfierBase is ResolverBase
+
+commit 876e60c5d428af151f678eced2acf1db5e5d6104
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 3 00:03:52 2010 +0000
+
+    sbuild: Call unlock_chroot() on shutdown
+
+commit e85305b85ed23f833dad944a585a8b1dfaea9765
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 23:46:31 2010 +0000
+
+    Buildd: Remove srcdep and install locks
+    
+    All locking now comes under the chroot lock, making the separate
+    srcdep and install locks redundant.
+
+commit a550c88db3ae7648b4c4763ba0fffa0c64c880a0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 23:15:26 2010 +0000
+
+    Sbuild::BuildDepSatisfierBase: Add chroot locking functions
+    
+    Add chroot_lock and chroot_unlock functions.
+    Sbuild::Build::run locks the chroot after beginning a session, and
+    unlocks immediately prior to ending a session.
+
+commit 023b540e03e5d0c7a8d726ddb1cd741056839a0c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 21:51:29 2010 +0000
+
+    Sbuild::Options: Fix warning when using gcc-snapshot
+
+commit 4938ae861fbdcb2a9ae36ed5ca9fec56dc6c5c10
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 21:50:49 2010 +0000
+
+    Sbuild: Fully separate internal and aptitude resolvers
+    
+    Not internal resolver code is now used by the aptitude resolver.
+
+commit 2d47eaa3aa7a316e17f6b26693ed686c9a463531
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 21:28:05 2010 +0000
+
+    Sbuild::BuildDepSatisfierBase: Move merge_pkg_build_deps here
+    
+    merge_pkg_build_deps becomes add_dependencies
+    
+    The Sbuild::Build Dependencies and AptDependencies members are
+    also moved here.
+    
+    This change moves all dependency resolving completely out of
+    Sbuild::Build and into the resolver code.
+
+commit 321e75a71b0d716d77abbeffb67be462277ac31c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 20:19:39 2010 +0000
+
+    Sbuild::Build: Remove unused functions
+    
+    Remove expand_virtuals, expand_dependencies and file_for_name.
+
+commit 81bd06a13a28014ef15c2786e878654f03f1ffeb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 20:17:30 2010 +0000
+
+    Sbuild::Build: Remove unused get_altlist
+
+commit 9141da1ee5d4212ab124f681da070847062293a7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 20:14:35 2010 +0000
+
+    Sbuild::BuildDepSatisfierBase: Display toolchain packages directly from dpkg
+    
+    Filter toolchain packages directly from installed package list.
+    Remove unused expand_dependencies from Sbuild::Build.
+
+commit 1211c8e237366f9ace116730086602ad92b8c3d8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 19:09:24 2010 +0000
+
+    Sbuild::Build: Drop unused is_superset
+
+commit 95cf9921aba0d85176c40b12fec8518bcded60ae
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 19:04:43 2010 +0000
+
+    Sbuild::AptitudeBuildDepSatisfier: Use package build dependencies directly
+    
+    The aptitude resolver was using the pre-parsed dependency information
+    used by the internal resolver.  Use the build dependencies directly
+    from the package control file, using Dpkg::Deps deps_parse with
+    reduce_arch=1 to filter arch-specific dependencies when constructing
+    the control file for the dummy package.
+    
+    In Sbuild::Build, create an alternative AptDependencies structure which
+    mirrors the existing Dependencies structure but which does not pre-parse
+    any dependencies.
+
+commit 1d9678556a25d12d92eb1df30009e0438b6a2ce4
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 2 14:16:53 2010 -0400
+
+    Run commands only if there are commands to run
+
+commit f82fe155b4e0e2e6a9802f939e415d0679ec180f
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 2 14:14:10 2010 -0400
+
+    Fix comparison of $debug_level. Only compare if it's defined.
+
+commit bde142956f4ecd7da5e4b4bd1c4330758e90641a
+Merge: 6297b8e c62a210
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 2 14:13:57 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
+    
+    Conflicts:
+    	lib/Sbuild/Build.pm
+    	lib/Sbuild/Conf.pm
+
+commit 4505089dcc3acf9c769e1d538e5b67595e592d4a
+Merge: 1478ae2 c62a210
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 2 13:40:24 2010 -0400
+
+    Merge branch 'master' into sbuild-createchroot
+
+commit 230b5767f96d700032b02413d6b03b198c304436
+Merge: b53b679 c62a210
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 2 13:40:08 2010 -0400
+
+    Merge branch 'master' into sbuild-update
+
+commit d2e4c08a6b724729a5404423cd8c16366c689366
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 17:32:12 2010 +0000
+
+    Sbuild::Build: Remove 'Have DSC Build Deps'
+    
+    All packages now have build dependencies.
+
+commit c62a210ed548f05e4e58133e4ae86afffbefa202
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 17:26:02 2010 +0000
+
+    build: Restore check for aptitude
+    
+    Without the configure check, APTITUDE isn't defined in Sbuild::Sysconfig.
+
+commit 23e2076519f78ce2a76630cf6290a90cb978f14e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 17:25:20 2010 +0000
+
+    Sbuild::AptitudeBuildDepSatisfier: Clean up dummy deb files
+    
+    We always pass through the cleanup code on all failure paths.
+
+commit b6098d0cad24ff2bf9211a0e662d82eb7ad79f17
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 16:46:09 2010 +0000
+
+    Sbuild::AptitudeBuildDepSatisfier: Handle Build-Conflicts and error conditions
+    
+    Handle errors building dummy package
+    Handle errors installing dummy package
+    Install dummy package with dpkg --force-depends --force-conflicts
+    Remove package purge code since it's handled automatically in uninstall_deps
+
+commit e7c549dfff1155467dfdd4f0a24752baa2a17d2c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 2 15:47:21 2010 +0000
+
+    Sbuild::BuildDepSatisfierBase: Replace uninstall_debs with run_apt call
+    
+    Don't use dpkg to remove packages since apt-get can do a better job.
+
 commit 53db4e7d88f05aa7aa7ef0a1aed5bb022b8c7944
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Tue Nov 2 13:53:24 2010 +0000
@@ -458,6 +1151,33 @@ Date:   Mon Jul 5 17:35:27 2010 +0900
     Signed-off-by: Ansgar Burchardt <ansgar@43-1.org>
     Signed-off-by: Roger Leigh <rleigh@debian.org>
 
+commit 1478ae27ba528c19c680df38c5d8ba3cc8105616
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Oct 28 13:48:04 2010 -0400
+
+    Remove deprecated key 'priority' from being added in configuration files.
+
+commit 6297b8e1273db9ccaccf31cffda96f053e0bcf27
+Merge: db0c8dc 51d8b81
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Oct 27 14:36:06 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
+
+commit 715859d662940539b04fc2f3b5bc14065e9d3adb
+Merge: 24e375c 51d8b81
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Oct 27 14:35:57 2010 -0400
+
+    Merge branch 'master' into sbuild-createchroot
+
+commit b53b6793f306a6711213f5f134dbc100faab1931
+Merge: cbbc08b 51d8b81
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Oct 27 14:35:43 2010 -0400
+
+    Merge branch 'master' into sbuild-update
+
 commit 51d8b818c65101ec0145fb5bc53baf1c4a12aa7d
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Tue Oct 26 23:01:33 2010 +0100
@@ -501,6 +1221,66 @@ Date:   Tue Oct 26 22:53:34 2010 +0100
     
     Signed-off-by: Ansgar Burchardt <ansgar@43-1.org>
     Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit db0c8dc00b881e0d7b21ac1aec7e079bd81ff62d
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Oct 26 02:35:39 2010 -0400
+
+    Deprecate setup-hook option in favor of chroot-setup-commands feature.
+
+commit 10f8886ae7e2c181c4b9e7ca679c18715bfd6291
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Oct 26 02:05:35 2010 -0400
+
+    Change to using a hash of arrays of arrays as the data structure for external commands.
+
+commit a19001a873bc504ebedd3c54f4ce8b413b66dd67
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Oct 26 01:03:17 2010 -0400
+
+    Support running external commands inside and outside chroot.
+    There's also a fix to get external commands from config files detected properly.
+
+commit 24e375c655e57aa4d550eb502236840c29996458
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Mon Oct 25 00:43:13 2010 -0400
+
+    Update sbuild-createchroot explaining how a tarball is generated based on a specified extension.
+
+commit 02e2e3a82b9ff20f45d3f606af7c3388cfef085d
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sun Oct 24 23:38:45 2010 -0400
+
+    Don't prepend 'sudo' in example command to run piuparts.
+    How users run piuparts as root is at their discretion.
+
+commit cbbc08b1610f7415bac468fe3301ce9a3b4cfca1
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sun Oct 24 23:06:39 2010 -0400
+
+    Merge sbuild-clean functionality with sbuild-update.
+    This deprecates sbuild-clean.
+
+commit d42bb4151fdd9d1a2421dafc9edb547db60c5a09
+Merge: 92464e1 2b23363
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sun Oct 24 22:23:03 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
+
+commit 670cc71e50fb991910f72c5e0e7735623a904a5f
+Merge: 1c7aab9 2b23363
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sun Oct 24 22:22:23 2010 -0400
+
+    Merge branch 'master' into sbuild-createchroot
+
+commit 31d85b1c4ef2c0c340152a1d82f102d1c63ea1ec
+Merge: 2d2d0ac 2b23363
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sun Oct 24 22:21:48 2010 -0400
+
+    Merge branch 'master' into sbuild-update
 
 commit 2b2336347a1a9f747f0216eddf84831016a6cf21
 Author: Roger Leigh <rleigh@debian.org>
@@ -669,6 +1449,30 @@ Date:   Tue Aug 31 11:14:12 2010 +0200
 
     man/buildd.1.in: Ryan Murray does not maintain a fork of sbuild anymore
 
+commit 2d2d0ac8c2feea894470159813b54da3aa96e45c
+Merge: a3b9cc1 e058334
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Aug 28 19:42:45 2010 -0400
+
+    Merge branch 'master' into sbuild-update
+
+commit 92464e1022ec1223fbbd31309475fe2d019a150d
+Merge: 9f6a358 e058334
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Aug 28 19:41:26 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
+
+commit 1c7aab97d49e791ae378e8be6d51cd023fd3ef51
+Merge: 70ebbe9 e058334
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Aug 28 19:40:28 2010 -0400
+
+    Merge branch 'master' into sbuild-createchroot
+    
+    Conflicts:
+    	bin/sbuild-createchroot
+
 commit e058334813faaf8a5000ffafbc091a2bf0b9f8b3
 Author: Philipp Kern <pkern@debian.org>
 Date:   Sat Aug 28 22:49:39 2010 +0200
@@ -677,6 +1481,54 @@ Date:   Sat Aug 28 22:49:39 2010 +0200
     
     Dots are no longer allowed in schroot config snippets, to comply with the
     run-parts regexp.
+
+commit 70ebbe98c68ed8a65946f4018d7f3b30c0b5fb88
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Fri Aug 20 03:54:09 2010 -0400
+
+    Support multiple tarball compression formats besides gzip.
+
+commit a3b9cc11490554b8967a164e28526e68182a4f14
+Merge: b590629 aa08f1a
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Aug 19 20:56:22 2010 -0400
+
+    Merge branch 'master' into sbuild-update
+
+commit 93315a62f6c2d0d04b47e5cd9c66899cc31918d6
+Merge: a5937aa aa08f1a
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Aug 19 20:56:13 2010 -0400
+
+    Merge branch 'master' into sbuild-createchroot
+
+commit 9f6a35823e64988868f36847166bc79ab467694d
+Merge: a65357b aa08f1a
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Aug 19 20:56:05 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
+
+commit b590629158e6a9710f0f2b9b4f49f9f00939e50c
+Merge: b336ccb 3426a61
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Aug 19 16:48:02 2010 -0400
+
+    Merge branch 'master' into sbuild-update
+
+commit a5937aa6b3c6b7c76008cce31650359181bea187
+Merge: af29218 3426a61
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Aug 19 16:47:53 2010 -0400
+
+    Merge branch 'master' into sbuild-createchroot
+
+commit a65357be74588914dbf7bf77bc10cac74cfe2701
+Merge: c58a8c7 3426a61
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Thu Aug 19 16:47:44 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
 
 commit aa08f1aa63a0b46d5ea78a89f4397c6e7186f0ce
 Merge: 3426a61 b336ccb
@@ -701,6 +1553,20 @@ Author: Roger Leigh <rleigh@debian.org>
 Date:   Wed Aug 18 22:07:39 2010 +0100
 
     Merge branch 'buildd'
+
+commit c58a8c79ee4ad7049f93b58fbf67f80e2a6f1742
+Merge: c59baf2 d89ed77
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Mon Aug 16 03:02:17 2010 -0400
+
+    Merge branch 'master' into debuild-functionality
+
+commit af2921850a42c1d7d6deb2d5409c16b1f991d5f3
+Merge: b2e2161 d89ed77
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Mon Aug 16 03:02:05 2010 -0400
+
+    Merge branch 'master' into sbuild-createchroot
 
 commit b336ccb407a95ff95f5c06901bb97c06a60f82da
 Merge: ebd0a35 d89ed77
@@ -824,6 +1690,47 @@ Author: Philipp Kern <pkern@debian.org>
 Date:   Thu Jul 29 23:27:36 2010 +0200
 
     bin/create-chroot: correct two typos
+
+commit b2e2161a0f605eb89cf55d81fd32aa69c9a8b363
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Jul 24 19:54:32 2010 -0400
+
+    Implement creating sbuild chroot tarballs.
+
+commit c59baf2493d6b071c0a8474ab230d34e1b758a29
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Jul 24 18:06:39 2010 -0400
+
+    Clarify that pre/post build commands in configuration file are array of array of strings.
+
+commit 8efff5bb408387d6932ebe34a9dee89fc0c2b392
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Jul 24 18:04:03 2010 -0400
+
+    Fix up sbuild man page.
+
+commit edf175d510f8c71a9825f136069e4d37fdde7154
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Jul 24 18:03:29 2010 -0400
+
+    Make pre/post build commands specified in command line to be array refs
+
+commit aee8e7bf0183dafa6406092968ee8d0455a155dc
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Jul 24 17:05:49 2010 -0400
+
+    Fixup various problems from merge.
+
+commit 820c42c6a343f1cfe7c5f83261904458abf91751
+Merge: d123d67 bbbdab1
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Jul 20 15:35:43 2010 -0400
+
+    Merge remote branch 'rleigh/debuild-am2' into debuild-functionality
+    
+    Conflicts:
+    	debian/rules
+    	man/sbuild.1.in
 
 commit ebd0a350f84d284135aad8de878c91a5827f803f
 Author: Andres Mejia <mcitadel@gmail.com>
@@ -1286,6 +2193,141 @@ Author: Roger Leigh <rleigh@debian.org>
 Date:   Wed Mar 3 23:30:51 2010 +0000
 
     Sbuild::Options: Add --no-source option
+
+commit bbbdab179fb37c694ba278999a2f740a87aae30c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Dec 12 13:46:24 2009 +0000
+
+    Sbuild::Chroot: Simplify logic for executing on host
+    
+    Previously, Chroot classes had a CHROOT=>0|1 parameter
+    to control whether the command was executed inside the
+    chroot or on the host system.  This has been removed
+    in favour of using Sbuild::ChrootRoot for executing on
+    the host.  Note that user switching on the host is not
+    permitted.  This means that root access is only allowed
+    in the build chroot.
+
+commit 557bda3b0d270957ce52ed300792ef54c82ff674
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Dec 12 10:45:17 2009 +0000
+
+    Sbuild::Build: dpkg-source and lintian options may be undefined
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit f529df8ebeca7eb615c0e907c33734ab4774bd18
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Dec 12 10:44:05 2009 +0000
+
+    Sbuild::Build: Move object member initialisation earlier in construction
+
+commit 536154a93e68178f857f39d63812901b440cce6d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Dec 12 10:42:11 2009 +0000
+
+    Sbuild::ChrootRoot: Don't inherit from ChrootPlain
+    
+    Don't support CHROOT parameter, so this is only usable fpr running
+    commands as the current user on the host.
+
+commit 029d5c269f53a40b83c35972bce4ba64e54c358b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Dec 11 23:28:57 2009 +0000
+
+    Sbuild::Build: Use ChrootRoot for running commands on host
+
+commit 1c3cff654828fe0613c54d443f5128ec96a33637
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Dec 11 23:26:01 2009 +0000
+
+    Sbuild::Build: Simplify debugging output
+
+commit e0c299f70608966f50c3164b0b95189efb9dc0bf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Dec 11 23:25:03 2009 +0000
+
+    Sbuild::Chroot: Default I/O streams to standard I/O
+
+commit dbee280656c95278c621d3e494061eb93d5eddf0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Dec 9 22:14:41 2009 +0000
+
+    Sbuild::Conf: Use arrayref for dpkg-buildpackage and lintian options
+    
+    Rather than storing options in a space-separated string, use
+    an array for safety.
+
+commit 1ac7f2ceea784ff03d36fb4cad8f160d8d1000e0
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Oct 27 01:17:37 2009 -0400
+
+    Clean the source dir before building a the source packages
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit f4333fe32a5af5bf9bb4720502a361d4869a7a73
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Fri Oct 23 18:50:21 2009 -0400
+
+    Update build system and Debian packaging
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 881fd52dda663161ae562ee13db92a194fb59c65
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Fri Oct 23 18:49:47 2009 -0400
+
+    Update sbuild man page for new features
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 74a17bcc7a75da45a48cc87db974bb95f0f02921
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Fri Oct 23 18:48:18 2009 -0400
+
+    Have sbuild process current directory if no arguments are supplied
+    
+    Also fix some issue where $_ is changed somewhere in the library code.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 9aa7b3f07ae3a8636c488b80f4f04dedbf5b83c5
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Fri Oct 23 18:46:41 2009 -0400
+
+    Implement support for supplying directories as arguments, running lintian, and running pre and post build commands
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 8adb7124922397c5be77f5465c0c414c6d58946c
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Fri Oct 23 18:16:37 2009 -0400
+
+    Supply more options to be used with sbuild
+    
+    Options are:
+    
+    • Supporting options to pass to dpkg-source
+    • Being able to run lintian
+    • Supporting options to pass to lintian
+    • Being able to run external commands before a build
+    • Being able to run commands after a build
+    • Whether to log stdout or stderr from external commands
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit e5a5799623b5c30ff872e6663723135f0e376489
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Fri Oct 23 18:04:28 2009 -0400
+
+    Improve the parse_file() utility subroutine by being able to handle filehandles
+    
+    This also provides better handling of placing the contents of fields in
+    the hashes. Trailing newlines are removed as well as leading
+    whitespace. Also, the first whitespace from multiline fields is removed.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
 
 commit ecf644adceb5321108f1da6edef6db77679e54e8
 Author: Philipp Kern <pkern@debian.org>

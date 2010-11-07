@@ -81,11 +81,10 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/buildd.1.in $(srcdir)/sbuild-abort.1.in \
 	$(srcdir)/sbuild-adduser.8.in $(srcdir)/sbuild-apt.1.in \
 	$(srcdir)/sbuild-checkpackages.1.in \
-	$(srcdir)/sbuild-clean.1.in $(srcdir)/sbuild-createchroot.8.in \
-	$(srcdir)/sbuild-hold.1.in $(srcdir)/sbuild-setup.7.in \
-	$(srcdir)/sbuild-shell.1.in $(srcdir)/sbuild-stats.1.in \
-	$(srcdir)/sbuild-update.1.in $(srcdir)/sbuild.1.in \
-	$(srcdir)/wanna-build-catdb.1.in \
+	$(srcdir)/sbuild-createchroot.8.in $(srcdir)/sbuild-hold.1.in \
+	$(srcdir)/sbuild-setup.7.in $(srcdir)/sbuild-shell.1.in \
+	$(srcdir)/sbuild-stats.1.in $(srcdir)/sbuild-update.1.in \
+	$(srcdir)/sbuild.1.in $(srcdir)/wanna-build-catdb.1.in \
 	$(srcdir)/wanna-build-mail.1.in \
 	$(srcdir)/wanna-build-merge-packages.1.in \
 	$(srcdir)/wanna-build-statistics.1.in \
@@ -101,8 +100,8 @@ CONFIG_CLEAN_FILES = buildd.1 buildd-mail.1 buildd-uploader.1 \
 	buildd-vlog.1 buildd-watcher.1 sbuild.1 sbuild-abort.1 \
 	sbuild-adduser.8 sbuild-apt.1 sbuild-checkpackages.1 \
 	sbuild-createchroot.8 sbuild-hold.1 sbuild-setup.7 \
-	sbuild-shell.1 sbuild-stats.1 sbuild-update.1 sbuild-clean.1 \
-	wanna-build.1 wanna-build-catdb.1 wanna-build-mail.1 \
+	sbuild-shell.1 sbuild-stats.1 sbuild-update.1 wanna-build.1 \
+	wanna-build-catdb.1 wanna-build-mail.1 \
 	wanna-build-merge-packages.1 wanna-build-statistics.1
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_GEN = $(am__v_GEN_$(V))
@@ -179,6 +178,7 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LINTIAN = @LINTIAN@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MAN = @MAN@
@@ -284,7 +284,6 @@ man_MANS = \
 	sbuild-shell.1			\
 	sbuild-stats.1			\
 	sbuild-update.1			\
-	sbuild-clean.1			\
 	wanna-build.1			\
 	wanna-build-catdb.1		\
 	wanna-build-mail.1		\
@@ -355,8 +354,6 @@ sbuild-shell.1: $(top_builddir)/config.status $(srcdir)/sbuild-shell.1.in
 sbuild-stats.1: $(top_builddir)/config.status $(srcdir)/sbuild-stats.1.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 sbuild-update.1: $(top_builddir)/config.status $(srcdir)/sbuild-update.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild-clean.1: $(top_builddir)/config.status $(srcdir)/sbuild-clean.1.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 wanna-build.1: $(top_builddir)/config.status $(srcdir)/wanna-build.1.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -653,6 +650,7 @@ install-data-hook:
 	ln -sf sbuild-hold.1 $(DESTDIR)$(man1dir)/sbuild-unhold.1
 	ln -sf sbuild-update.1 $(DESTDIR)$(man1dir)/sbuild-upgrade.1
 	ln -sf sbuild-update.1 $(DESTDIR)$(man1dir)/sbuild-distupgrade.1
+	ln -sf sbuild-update.1 $(DESTDIR)$(man1dir)/sbuild-clean.1
 	ln -sf wanna-build-catdb.1 $(DESTDIR)$(man1dir)/wanna-build-catgdbm.1
 	ln -sf wanna-build-catdb.1 $(DESTDIR)$(man1dir)/wanna-build-catmldbm.1
 	ln -sf wanna-build-merge-packages.1 $(DESTDIR)$(man1dir)/wanna-build-merge-quinn.1

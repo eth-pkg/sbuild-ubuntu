@@ -186,6 +186,9 @@ sub init_allowed_keys {
 	    CHECK => $validate_program,
 	    DEFAULT => $Sbuild::Sysconfig::programs{'DPKG_SOURCE'}
 	},
+	'DPKG_SOURCE_OPTIONS'			=> {
+	    DEFAULT => []
+	},
 	'DCMD'					=> {
 	    CHECK => $validate_program,
 	    DEFAULT => $Sbuild::Sysconfig::programs{'DCMD'}
@@ -450,7 +453,7 @@ sub init_allowed_keys {
 	    DEFAULT => 'build-progress'
 	},
 	'BUILD_DEP_RESOLVER'			=> {
-	    DEFAULT => 'internal',
+	    DEFAULT => 'aptitude',
 	    CHECK => sub {
 		my $self = shift;
 		my $entry = shift;
@@ -463,8 +466,32 @@ sub init_allowed_keys {
 			     qw(internal aptitude));
 	    },
 	},
-	'RESOLVE_VIRTUAL'				=> {
+	'LINTIAN'				=> {
+	    CHECK => $validate_program,
+	    DEFAULT => $Sbuild::Sysconfig::programs{'LINTIAN'},
+	},
+	'RUN_LINTIAN'				=> {
+	    DEFAULT => 0
+	},
+	'LINTIAN_OPTIONS'			=> {
+	    DEFAULT => []
+	},
+	'EXTERNAL_COMMANDS'			=> {
+	    DEFAULT => {
+		"pre-build-commands" => [],
+		"chroot-setup-commands" => [],
+		"chroot-cleanup-commands" => [],
+		"post-build-commands" => [],
+	    },
+	},
+	'LOG_EXTERNAL_COMMAND_OUTPUT'		=> {
 	    DEFAULT => 1
+	},
+	'LOG_EXTERNAL_COMMAND_ERROR'		=> {
+	    DEFAULT => 1
+	},
+	'RESOLVE_VIRTUAL'				=> {
+	    DEFAULT => 0
 	},
     );
 
@@ -494,6 +521,7 @@ sub read_config {
     my $apt_cache = undef;
     my $aptitude = undef;
     my $dpkg_source = undef;
+    my $dpkg_source_opts = undef;
     my $dcmd = undef;
     my $md5sum = undef;
     my $avg_time_db = undef;
@@ -552,6 +580,12 @@ sub read_config {
     my $job_file = undef;
     my $build_dir = undef;
     my $build_dep_resolver = undef;
+    my $lintian = undef;
+    my $run_lintian = undef;
+    my $lintian_opts = undef;
+    my $external_commands = undef;
+    my $log_external_command_output = undef;
+    my $log_external_command_error = undef;
     my $resolve_virtual = undef;
     my $core_depends = undef;
 
@@ -586,6 +620,7 @@ sub read_config {
     $self->set('APT_CACHE', $apt_cache);
     $self->set('APTITUDE', $aptitude);
     $self->set('DPKG_SOURCE', $dpkg_source);
+    $self->set('DPKG_SOURCE_OPTIONS', $dpkg_source_opts);
     $self->set('DCMD', $dcmd);
     $self->set('MD5SUM', $md5sum);
     $self->set('AVG_TIME_DB', $avg_time_db);
@@ -662,7 +697,14 @@ sub read_config {
 	$self->get('BIN_NMU')) {
 	die "A maintainer name, uploader name or key ID must be specified in .sbuildrc,\nor use -m, -e or -k, when performing a binNMU\n";
     }
-
+    $self->set('LINTIAN', $lintian);
+    $self->set('RUN_LINTIAN', $run_lintian);
+    $self->set('LINTIAN_OPTIONS', $lintian_opts);
+    $self->set('EXTERNAL_COMMANDS', $external_commands);
+    push(@{${$self->get('EXTERNAL_COMMANDS')}{"chroot-setup-commands"}},
+        $chroot_setup_script) if ($chroot_setup_script);
+    $self->set('LOG_EXTERNAL_COMMAND_OUTPUT', $log_external_command_output);
+    $self->set('LOG_EXTERNAL_COMMAND_ERROR', $log_external_command_error);
 }
 
 sub check_group_membership ($) {
