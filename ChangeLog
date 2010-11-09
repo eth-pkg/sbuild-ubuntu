@@ -1,3 +1,72 @@
+commit fa4cd4daa34d687f64b8b085c6aaaab0a716a3be
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 9 19:47:06 2010 +0000
+
+    debian: Document revert of resolver to internal
+
+commit 2e07435a301dcaae4858b3a72e00f6b33a793566
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 9 19:24:58 2010 +0000
+
+    debian: Document resolver changes in sbuild.NEWS
+
+commit c16ed3fe979926ab1bcbd43cc8a307703062479c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 9 19:17:54 2010 +0000
+
+    NEWS: Revert resolver to internal
+
+commit 49047c1d7bc3809774920aa7fd49921759ebe16b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 9 17:45:06 2010 +0000
+
+    Sbuild::Conf: Revert resolver to internal by default for now
+
+commit 77a5b174d0b518bf4fe9ee47ec56e60b9418929a
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 9 17:33:30 2010 +0000
+
+    sbuild.conf: $lintian_opt should be $lintian_opts
+
+commit 49d453185ee50f3b22372cc37e8e82c3cc7117c1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 8 21:55:57 2010 +0000
+
+    Extend sbuild compatibility mode for buildd usage
+    
+    Define compatibility mode in Sbuild::Sysconfig.
+    Default resolver to internal in configuration (if compat).
+    Strip chroot namespace when beginning session (if compat).
+    [schroot 1.2.x compat]
+
+commit aa172107b96c87a92114bac659e83fa9d56d5649
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 8 21:08:14 2010 +0000
+
+    Sbuild: Correct chroot lock unlocking on failure path
+    
+    Locking failure would unlock prematurely.
+
+commit 0266fb2124041894e5e2ff5466eab0c78c8e20ba
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 8 17:45:35 2010 +0000
+
+    debian: Bump version to 0.60.4-1 and close #602789
+
+commit 5076fda4c3fe4cb97685719f006a4ce0453cf3ef
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 8 17:15:46 2010 +0000
+
+    NEWS: Bump version to 0.60.4
+
+commit 3531b5f6f93afb490aa0cdb5981a17d7ba977d2c
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Mon Nov 8 01:38:28 2010 -0500
+
+    Fix regression when passing source:<distribution> as CHROOT for sbuild-update and friends.
+    
+    Also makes it possible to override use of 'source' as namespace.
+
 commit 413577ce20a7c10b4fce3b1d2ca5ea3f408d28a8
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sun Nov 7 22:33:26 2010 +0000
