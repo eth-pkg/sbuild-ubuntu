@@ -186,19 +186,22 @@ sub run_apt {
 
     my $builder = $self->get('Builder');
 
-    return 1 if !@packages;
-
     $msgs = "";
     # redirection of stdin from /dev/null so that conffile question
     # are treated as if RETURN was pressed.
     # dpkg since 1.4.1.18 issues an error on the conffile question if
     # it reads EOF -- hardwire the new --force-confold option to avoid
     # the questions.
+    my @apt_command = ($builder->get_conf('APT_GET'), '--purge',
+	'-o', 'DPkg::Options::=--force-confold',
+	'-o', 'DPkg::Options::=--refuse-remove-essential',
+	'-q', '--no-install-recommends');
+    push @apt_command, '--allow-unauthenticated' if
+	($self->get_conf('APT_ALLOW_UNAUTHENTICATED'));
+    push @apt_command, "$mode", $action, @packages;
     my $pipe =
 	$builder->get('Session')->pipe_apt_command(
-	{ COMMAND => [$builder->get_conf('APT_GET'), '--purge',
-		      '-o', 'DPkg::Options::=--force-confold',
-		      '-q', "$mode", $action, @packages],
+	{ COMMAND => \@apt_command,
 	  ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
 	  USER => 'root',
 	  PRIORITY => 0,

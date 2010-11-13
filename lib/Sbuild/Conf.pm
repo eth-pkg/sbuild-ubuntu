@@ -461,19 +461,58 @@ sub init_allowed_keys {
 
 		die '$key: Invalid build-dependency resolver \'' .
 		    $self->get($key) .
-		    "'\nValid algorthms are 'internal' and 'aptitude'\n"
+		    "'\nValid algorthms are 'internal', 'apt' and 'aptitude'\n"
 		    if !isin($self->get($key),
-			     qw(internal aptitude));
+			     qw(internal apt aptitude));
 	    },
 	},
 	'LINTIAN'				=> {
-	    CHECK => $validate_program,
+	    CHECK => sub {
+		my $self = shift;
+		my $entry = shift;
+		my $key = $entry->{'NAME'};
+
+		# Only validate if needed.
+		if ($self->get('RUN_LINTIAN')) {
+		    $validate_program->($self, $entry);
+		}
+	    },
 	    DEFAULT => $Sbuild::Sysconfig::programs{'LINTIAN'},
 	},
 	'RUN_LINTIAN'				=> {
+	    CHECK => sub {
+		my $self = shift;
+		$self->check('LINTIAN');
+	    },
 	    DEFAULT => 0
 	},
 	'LINTIAN_OPTIONS'			=> {
+	    DEFAULT => []
+	},
+	'PIUPARTS'				=> {
+	    CHECK => sub {
+		my $self = shift;
+		my $entry = shift;
+		my $key = $entry->{'NAME'};
+
+		# Only validate if needed.
+		if ($self->get('RUN_PIUPARTS')) {
+		    $validate_program->($self, $entry);
+		}
+	    },
+	    DEFAULT => $Sbuild::Sysconfig::programs{'PIUPARTS'},
+	},
+	'RUN_PIUPARTS'				=> {
+	    CHECK => sub {
+		my $self = shift;
+		$self->check('PIUPARTS');
+	    },
+	    DEFAULT => 0
+	},
+	'PIUPARTS_OPTIONS'			=> {
+	    DEFAULT => []
+	},
+	'PIUPARTS_ROOT_ARGS'			=> {
 	    DEFAULT => []
 	},
 	'EXTERNAL_COMMANDS'			=> {
@@ -583,6 +622,10 @@ sub read_config {
     my $lintian = undef;
     my $run_lintian = undef;
     my $lintian_opts = undef;
+    my $piuparts = undef;
+    my $run_piuparts = undef;
+    my $piuparts_opts = undef;
+    my $piuparts_root_args = undef;
     my $external_commands = undef;
     my $log_external_command_output = undef;
     my $log_external_command_error = undef;
@@ -697,9 +740,13 @@ sub read_config {
 	$self->get('BIN_NMU')) {
 	die "A maintainer name, uploader name or key ID must be specified in .sbuildrc,\nor use -m, -e or -k, when performing a binNMU\n";
     }
-    $self->set('LINTIAN', $lintian);
     $self->set('RUN_LINTIAN', $run_lintian);
+    $self->set('LINTIAN', $lintian);
     $self->set('LINTIAN_OPTIONS', $lintian_opts);
+    $self->set('RUN_PIUPARTS', $run_piuparts);
+    $self->set('PIUPARTS', $piuparts);
+    $self->set('PIUPARTS_OPTIONS', $piuparts_opts);
+    $self->set('PIUPARTS_ROOT_ARGS', $piuparts_root_args);
     $self->set('EXTERNAL_COMMANDS', $external_commands);
     push(@{${$self->get('EXTERNAL_COMMANDS')}{"chroot-setup-commands"}},
         $chroot_setup_script) if ($chroot_setup_script);

@@ -1,3 +1,166 @@
+commit aad7e66da0062cf880418f55e52eacf78f2b11c3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 14 12:15:15 2010 +0000
+
+    Sbuild::Build: Correctly report build times on failure
+
+commit 43cf4364c5630cb5a5736cc22217197b592c3e5e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 14 12:01:25 2010 +0000
+
+    etc: Only install 99builddsourceslist on buildds
+
+commit 1fac57ea98d9d04308baeb643c8f0bd10f74c450
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 14 11:56:59 2010 +0000
+
+    debian: Bump version to 0.60.5-1
+
+commit 70c150663a6d58894ef2313d2ae20c8ded7d300f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 14 11:56:29 2010 +0000
+
+    NEWS: Bump version to 0.60.5 and document piuparts and apt resolver
+
+commit 329258ad45b5442b2c4848d0a6db3b6f7c4af557
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 14 11:35:26 2010 +0000
+
+    Sbuild::Build: Remove stats delimiters
+
+commit e56d65bad7aeb5cc47862d924288bfc993d72820
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 14 11:18:12 2010 +0000
+
+    Sbuild::Build: Add job name to statistics
+
+commit 32c59940679f70aef491005efabd1bb63268b1db
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 14 11:17:29 2010 +0000
+
+    sbuild: Return buildd-style exit codes for all use cases
+
+commit b0463acbe37e8a3ec661b3ed89fc1344c2cf49dd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 13 19:15:42 2010 +0000
+
+    Sbuild::InternalResolver: Prune Provided virtual packages in filter_dependencies
+    
+    If RESOLVE_VIRTUAL is enabled, prune provided virtual packages in
+    filter_dependencies.  Unsatisfied virtual depdendencies are later
+    expanded in virtual_dependencies.  The pruning is needed or else
+    we might expand the virtual package to a different package than
+    already providing the dependency, if such a package was already
+    installed.
+
+commit 25c77aea4133c04bf956f3dc79a2e3c3a749b89f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 13 18:44:44 2010 +0000
+
+    debian: Close #603397
+
+commit c833c64bb7e34410c5105c5304a41e5396cbd234
+Author: Loïc Minier <lool@dooz.org>
+Date:   Sat Nov 13 18:41:58 2010 +0000
+
+    Sbuild::ChrootSetup: Run dpkg with --force-confold as for build deps
+
+commit 2033da980182f3b54a7782c5a7de72c33cd59e15
+Merge: b402d90 dbf0d41
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 13 15:03:01 2010 +0000
+
+    Merge remote branch 'origin/buildd-0.60.0'
+    
+    Conflicts:
+    	bin/create-chroot
+
+commit b402d9065465b8854194e85b1c960b4a03aa874c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 13 14:38:20 2010 +0000
+
+    Sbuild::Build: Add functions for stats logging
+
+commit 4c115f05b01b452203d26b4e43c302d7412f9a08
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 13 13:31:31 2010 +0000
+
+    Sbuild::Build: Log stats for Distribution and hyphenate Source-Version
+
+commit d2b52f30c3cee69d1f2f09bc8fbe415a6b6e455a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 13 11:41:55 2010 +0000
+
+    Sbuild::Conf: Only validate lintian and piuparts when enabled
+
+commit dc806b02c468efc19b91e220d2f982304f14ebab
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Nov 13 03:24:55 2010 -0500
+
+    Add feature to run piuparts after a successful build.
+
+commit 0ccb61ca018a90acc200fb20761fca98c11523a6
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Nov 13 01:35:24 2010 -0500
+
+    Place lintian run code inside a function.
+
+commit 1d46d853b2abfac197e40b70adbd6ca07d083ff4
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Fri Nov 12 17:26:56 2010 -0500
+
+    Include AptResolver module in installation of libsbuild-perl.
+
+commit dbf0d41c5d824c028daaec50203209724b62cfdd
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Nov 11 22:25:25 2010 +0100
+
+    bin/create-chroot.sh: create edu chroots on i386, amd64 and powerpc
+
+commit 474ad9f811e39115327034c23b08720a1121850f
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Nov 11 22:02:43 2010 +0100
+
+    etc/99builddsourceslist: rip out support for key packages
+    
+    It doesn't seem to be possible to use apt-get via simple chroot
+    statements in a sane way from this script.  You'd need to update
+    its cache first because the new sources.list might not refer to
+    any mirrors whose lists are already cached and then dpkg complains
+    about its environment not being set up properly.
+    
+    So let's add the debian-edu key to the package and handle it like
+    the backports.org key.
+
+commit 548ee0641883b1c3170416ef61da19ab9d8d3526
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Nov 10 01:20:26 2010 -0500
+
+    Add option to refuse to ever remove essential packages.
+
+commit 1ea5e270438db99b646fcbf28ce5ad3dd708f55b
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Nov 10 01:07:31 2010 -0500
+
+    Fix some aptitude options in accordance with aptitude documentation.
+
+commit 0b0eb6a221ba1a16379c329ff6e5c987ed37a897
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Wed Nov 10 01:00:23 2010 -0500
+
+    Set --allow-unauthenticated (when appropriate) and --no-install-recommends option for apt resolver.
+
+commit 07bf78ec09d14fcc1b985158f3da36f80c84c4e3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Nov 10 00:01:58 2010 +0000
+
+    Sbuild::AptResolver: Add new resolver using apt-get
+    
+    Like the 'aptitude' resolver, 'apt' installs a dependency package
+    containing the Build-Depends and Build-Conflicts and Depends and
+    Conflicts, then runs "apt-get -yf install" to force installation
+    and removal of the depends and conflicts.
+
 commit fa4cd4daa34d687f64b8b085c6aaaab0a716a3be
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Tue Nov 9 19:47:06 2010 +0000
@@ -971,6 +1134,12 @@ Date:   Mon Nov 1 16:32:11 2010 +0000
     Skip copying if source and destination are identical, preventing
     blanking the file if it's hardlinked or bind mounted.
     Use strict POSIX shell.
+
+commit 74ca8ce573377cdf8eaa7ef045c512d5467847bc
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Nov 1 10:37:42 2010 +0100
+
+    bin/create-chroot: add testing-edu
 
 commit 7d14ca461db2c29429f305fcd4021660ce90faed
 Author: Roger Leigh <rleigh@debian.org>

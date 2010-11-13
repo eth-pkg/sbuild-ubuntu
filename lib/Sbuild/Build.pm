@@ -49,6 +49,7 @@ use Sbuild::Conf;
 use Sbuild::LogBase qw($saved_stdout);
 use Sbuild::Sysconfig;
 use Sbuild::Utility qw(check_url download parse_file dsc_files);
+use Sbuild::AptResolver;
 use Sbuild::AptitudeResolver;
 use Sbuild::InternalResolver;
 
@@ -69,6 +70,7 @@ sub new {
     my $self = $class->SUPER::new($conf);
     bless($self, $class);
 
+    $self->set('Job', $dsc);
     $self->set('Arch', undef);
     $self->set('Chroot Dir', '');
     $self->set('Chroot Build Dir', '');
@@ -268,7 +270,10 @@ sub run {
 
     $self->set_status('building');
 
-    if ($self->get_conf('BUILD_DEP_RESOLVER') eq "aptitude") {
+    if ($self->get_conf('BUILD_DEP_RESOLVER') eq "apt") {
+	$self->set('Dependency Resolver',
+		   Sbuild::AptResolver->new($self));
+    } elsif ($self->get_conf('BUILD_DEP_RESOLVER') eq "aptitude") {
 	$self->set('Dependency Resolver',
 		   Sbuild::AptitudeResolver->new($self));
     } else {
@@ -279,6 +284,7 @@ sub run {
 
 
     $self->set('Pkg Start Time', time);
+    $self->set('Pkg End Time', $self->get('Pkg Start Time'));
 
     # Acquire the architecture we're building for.
     $self->set('Arch', $self->get_conf('ARCH'));
@@ -531,32 +537,10 @@ sub run {
 	$self->log_subsection("Post Build");
 
 	# Run lintian.
-	my $lintian = $self->get_conf('LINTIAN');
-	if (($self->get_conf('RUN_LINTIAN')) && (-x $lintian)) {
-	    $self->log_subsubsection("lintian");
+        $self->run_lintian();
 
-	    my @lintian_command = ($lintian);
-	    push @lintian_command, @{$self->get_conf('LINTIAN_OPTIONS')} if
-		($self->get_conf('LINTIAN_OPTIONS'));
-	    push @lintian_command, $self->get('Changes File');
-	    $self->get('Host')->run_command(
-		{ COMMAND => \@lintian_command,
-		  CHROOT => 0,
-		  PRIORITY => 0,
-		});
-	    my $status = $? >> 8;
-
-	    $self->log("\n");
-	    if (! $?) {
-		$self->log_info("Lintian run was successful.\n");
-	    } else {
-		my $why = "unknown reason";
-		$why = "runtime error" if ($status == 2);
-		$why = "policy violation" if ($status == 1);
-		$why = "received signal " . $? & 127 if ($? & 127);
-		$self->log_error("Lintian run failed ($why)\n");
-	    }
-	}
+        # Run piuparts.
+        $self->run_piuparts();
 
 	# Run post build external commands
 	$self->run_external_commands("post-build-commands",
@@ -951,6 +935,86 @@ sub run_external_commands {
     return $returnval;
 }
 
+sub run_lintian {
+    my $self = shift;
+
+    return 1 unless ($self->get_conf('RUN_LINTIAN'));
+
+    $self->log_subsubsection("lintian");
+
+    my $lintian = $self->get_conf('LINTIAN');
+    if (! -x $lintian) {
+        my $why = "$lintian does not exist or is not executable";
+        $self->log_error("Lintian run failed ($why)\n");
+        return 0;
+    }
+
+    my @lintian_command = ($lintian);
+    push @lintian_command, @{$self->get_conf('LINTIAN_OPTIONS')} if
+        ($self->get_conf('LINTIAN_OPTIONS'));
+    push @lintian_command, $self->get('Changes File');
+    $self->get('Host')->run_command(
+        { COMMAND => \@lintian_command,
+          CHROOT => 0,
+          PRIORITY => 0,
+        });
+    my $status = $? >> 8;
+
+    $self->log("\n");
+    if ($?) {
+        my $why = "unknown reason";
+        $why = "runtime error" if ($status == 2);
+        $why = "policy violation" if ($status == 1);
+        $why = "received signal " . $? & 127 if ($? & 127);
+        $self->log_error("Lintian run failed ($why)\n");
+        return 0;
+    }
+
+    $self->log_info("Lintian run was successful.\n");
+    return 1;
+}
+
+sub run_piuparts {
+    my $self = shift;
+
+    return 1 unless ($self->get_conf('RUN_PIUPARTS'));
+
+    $self->log_subsubsection("piuparts");
+
+    my $piuparts = $self->get_conf('PIUPARTS');
+    if (! -x $piuparts) {
+        my $why = "$piuparts does not exist or is not executable";
+        $self->log_error("Piuparts run failed ($why)\n");
+        return 0;
+    }
+
+    my @piuparts_command;
+    if (scalar(@{$self->get_conf('PIUPARTS_ROOT_ARGS')})) {
+	push @piuparts_command, @{$self->get_conf('PIUPARTS_ROOT_ARGS')};
+    } else {
+	push @piuparts_command, $Sbuild::Sysconfig::programs{'SUDO'}, '--';
+    }
+    push @piuparts_command, $piuparts;
+    push @piuparts_command, @{$self->get_conf('PIUPARTS_OPTIONS')} if
+        ($self->get_conf('PIUPARTS_OPTIONS'));
+    push @piuparts_command, $self->get('Changes File');
+    $self->get('Host')->run_command(
+        { COMMAND => \@piuparts_command,
+          CHROOT => 0,
+          PRIORITY => 0,
+        });
+    my $status = $? >> 8;
+
+    $self->log("\n");
+    if ($?) {
+        $self->log_error("Piuparts run failed.\n");
+        return 0;
+    }
+
+    $self->log_info("Piuparts run was successful.\n");
+    return 1;
+}
+
 sub build {
     my $self = shift;
 
@@ -1125,6 +1189,7 @@ sub build {
 
     $self->log_subsubsection("dpkg-buildpackage");
     $self->set('Build Start Time', time);
+    $self->set('Build End Time', $self->get('Build Start Time'));
     $self->set('Pkg Fail Stage', "build");
 
     my $binopt = $self->get_conf('BUILD_SOURCE') ?
@@ -1582,19 +1647,35 @@ sub add_stat {
 sub generate_stats {
     my $self = shift;
 
+    $self->add_stat('Job', $self->get('Job'));
     $self->add_stat('Package', $self->get('Package'));
     $self->add_stat('Version', $self->get('Version'));
-    $self->add_stat('Source Version', $self->get('OVersion'));
+    $self->add_stat('Source-Version', $self->get('OVersion'));
     $self->add_stat('Architecture', $self->get('Arch'));
+    $self->add_stat('Distribution', $self->get_conf('DISTRIBUTION'));
     $self->add_stat('Space', $self->get('This Space'));
     $self->add_stat('Build-Time',
 		    $self->get('Build End Time')-$self->get('Build Start Time'));
     $self->add_stat('Package-Time',
 		    $self->get('Pkg End Time')-$self->get('Pkg Start Time'));
-    $self->add_stat('Space', $self->get('This Space'));
+    $self->add_stat('Build-Space', $self->get('This Space'));
     $self->add_stat('Status', $self->get_status());
     $self->add_stat('Fail-Stage', $self->get('Pkg Fail Stage'))
 	if ($self->get_status() ne "successful");
+}
+
+sub log_stats {
+    my $self = shift;
+    foreach my $stat (sort keys %{$self->get('Summary Stats')}) {
+	$self->log("${stat}: " . $self->get('Summary Stats')->{$stat} . "\n");
+    }
+}
+
+sub print_stats {
+    my $self = shift;
+    foreach my $stat (sort keys %{$self->get('Summary Stats')}) {
+	print STDOUT "${stat}: " . $self->get('Summary Stats')->{$stat} . "\n";
+    }
 }
 
 sub write_stats {
@@ -1781,9 +1862,7 @@ sub close_build_log {
 
     $self->log_subsection('Summary');
     $self->generate_stats();
-    foreach my $stat (sort keys %{$self->get('Summary Stats')}) {
-	$self->log("${stat}: " . $self->get('Summary Stats')->{$stat} . "\n");
-    }
+    $self->log_stats();
 
     $self->log_sep();
     $self->log("Finished at ${date}\n");

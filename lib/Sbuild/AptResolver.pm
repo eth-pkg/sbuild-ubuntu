@@ -19,7 +19,7 @@
 #
 #######################################################################
 
-package Sbuild::AptitudeResolver;
+package Sbuild::AptResolver;
 
 use strict;
 use warnings;
@@ -68,16 +68,7 @@ sub install_deps {
     my $dummy_dir = $self->get('Dummy package path') . '/' . $dummy_pkg_name;
     my $dummy_deb = $self->get('Dummy package path') . '/' . $dummy_pkg_name . '.deb';
 
-    $builder->log_subsection("Install $name build dependencies (aptitude-based resolver)");
-
-    #install aptitude first:
-    my (@aptitude_installed_packages, @aptitude_removed_packages);
-    if (!$self->run_apt('-y', \@aptitude_installed_packages, \@aptitude_removed_packages, 'install', 'aptitude')) {
-	$builder->log_warning('Could not install aptitude!');
-	goto cleanup;
-    }
-    $self->set_installed(@aptitude_installed_packages);
-    $self->set_removed(@aptitude_removed_packages);
+    $builder->log_subsection("Install $name build dependencies (apt-based resolver)");
 
     if (!mkdir $dummy_dir) {
 	$builder->log_warning('Could not create build-depends dummy dir ' . $dummy_dir . ': ' . $!);
@@ -141,7 +132,7 @@ EOF
 
     print DUMMY_CONTROL <<"EOF";
 Maintainer: Debian buildd-tools Developers <buildd-tools-devel\@lists.alioth.debian.org>
-Description: Dummy package to satisfy dependencies with aptitude - created by sbuild
+Description: Dummy package to satisfy dependencies with apt - created by sbuild
  This package was created automatically by sbuild and should never appear on
  a real system. You can safely remove it.
 EOF
@@ -171,74 +162,22 @@ EOF
 	goto package_cleanup;
     }
 
-    my $ignore_trust_violations =
-	$self->get_conf('APT_ALLOW_UNAUTHENTICATED') ? 'true' : 'false';
-
-    my @aptitude_install_command = (
-	$self->get_conf('APTITUDE'),
-	'-y',
-	'--without-recommends',
-	'-o', "Aptitude::CmdLine::Ignore-Trust-Violations=$ignore_trust_violations",
-	'-o', 'Aptitude::ProblemResolver::StepScore=100',
-	'-o', "Aptitude::ProblemResolver::Hints::KeepDummy=reject $dummy_pkg_name :UNINST",
-	'-o', 'Aptitude::ProblemResolver::Keep-All-Level=55000',
-	'-o', 'Aptitude::ProblemResolver::Remove-Essential-Level=maximum',
-	'install',
-	$dummy_pkg_name
-    );
-
-    $builder->log(join(" ", @aptitude_install_command), "\n");
-
-    my $pipe = $session->pipe_aptitude_command(
-	    { COMMAND => \@aptitude_install_command,
-	      ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
-	      PIPE => 'in',
-	      USER => 'root',
-	      CHROOT => 1,
-	      PRIORITY => 0,
-	      DIR => '/' });
-
-    if (!$pipe) {
-	$builder->log_warning('Cannot open pipe from aptitude: ' . $! . "\n");
-	goto package_cleanup;
+    my (@instd, @rmvd);
+    $builder->log("Installing build dependencies\n");
+    if (!$self->run_apt("-yf", \@instd, \@rmvd, 'install')) {
+	$builder->log("Package installation failed\n");
+	if (defined ($builder->get('Session')->get('Session Purged')) &&
+	    $builder->get('Session')->get('Session Purged') == 1) {
+	    $builder->log("Not removing build depends: cloned chroot in use\n");
+	} else {
+	    $self->set_installed(@instd);
+	    $self->set_removed(@rmvd);
+	    goto package_cleanup;
+	}
+	return 0;
     }
-
-    my $aptitude_output = "";
-    while(<$pipe>) {
-	$aptitude_output .= $_;
-	$builder->log($_);
-    }
-    close($pipe);
-    my $aptitude_exit_code = $?;
-
-    if ($aptitude_output =~ /^E:/m) {
-	$builder->log('Satisfying build-deps with aptitude failed.' . "\n");
-	goto package_cleanup;
-    }
-
-    my ($installed_pkgs, $removed_pkgs) = ("", "");
-    while ($aptitude_output =~ /The following NEW packages will be installed:\n((^[  ].*\n)*)/gmi) {
-	($installed_pkgs = $1) =~ s/^[    ]*((.|\n)*)\s*$/$1/m;
-	$installed_pkgs =~ s/\*//g;
-	$installed_pkgs =~ s/\{.\}//g;
-    }
-    while ($aptitude_output =~ /The following packages will be REMOVED:\n((^[    ].*\n)*)/gmi) {
-	($removed_pkgs = $1) =~ s/^[   ]*((.|\n)*)\s*$/$1/m;
-	$removed_pkgs =~ s/\*//g;
-	$removed_pkgs =~ s/\{.\}//g; #remove {u}, {a} in output...
-    }
-
-    my @installed_packages = split( /\s+/, $installed_pkgs);
-
-    $self->set_installed(keys %{$self->get('Changes')->{'installed'}}, @installed_packages);
-    $self->set_removed(keys %{$self->get('Changes')->{'removed'}}, split( /\s+/, $removed_pkgs));
-
-    if ($aptitude_exit_code != 0) {
-	goto package_cleanup;
-    }
-
-    #Seems it all went fine.
-
+    $self->set_installed(@instd);
+    $self->set_removed(@rmvd);
     $status = 1;
 
   package_cleanup:
