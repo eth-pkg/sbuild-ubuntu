@@ -21,13 +21,12 @@
 # Import default modules into main
 package main;
 use Sbuild qw($devnull);
-use Sbuild::Conf;
 use Sbuild::ChrootInfoSchroot;
 use Sbuild::ChrootInfoSudo;
 use Sbuild::Sysconfig;
 
 $ENV{'LC_ALL'} = "POSIX";
-$ENV{'SHELL'} = $Sbuild::Sysconfig::programs{'SHELL'};
+$ENV{'SHELL'} = '/bin/sh';
 
 # avoid intermixing of stdout and stderr
 $| = 1;
@@ -37,7 +36,6 @@ package Sbuild::Utility;
 use strict;
 use warnings;
 
-use Sbuild::Conf;
 use Sbuild::Chroot;
 use File::Temp qw(tempfile);
 use Module::Load::Conditional qw(can_load); # Used to check for LWP::UserAgent

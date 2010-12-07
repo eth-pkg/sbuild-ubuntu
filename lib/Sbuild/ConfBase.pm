@@ -47,10 +47,19 @@ sub init_allowed_keys {
 	my $program = $self->get($key);
 
 	die "$key binary is not defined"
-	    if !defined($program);
+	    if !defined($program) || !$program;
 
-	die "$key binary $program does not exist or is not executable"
-	    if !-x $program;
+	# Emulate execvp behaviour by searching the binary in the PATH.
+	my @paths = split(/:/, $self->get('PATH'));
+	# Also consider the empty path for absolute locations.
+	push (@paths, '');
+	my $found = 0;
+	foreach my $path (@paths) {
+	    $found = 1 if (-x File::Spec->catfile($path, $program));
+	}
+
+	die "$key binary '$program' does not exist or is not executable"
+	    if !$found;
     };
 
     my $validate_directory = sub {
@@ -73,13 +82,16 @@ sub init_allowed_keys {
     my $fullname = $pwinfo[6];
     $fullname =~ s/,.*$//;
 
-    chomp(my $hostname = `$Sbuild::Sysconfig::programs{'HOSTNAME'} -f`);
+    chomp(my $hostname = `hostname -f`);
 
     # Not user-settable.
     chomp(my $host_arch =
-	  readpipe("$Sbuild::Sysconfig::programs{'DPKG'} --print-architecture"));
+	  readpipe("dpkg --print-architecture"));
 
     my %common_keys = (
+	'PATH'					=> {
+	    DEFAULT => "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games"
+	},
 	'DISTRIBUTION'				=> {
 	    SET => sub {
 		my $self = shift;
@@ -95,12 +107,14 @@ sub init_allowed_keys {
 		#Now, we might need to adjust the MAILTO based on the
 		#config data. We shouldn't do this if it was already
 		#explicitly set by the command line option:
-		if (!$self->get('MAILTO_FORCED_BY_CLI') 
-		    && defined($self->get('DISTRIBUTION')) 
-		    && $self->get('DISTRIBUTION') 
+		if (defined($self->get('MAILTO_FORCED_BY_CLI')) &&
+		    !$self->get('MAILTO_FORCED_BY_CLI')
+		    && defined($self->get('DISTRIBUTION'))
+		    && $self->get('DISTRIBUTION')
+		    && defined($self->get('MAILTO_HASH'))
 		    && $self->get('MAILTO_HASH')->{$self->get('DISTRIBUTION')}) {
 		    $self->set('MAILTO',
-		        $self->get('MAILTO_HASH')->{$self->get('DISTRIBUTION')});
+			       $self->get('MAILTO_HASH')->{$self->get('DISTRIBUTION')});
 		}
 	    }
 	},
@@ -109,7 +123,7 @@ sub init_allowed_keys {
 	},
 	'MAILPROG'				=> {
 	    CHECK => $validate_program,
-	    DEFAULT => $Sbuild::Sysconfig::programs{'SENDMAIL'}
+	    DEFAULT => '/usr/sbin/sendmail'
 	},
 	# TODO: Check if defaulted in code assuming undef
 	'ARCH'					=> {
@@ -139,10 +153,6 @@ sub init_allowed_keys {
 	'DEBUG'					=> {
 	    DEFAULT => 0
 	},
-	'DPKG'					=> {
-	    CHECK => $validate_program,
-	    DEFAULT => $Sbuild::Sysconfig::programs{'DPKG'}
-	},
     );
 
     $self->set_allowed_keys(\%common_keys);
@@ -156,7 +166,6 @@ sub new {
     bless($self, $class);
 
     $self->init_allowed_keys();
-    $self->read_config();
 
     return $self;
 }

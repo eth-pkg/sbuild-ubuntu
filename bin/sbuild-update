@@ -21,26 +21,14 @@
 use strict;
 use warnings;
 
-use Sbuild::ChrootSetup qw(update upgrade distupgrade clean autoclean
-                           autoremove);
+use Sbuild::ChrootSetup qw(generate_keys);
+use Sbuild::ChrootRoot;
+use Sbuild::Resolver qw(get_resolver);
 
 package Conf;
 
-use Sbuild::Conf;
-
-BEGIN {
-    use Exporter ();
-    our (@ISA, @EXPORT);
-
-    @ISA = qw(Exporter Sbuild::Conf);
-
-    @EXPORT = qw();
-}
-
-sub init_allowed_keys {
-    my $self = shift;
-
-    $self->SUPER::init_allowed_keys();
+sub setup {
+    my $conf = shift;
 
     my %update_keys = (
 	'COMPAT'				=> {
@@ -64,15 +52,18 @@ sub init_allowed_keys {
 	'AUTOREMOVE'			=> {
 	    DEFAULT => 0
 	},
+	'KEYGEN'			=> {
+	    DEFAULT => 0
+	},
     );
 
-    $self->set_allowed_keys(\%update_keys);
+    $conf->set_allowed_keys(\%update_keys);
 }
 
 package Options;
 
 use Sbuild::OptionsBase;
-use Sbuild::Conf;
+use Sbuild::Conf qw();
 
 BEGIN {
     use Exporter ();
@@ -87,6 +78,9 @@ sub set_options {
     my $self = shift;
 
     $self->add_options(
+	"arch=s" => sub {
+	    $self->set_conf('ARCH', $_[1]);
+	},
 	"update|u" => sub {
 	    $self->set_conf('UPDATE', 1);
 	    $self->set_conf('COMPAT', 0);
@@ -110,20 +104,25 @@ sub set_options {
 	"autoremove|r" => sub {
 	    $self->set_conf('AUTOREMOVE', 1);
 	    $self->set_conf('COMPAT', 0);
+	},
+	"keygen|k" => sub {
+	    $self->set_conf('KEYGEN', 1);
+	    $self->set_conf('COMPAT', 0);
 	});
 }
 
 package main;
 
 use Getopt::Long;
-use Sbuild qw(help_text version_text usage_error);
+use Sbuild qw(help_text version_text usage_error check_group_membership);
 use Sbuild::Utility qw(setup cleanup);
 
-my $conf = Conf->new();
+my $conf = Sbuild::Conf::new();
+Conf::setup($conf);
 exit 1 if !defined($conf);
 my $options = Options->new($conf, "sbuild-update", "1");
 exit 1 if !defined($options);
-$conf->check_group_membership();
+check_group_membership();
 
 if ($conf->get('COMPAT')) {
     my $msg = "$0 will perform apt-get command 'update' now, however this ";
@@ -132,22 +131,52 @@ if ($conf->get('COMPAT')) {
     $conf->set('UPDATE', 1);
 }
 
-usage_error("sbuild-update", "Incorrect number of options") if (@ARGV < 1);
+if ((@ARGV < 1 && !$conf->get('KEYGEN')) ||
+    (@ARGV >= 1 && $conf->get('KEYGEN'))) {
+    usage_error("sbuild-update", "Incorrect number of options")
+}
 
-my $status = 1;
+my $status = 0;
+
+if ($conf->get('KEYGEN')) {
+    print "Generating archive key.\n";
+
+    my $session = Sbuild::ChrootRoot->new($conf);
+    if (!$session->begin_session()) {
+	die "Chroot setup failed";
+    }
+
+    $status = generate_keys($session, $conf);
+
+    $session->end_session();
+
+    $status >>= 8;
+    if ($status) {
+	print STDERR "Exiting from key generation with status $status.\n";
+	exit($status ? 1 : 0);
+    }
+    exit 0;
+}
 
 foreach (@ARGV) {
     my $chroot = Sbuild::Utility::get_dist($_);
 
-    my $session = setup('source', $ARGV[0], $conf) or die "Chroot setup failed";
+    my $session = setup('source', $chroot, $conf) or die "Chroot setup failed";
+    my $host = Sbuild::ChrootRoot->new($conf);
+    if (!$host->begin_session()) {
+	die "Chroot setup failed";
+    }
+    my $resolver = get_resolver($conf, $session, $host);
 
     if (!$session->lock_chroot('SBUILD_UPDATE', $$, $conf->get('USERNAME'))) {
 	goto cleanup_unlocked;
     }
 
+    $resolver->setup();
+
     if ($conf->get('UPDATE')) {
-	print "Performing update.\n";
-	$status = update($session, $conf);
+	print "$chroot: Performing update.\n";
+	$status = $resolver->update($session, $conf);
 	$status >>= 8;
 	if ($status) {
 	    print STDERR "Exiting from update with status $status.\n";
@@ -156,8 +185,8 @@ foreach (@ARGV) {
     }
 
     if ($conf->get('UPGRADE')) {
-	print "Performing upgrade.\n";
-	my $status = upgrade($session, $conf);
+	print "$chroot: Performing upgrade.\n";
+	my $status = $resolver->upgrade($session, $conf);
 	$status >>= 8;
 	if ($status) {
 	    print STDERR "Exiting from upgrade with status $status.\n";
@@ -166,8 +195,8 @@ foreach (@ARGV) {
     }
 
     if ($conf->get('DISTUPGRADE')) {
-	print "Performing dist-upgrade.\n";
-	my $status = distupgrade($session, $conf);
+	print "$chroot: Performing dist-upgrade.\n";
+	my $status = $resolver->distupgrade($session, $conf);
 	$status >>= 8;
 	if ($status) {
 	    print STDERR "Exiting from distupgrade with status $status.\n";
@@ -176,8 +205,8 @@ foreach (@ARGV) {
     }
 
     if ($conf->get('CLEAN')) {
-	print "Performing clean.\n";
-	my $status = clean($session, $conf);
+	print "$chroot: Performing clean.\n";
+	my $status = $resolver->clean($session, $conf);
 	$status >>= 8;
 	if ($status) {
 	    print STDERR "Exiting from update with status $status.\n";
@@ -186,33 +215,34 @@ foreach (@ARGV) {
     }
 
     if ($conf->get('AUTOCLEAN')) {
-	print "Performing autoclean.\n";
-	my $status = autoclean($session, $conf);
+	print "$chroot: Performing autoclean.\n";
+	my $status = $resolver->autoclean($session, $conf);
 	$status >>= 8;
 	if ($status) {
-	    print STDERR "Exiting from upgrade with status $status.\n";
+	    print STDERR "Exiting from autoclean with status $status.\n";
 	    goto cleanup;
 	}
     }
 
     if ($conf->get('AUTOREMOVE')) {
-	print "Performing autoremove.\n";
-	my $status = autoremove($session, $conf);
+	print "$chroot: Performing autoremove.\n";
+	my $status = $resolver->autoremove($session, $conf);
 	$status >>= 8;
 	if ($status) {
-	    print STDERR "Exiting from distupgrade with status $status.\n";
+	    print STDERR "Exiting from autoremove with status $status.\n";
 	    goto cleanup;
 	}
     }
 
 cleanup:
+    $resolver->cleanup();
     # Unlock chroot now it's cleaned up and ready for other users.
     $session->unlock_chroot();
 
 cleanup_unlocked:
     cleanup($conf);
 
-    exit($status ? 1 : 0);
+    last if $status;
 }
 
-exit 0;
+exit($status ? 1 : 0);

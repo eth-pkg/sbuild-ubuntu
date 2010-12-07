@@ -26,7 +26,7 @@ use warnings;
 
 use POSIX;
 use Buildd qw(isin lock_file unlock_file send_mail exitstatus);
-use Buildd::Conf;
+use Buildd::Conf qw();
 use Buildd::Base;
 use Sbuild qw($devnull df);
 use Sbuild::Sysconfig;
@@ -63,6 +63,7 @@ sub run {
     my $host = Sbuild::ChrootRoot->new($self->get('Config'));
     $host->set('Log Stream', $self->get('Log Stream'));
     $self->set('Host', $host);
+    $host->begin_session() or die "Can't begin session\n";
 
     my $my_binary = $0;
     $my_binary = cwd . "/" . $my_binary if $my_binary !~ m,^/,;
@@ -438,11 +439,47 @@ sub do_wanna_build {
     }
 }
 
+sub should_skip {
+    my $self = shift;
+    my $pkgv = shift;
+
+    my $found = 0;
+
+    $self->lock_file("SKIP", 0);
+    goto unlock if !open( F, "SKIP" );
+    my @pkgs = <F>;
+    close(F);
+
+    if (!open( F, ">SKIP" )) {
+	$self->log("Can't open SKIP for writing: $!\n",
+		   "Would write: @pkgs\nminus $pkgv\n");
+	goto unlock;
+    }
+    foreach (@pkgs) {
+	if (/^\Q$pkgv\E$/) {
+	    ++$found;
+	    $self->log("$pkgv found in SKIP file -- skipping building it\n");
+	}
+	else {
+	    print F $_;
+	}
+    }
+    close( F );
+  unlock:
+    $self->unlock_file("SKIP");
+    return $found;
+}
+
 sub do_build {
     my $self = shift;
     my $dist_config = shift;
     my $todo = shift;
     # $todo = { 'pv' => $pkg_ver, 'changelog' => $binNMUlog->{$pkg_ver}, 'binNMU' => $binNMUver; };
+
+    # If the package to build is in SKIP, then skip.
+    if ($self->should_skip($todo->{'pv'})) {
+	return;
+    }
 
     my $free_space;
 
@@ -678,7 +715,6 @@ retry:
 		      "$apt_get", '-q', '-d',
 		      '--diff-only', 'source', "$n=$v"],
 	  USER => $self->get_conf('USERNAME'),
-	  CHROOT => 1,
 	  PRIORITY => 0,
 	});
     if (!$pipe) {
@@ -704,7 +740,6 @@ retry:
 			  "$apt_get", '-q', '-d',
 			  '--tar-only', 'source', "$n=$v"],
 	      USER => $self->get_conf('USERNAME'),
-	      CHROOT => 1,
 	      PRIORITY => 0,
 	    });
 	if (!$pipe2) {
@@ -728,7 +763,6 @@ retry:
 			  $apt_get, '-qq',
 			  'update'],
 	      USER => $self->get_conf('USERNAME'),
-	      CHROOT => 1,
 	      PRIORITY => 0,
 	      STREAMOUT => $devnull
 	    });

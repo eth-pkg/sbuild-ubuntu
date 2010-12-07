@@ -45,6 +45,9 @@
 /* Package release date. */
 #undef RELEASE_DATE
 
+/* Enable additional chroot checks */
+#undef SBUILD_CHROOT_CHECKS
+
 /* Enable compatibility features */
 #undef SBUILD_COMPAT
 

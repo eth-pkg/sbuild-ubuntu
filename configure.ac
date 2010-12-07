@@ -101,38 +101,26 @@ AC_DEFINE_UNQUOTED([SBUILD_COMPAT], [$compat], [Enable compatibility features])
 AC_SUBST([SBUILD_COMPAT], [$compat])
 AM_CONDITIONAL([SBUILD_COMPAT], [test "$enable_compat" = "yes"])
 
+AC_MSG_CHECKING([whether to enable compatibility features])
+AC_ARG_ENABLE([chroot_checks], [AS_HELP_STRING([--enable-chroot-checks], [Enable additional chroot checks in testsuite (requires "unstable" chroot)])],
+              [ case "${enableval}" in
+                yes) enable_chroot_checks="yes" ;;
+                no)  enable_chroot_checks="no" ;;
+                unset)  enable_chroot_checks="no" ;;
+                *) AC_MSG_RESULT([unknown])
+                   AC_MSG_ERROR([bad value ${enableval} for --enable-chroot-checks]) ;;
+                esac ],
+              [ enable_chroot_checks="no" ])
+AC_MSG_RESULT([$enable_chroot_checks])
+chroot_checks=0
+if test "$enable_chroot_checks" = "yes"; then
+   chroot_checks=1
+fi
+AC_DEFINE_UNQUOTED([SBUILD_CHROOT_CHECKS], [$chroot_checks], [Enable additional chroot checks])
+AC_SUBST([SBUILD_CHROOT_CHECKS], [$chroot_checks])
+AM_CONDITIONAL([SBUILD_CHROOT_CHECKS], [test "$enable_chroot_checks" = "yes"])
+
 # Checks for programs.
-AC_PATH_PROG([APT_CACHE], [apt-cache])
-AC_PATH_PROG([APTITUDE], [aptitude])
-AC_PATH_PROG([APT_GET], [apt-get])
-AC_PATH_PROG([APTITUDE], [aptitude])
-AC_PATH_PROG([CHMOD], [chmod])
-AC_PATH_PROG([DATE], [date])
-AC_PATH_PROG([DCMD], [dcmd])
-AC_PATH_PROG([DF], [df])
-AC_PATH_PROG([DPKG], [dpkg])
-AC_PATH_PROG([DPKG_BUILDPACKAGE], [dpkg-buildpackage])
-AC_PATH_PROG([DPKG_PARSECHANGELOG], [dpkg-parsechangelog])
-AC_PATH_PROG([DPKG_SOURCE], [dpkg-source])
-AC_PATH_PROG([LINTIAN], [lintian])
-AC_PATH_PROG([PIUPARTS], [piuparts])
-AC_PATH_PROG([DU], [du])
-AC_PATH_PROG([FAKEROOT], [fakeroot])
-AC_PATH_PROG([FIND], [find])
-AC_PATH_PROG([GPG], [gpg])
-AC_PATH_PROG([HOSTNAME], [hostname])
-AC_PATH_PROG([MAN], [man])
-AC_PATH_PROG([MD5SUM], [md5sum])
-AC_PATH_PROG([PGP], [pgp])
-AC_PATH_PROG([PS], [ps])
-AC_PATH_PROG([RM], [rm])
-AC_PATH_PROG([SCHROOT], [schroot])
-AC_PATH_PROG([SENDMAIL], [sendmail], [/usr/sbin/sendmail], [$PATH:/sbin:/usr/sbin])
-AC_PATH_PROG([SSH], [ssh])
-AC_PATH_PROG([SUDO], [sudo])
-AC_PATH_PROG([SU], [su])
-AC_PATH_PROG([TEMPFILE], [tempfile])
-AC_PATH_PROG([XARGS], [xargs])
 
 # Check for host platform
 AC_CANONICAL_HOST
@@ -369,6 +357,25 @@ AC_CONFIG_FILES([man/wanna-build-catdb.1])
 AC_CONFIG_FILES([man/wanna-build-mail.1])
 AC_CONFIG_FILES([man/wanna-build-merge-packages.1])
 AC_CONFIG_FILES([man/wanna-build-statistics.1])
+AC_CONFIG_FILES([test/Makefile])
+AC_CONFIG_FILES([test/perl-syntax],
+		[chmod +x test/perl-syntax])
+AC_CONFIG_FILES([test/sbuild-checkpackages],
+		[chmod +x test/sbuild-checkpackages])
+AC_CONFIG_FILES([test/sbuild-hold],
+		[chmod +x test/sbuild-hold])
+AC_CONFIG_FILES([test/sbuild-stats],
+		[chmod +x test/sbuild-stats])
+AC_CONFIG_FILES([test/sbuild-update],
+		[chmod +x test/sbuild-update])
+AC_CONFIG_FILES([test/sbuild-upgrade],
+		[chmod +x test/sbuild-upgrade])
+AC_CONFIG_FILES([test/sbuild-distupgrade],
+		[chmod +x test/sbuild-distupgrade])
+AC_CONFIG_FILES([test/sbuild-clean],
+		[chmod +x test/sbuild-clean])
+AC_CONFIG_FILES([test/sbuild],
+		[chmod +x test/sbuild])
 
 dnl Output the generated config.status script.
 AC_OUTPUT

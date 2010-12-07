@@ -1,3 +1,613 @@
+commit 5ab0fee2dd35730c7dfc8c8f0c5ba1a335b968a1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Dec 7 21:26:36 2010 +0000
+
+    debian: Tidy changelog and add major upstream changes
+
+commit 2553de0e93237315962a273904b55ce817d98ad9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Dec 7 21:25:09 2010 +0000
+
+    NEWS: Remove duplicate entry
+
+commit 82d41b3bea1994a01205f0d6c14bd1b809ee5e55
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Dec 7 21:11:28 2010 +0000
+
+    debian: Close #605997
+
+commit 7289e5061d604b4349028024d248344c24208869
+Author: Modestas Vainius <modax@debian.org>
+Date:   Tue Dec 7 21:08:12 2010 +0000
+
+    Do not skip purging of build directory if chroot is cloned.
+    
+    This is necessary if /build in chroots is (bind-)mounted to the outside of the
+    session.  However, if /build is part of the cloned session,
+    $purge_build_directory='never' could be used in order to avoid wasting time
+    when session ends.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 99a1c32ebd318aef82c86b9a6c916cff5d37338f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Dec 7 21:01:25 2010 +0000
+
+    debian: Close #589615
+
+commit 495ccf3f9a44714a93cd27e7ceb4f10cb08c20a6
+Author: Marc Dequènes (Duck) <duck@duckcorp.org>
+Date:   Tue Dec 7 20:59:19 2010 +0000
+
+    Sbuild::ConfBase: Only use MAILTO_HASH if defined
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 9e4560f80875a0f4996a6604d6b068e7c1d7b2cc
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Dec 7 20:52:51 2010 +0000
+
+    debian: Document Ubuntu workaround
+
+commit 3260bfe59ad59da978e956b88327832bba55cfcf
+Author: Jamie Strandboge <jamie@ubuntu.com>
+Date:   Tue Dec 7 20:44:23 2010 +0000
+
+    Sbuild::Build: read_build_essential: Add workaround for broken Ubuntu releases
+    
+    Older Ubuntu releases had sysvinit in their build essential list,
+    despite sysvinit no longer being available.  As a result, it's
+    not actually possible to install the build-essential package set
+    on these systems.  Manually remove sysvinit from the essential
+    list in these cases.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 857c8fe0198d3c72849259b4beff2fd190e75c10
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Dec 7 20:39:06 2010 +0000
+
+    debian: Close #605745
+
+commit 666d01fd8739c660b252a0ca8d2e672848e32051
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Dec 7 20:38:09 2010 +0000
+
+    sbuild.1: Update description of --maintainer
+
+commit 658e4abbd3152a8d76c8e895c7a65bba41022586
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Dec 7 17:11:21 2010 +0000
+
+    NEWS: Document testsuite
+
+commit 42f34187f98fec177d84949e64ceb0eec2e54a2d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Dec 7 17:08:21 2010 +0000
+
+    debian: Close #606001
+
+commit 5fdf954762ce215d617f85f55d32620f4f37223c
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Sun Dec 5 14:06:24 2010 +0100
+
+    sbuild-update: Add --arch option.
+    
+    Signed-off-by: Ansgar Burchardt <ansgar@debian.org>
+
+commit 5dafaeb57903aaf576d70f0772f547fae6ba4caf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 5 12:27:43 2010 +0000
+
+    NEWS: Document new features:
+    
+    - testsuite
+    - apt archive
+    - key generation
+    - dropping of REDO and SBUILD-REDO-DUMPED
+
+commit 1653d75932e7463fd72138e760d463e5faf8a8c9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 5 12:12:43 2010 +0000
+
+    test/.gitignore: Ignore generated scripts
+
+commit ab5c1795fc419f1e412a1570ab7d83a7635ff641
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 5 12:10:02 2010 +0000
+
+    test: sbuild only builds a single source package version
+    
+    Eliminate multiple versions (just pick the first)
+
+commit c54783ee80cd23d6788cffe8e96762a6ef5649a4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 5 11:52:19 2010 +0000
+
+    Sbuild::ConfBase: Don't use as a base class
+    
+    Currently, different configuration classes derive from Sbuild::ConfBase
+    and implement virtual functions to register their configuration
+    defaults (allowed keys) and read any configuration files.  This is
+    rather inflexible, because it means that it's hard to use a single
+    configuration object to read multiple configuration files.  Currently,
+    there are nasty hacks to support e.g. wanna-build configuration from
+    Sbuild::DB::ClientConf in both Sbuild::Conf and Buildd::Conf.  This
+    also make it difficult to read in alternative configuration files,
+    for example for regression testing, where the system and user
+    configuration should not be read.
+    
+    This change turns all the derived classes into simple library
+    functions.  Each one implements a setup() function to register allowed
+    keys, and one or more read/read_hash functions to read configuration
+    from a file or hash into the Sbuild::ConfBase object.  This means
+    that multiple setup() functions may be called to register multiple
+    sets of configuration keys, and multiple files may be read.
+
+commit 92387d628eff77060a3e1760d200725a8adf7306
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 5 11:34:52 2010 +0000
+
+    bin: sbuild-* wrappers don't need absolute paths
+
+commit 7ca3c48a12b75e418637b039e6187cc3d19b2f6f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 5 11:25:54 2010 +0000
+
+    Sbuild::Build: update() uses the dependency resolver
+
+commit 1f98891e8265301f473a177ea08f76b016574543
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 5 11:25:23 2010 +0000
+
+    Sbuild::Build: Initialise install start and end times
+
+commit fbbb757e2f3fdb3ed9a09348034e3c3e24463464
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 5 11:24:11 2010 +0000
+
+    test: Add additional sbuild helper tests
+    
+    Add tests for sbuild-hold/unhold, sbuild-stats, sbuild-update,
+    sbuild-distupgrade, sbuild-clean and sbuild.
+    Update sbuild-upgrade.
+
+commit f35040b9ed97070de9864ce9f5d6d73a4fe6585e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Dec 3 11:40:13 2010 +0000
+
+    Sbuild: Move check_group_membership here
+    
+    This check does not depend upon configuration at all, and is
+    no longer done when reading the configuration file.
+
+commit 881c53590bbb9af2f366e8ab6d53e3019849c9d9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Dec 2 20:39:05 2010 +0000
+
+    build: Add test/sbuild-update
+
+commit 9740b8edbbc783dcdcefd1c0b35cec13294fee53
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Dec 2 09:43:41 2010 +0000
+
+    test: Add sbuild-update check
+
+commit 40df3bc3339799cb3358b436c8d143b55f865b70
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 30 21:12:01 2010 -0500
+
+    Fix apt-keys directory permissions during installation.
+
+commit 1cd829609dd2bf8a129439f4a969eef69c6123f6
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 30 21:11:29 2010 -0500
+
+    Create apt-keys directory during installation.
+
+commit ac88a5a76face9d072a35734b2683febb4c00ae3
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 30 21:10:55 2010 -0500
+
+    Fix call to generate_keys() in Sbuild::ChrootSetup.
+
+commit 52905d70e0841b4e42ab75e5a0118ac950362849
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 30 22:19:53 2010 +0000
+
+    test: Use set -e
+
+commit 2e4d8e3ae7388e3581691e3180529a6f11823c76
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 30 22:19:14 2010 +0000
+
+    Sbuild: Correct use of removed conf:: namespace in error paths
+
+commit c7f4da524978f3e9559d84fde3f651b0dfae527b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 30 21:34:09 2010 +0000
+
+    test: Don't display grep output
+
+commit 985488bf88e008a2f2dfa935df5cff5eafb9415d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 30 21:29:17 2010 +0000
+
+    test: Add basic syntax checking of all perl scripts (perl-syntax)
+    
+    Check is run via "make check"
+
+commit 12c1c0922f37ec0e2b00d48fd07618af2b25eb4a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 30 21:04:40 2010 +0000
+
+    Sbuild::ResolverBase: Location is stored in session
+
+commit e0555aca15f89b2024ec38cdaa62de62c19d3803
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 30 21:01:19 2010 +0000
+
+    Sbuild::ResolverBase: Create dummy package in temporary directory
+
+commit 00407c4af338597b5fc55342821c9f85ca1c0199
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 30 21:00:42 2010 +0000
+
+    Sbuild::ResolverBase: Set Defaults in session
+
+commit 7a1dc94cfd1dc84a60a92d4e9184cc0f3875c4b6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 30 20:59:52 2010 +0000
+
+    Sbuild::Build: Correctly begin host session
+
+commit 56c8da11993fbffe8f4374ef259eb70e01c662fe
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 30 01:27:09 2010 -0500
+
+    Remove checks to see if lintian or piuparts are executable.
+    This is already done in Conf.pm.
+
+commit 34ed66f6b076065f1a1268a2bc7d012e53545e8e
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 30 00:53:03 2010 -0500
+
+    Fix aptitude resolver function call to pipe_aptitude_command().
+
+commit ae9f5aaa58e63274ee289975e4530dff4084ff84
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 30 20:40:07 2010 +0000
+
+    sbuild-update: Begin host session to fully initialise session
+
+commit a8fff81a48582f04fb6280b04071d042f2b9e312
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 30 00:52:08 2010 -0500
+
+    Fix sbuild-update to work with new apt split refactoring.
+
+commit ff62b268fdea1d21431fd58bece04bb4203f49be
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 29 22:52:15 2010 +0000
+
+    Sbuild::ResolverBase: Move chroot apt/aptitude command execution here
+
+commit 52335729f7140308dd3c6283be68633bc026e1e0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 29 20:14:38 2010 +0000
+
+    Sbuild: Remove now unused srcdep lock configuration
+
+commit 59f498f30aa290a7954e0d36980a8641dde995e6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 29 20:06:55 2010 +0000
+
+    Sbuild::ChrootSetup: Remove functions previously moved to ResolverBase
+
+commit 33530770688ea5d44c561391d53d5fe9aad1ef16
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Nov 29 20:03:53 2010 +0000
+
+    sbuild-update: Remove unused ChrootSetup functions
+
+commit 95c9a2700f482ffe06b6b23cd033a93cdef745e9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 18:17:23 2010 +0000
+
+    Sbuild::ResolverBase: Cleanup with / as CWD in case build tree removed
+
+commit 3bff8edf3bd2a4abe8b5506dc05415b49d207f73
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 18:15:36 2010 +0000
+
+    Sbuild::ChrootSetup: shell runs as normal user
+
+commit 92403c5ced0f485a744c18d4dc4d4d96d61a07a3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 18:14:14 2010 +0000
+
+    Sbuild::ChrootSetup: generate_keys runs as normal user
+
+commit 91f9228a731d91f2ed5b162d9ad536f57a075404
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 18:07:48 2010 +0000
+
+    sbuild-createchroot: Use resolver to update chroot
+
+commit 326da1d1d39f12cd8f8407cab5e45e50129df04d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 17:15:22 2010 +0000
+
+    sbuild: Simplify shutdown logic
+    
+    Remove unused and redundant REDO/SBUILD-REDO-DUMPED code.  This hasn't
+    been used for 11 months (explicitly disabled for buildds).  buildd and
+    buildd-mail continue to read and write  REDO for their own internal
+    uses.
+    
+    Shutdown sequence is aligned with the build sequence in Sbuild::Build.
+    
+    Temporary variables for job, session and resolver are used to simplify
+    code.
+    
+    The same error return is issued when in buildd or user mode and killed
+    by a signal.
+
+commit f4c9c25a71a7ba6c9bc8060d94ed04947b07d0a7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 15:43:54 2010 +0000
+
+    sbuild: Remove REDO and SBUILD-REDO-DUMPED handling
+
+commit ffa67de3a5476e866aaabc62e19724d55b858f89
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 15:32:24 2010 +0000
+
+    Sbuild::Build: Use resolver for all apt operations
+
+commit 57ca90177fd8af6ad8a83ddc202ac31db909856a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 15:31:28 2010 +0000
+
+    Sbuild::ResolverBase: Don't use Errno, and only remove archive if defined
+
+commit b3dbca2e3c9bc02cc5adf22540c76a8d4bf44ad8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 15:30:55 2010 +0000
+
+    sbuild-update: Use resolver to perform all apt-get calls
+
+commit 80f811184d7c7b06a6a5ec8d646b1eac015dffa2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 14:30:17 2010 +0000
+
+    Sbuild::Resolver*: Remove use of Build object
+    
+    Only use conf and session objects
+    Add support for apt repository to aptitude resolver
+    Add support for running apt tasks to resolver base
+    Use self logging
+    Set Arch from build object
+
+commit d8950a4ddabe5e4fcec44699e7b2931d1cbc381e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 14:18:25 2010 +0000
+
+    Sbuild::Build: Remove source dependencies support in prepare_watches
+    
+    Since we no longer handle sourcedeps files, there's no point in
+    handling them in watches.
+
+commit 7606c8d654b0e5aa51ec6bd43e2712f39d4baa5b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 14:14:41 2010 +0000
+
+    Sbuild::Build: Move prepare_watches call here from InternalResolver
+    
+    This means the resolvers don't need access to the build object
+
+commit 593e6e765fd0825cc88f55049836b627b1c3379b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 14:13:22 2010 +0000
+
+    Sbuild::Build: Add Install Time to generated stats
+
+commit 825320d50f58da8bf97d626747964bcedcb40d9c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 14:11:15 2010 +0000
+
+    Sbuild::Build: Move install time stats writing here from InternalResolver
+
+commit 0a1f524f7aad852dc41b196dd75cedffd576f5ed
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 28 14:07:19 2010 +0000
+
+    Sbuild::Base: Move section logging here from Sbuild::Build
+    
+    Allows use in other modules making use of logging functions
+
+commit 6482efda8c6b0bb5669f0102cf0b037badeb6e60
+Merge: e2c8759 7f40701
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 27 12:54:49 2010 +0000
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+    
+    Conflicts:
+    	NEWS
+    	debian/changelog
+
+commit e2c87594cf4dbf53696aeee10c32e100d055ddc7
+Merge: ec75bda a820790
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 27 12:50:48 2010 +0000
+
+    Merge branch 'apt-get-resolver'
+
+commit a82079010180e044f6041d5074350e5402b8848c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 27 12:49:16 2010 +0000
+
+    sbuild-update: Add --keygen option to generate GPG keys for archive signing
+    
+    Sbuild::ResoverBase::generate_keys now uses
+    Sbuild::ChrootSetup::generate_keys.
+
+commit ec75bda62549449f9c61a68580371f49b4107365
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 23 22:39:09 2010 +0000
+
+    debian: Bump version to 0.60.6-1 and close #604715
+
+commit 415ab468100c66911d8c58c90a480e5dc963f81d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 23 22:36:25 2010 +0000
+
+    NEWS: Bump version to 0.60.6
+
+commit 5fd22518b73fe96546f82562c374dfb34d0e32eb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Nov 23 22:34:54 2010 +0000
+
+    sbuild-update: Work on multiple chroots
+    
+    Correctly loop on all ARGV elements.
+    Indicate chroot being updated in messages.
+
+commit 02cabeefb003613acd9accd0147b11e1ae79101f
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 23 03:07:51 2010 -0500
+
+    Use Sbuild::ChrootSetup::update to run apt-get update.
+
+commit b47b01780af8337d02509e7f86e3391ea535b75f
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Tue Nov 23 02:58:30 2010 -0500
+
+    Simplify apt archive creation by using apt-ftparchive.
+
+commit 08f036513cf14fc5386244a22167884f8786071b
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Mon Nov 22 20:29:52 2010 -0500
+
+    Generate a key on first use instead of providing the keys during installation.
+
+commit a319faad50456cf342dc8d503566904f31b8ee52
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Nov 20 19:37:06 2010 -0500
+
+    Use run_apt_command() instead of running apt-get explicitely.
+
+commit 42c3e0c0ceadfca14fd900a8c52218ee42f699be
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Nov 20 17:54:25 2010 -0500
+
+    Supply sbuild apt archive keys for use in creating apt archives.
+
+commit 7f40701014247ed4b9dc5c1f747db46b94453598
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 20 16:33:43 2010 +0000
+
+    Buildd::Daemon: Move should_skip here
+    
+    Rather than sbuild checking the SKIP file after buildd runs it, we
+    check SKIP in do_build prior to running sbuild.  This means the
+    use of SKIP is confined to buildd and buildd-mail, and sbuild doesn't
+    need to worry about buildd's concerns.
+
+commit 55aaf40032db56b4e076c144b69c67af241f4dfe
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 20 16:10:52 2010 +0000
+
+    sbuild: Return 'skipped' packages with zero exit status
+    
+    Packages not meeting the arch check are treated as skipped.
+    This only applies to user mode; buildd mode must treat skipped
+    as failure for now, until it can parse the package status from
+    the sbuild output.
+
+commit c275d4bc50b9b5f6dc7350bd1b45ba5f307e0acb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 20 14:54:15 2010 +0000
+
+    debian: Drop unneeded programs when running configure
+
+commit 7ce884a74f5a8ba18e3a7de225bc84f3a6a201b7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 20 14:52:23 2010 +0000
+
+    Sbuild::Sysconfig: Drop programs hash
+    
+    Rather than indirectly searching for programs' absolute paths and
+    storing them in the %programs hash at configure time, search at
+    runtime in $PATH as would be expected.
+
+commit 353034c2ad71d9f6ec86d9af81256cb8271d5f16
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 20 14:01:22 2010 +0000
+
+    Sbuild::Sysconfig: drop unused DPKG_ARCHITECTURE
+
+commit 4d9f35bd7013d219ea6294356900a560b0328c4b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 20 11:41:06 2010 +0000
+
+    debian: Bump version to 0.60.6
+
+commit c9157ff462c5ddeb7da53ad14bebaa912312919d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 20 11:40:47 2010 +0000
+
+    NEWS: Bump version to 0.60.6 and document environment filtering
+
+commit cbbf001aced0825f49fd62fbc20e05acceea3a04
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Nov 20 11:34:48 2010 +0000
+
+    Sbuild::Chroot: Filter environment using ENVIRONMENT_FILTER
+    
+    Sbuild::Conf: Add ENVIRONMENT_FILTER/$environment_filter option
+    The environment filter is a list of regexes.  If an environment
+    variable matches any of the regexes, it is kept, or else if none
+    match it it dropped.  Currently various DEB* and *FLAGS* are
+    allowed.
+    
+    The allowed regexes are taken from debuild.  debuild also allows
+    LC_* variables, but sbuild does not (it sets the locale to POSIX,
+    making this pointless to allow).
+
+commit 510398198948ae41ddb390ed600df1cc5301e597
+Author: Andres Mejia <mcitadel@gmail.com>
+Date:   Sat Nov 20 02:20:49 2010 -0500
+
+    Add functions that setup a dummy apt archive for use with apt resolver.
+
+commit f0e39c70da6707e2ba007a737154296f38d599e7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Nov 18 17:00:21 2010 +0000
+
+    Sbuild::ChrootSetup: Add hold_packages and unhold_packages functions
+    
+    These wrap set_package_status.
+    sbuild-hold and sbuild-unhold use these functions in place of
+    set_package_status.
+
+commit 1432256a5bcb46a03ad3569ee3e1879ad71aa823
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Nov 15 21:16:53 2010 +0100
+
+    debian/control: depend on libdpkg-perl (>= 1.15.5)
+    
+    Dpkg::Control changed its interface completely in dpkg 1.15.5, and the code
+    relies on the new interface.
+
+commit 7b7116d592132ac422613432e56590cd043abe0b
+Merge: f07e28d aad7e66
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Nov 15 21:15:23 2010 +0100
+
+    Merge branch 'master' of alioth.debian.org:/git/buildd-tools/sbuild
+
 commit aad7e66da0062cf880418f55e52eacf78f2b11c3
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sun Nov 14 12:15:15 2010 +0000
@@ -1136,6 +1746,12 @@ Date:   Mon Nov 1 16:32:11 2010 +0000
     Use strict POSIX shell.
 
 commit 74ca8ce573377cdf8eaa7ef045c512d5467847bc
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Nov 1 10:37:42 2010 +0100
+
+    bin/create-chroot: add testing-edu
+
+commit f07e28d7dd9c80023f65a3df19da34ca0beb5d3c
 Author: Philipp Kern <pkern@debian.org>
 Date:   Mon Nov 1 10:37:42 2010 +0100
 

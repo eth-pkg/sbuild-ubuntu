@@ -23,6 +23,7 @@ package Sbuild::ChrootSetup;
 use strict;
 use warnings;
 
+use File::Temp qw(tempfile);
 use Sbuild qw($devnull);
 
 BEGIN {
@@ -31,92 +32,17 @@ BEGIN {
 
     @ISA = qw(Exporter);
 
-    @EXPORT = qw(update upgrade distupgrade clean autoclean autoremove basesetup
-                 shell list_packages set_package_status);
+    @EXPORT = qw(basesetup shell hold_packages unhold_packages
+                 list_packages set_package_status generate_keys);
 }
 
-sub update ($$);
-sub upgrade ($$);
-sub distupgrade($$);
-sub clean ($$);
-sub autoclean ($$);
-sub autoremove ($$);
 sub basesetup ($$);
 sub shell ($$);
+sub hold_packages ($$@);
+sub unhold_packages ($$@);
 sub list_packages ($$@);
 sub set_package_status ($$$@);
-
-sub update ($$) {
-    my $session = shift;
-    my $conf = shift;
-
-    $session->run_apt_command(
-	{ COMMAND => [$conf->get('APT_GET'), 'update'],
-	  ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
-	  USER => 'root',
-	  DIR => '/' });
-    return $?;
-}
-
-sub upgrade ($$) {
-    my $session = shift;
-    my $conf = shift;
-
-    $session->run_apt_command(
-	{ COMMAND => [$conf->get('APT_GET'), '-uy', '-o', 'Dpkg::Options::=--force-confold', 'upgrade'],
-	  ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
-	  USER => 'root',
-	  DIR => '/' });
-    return $?;
-}
-
-sub distupgrade ($$) {
-    my $session = shift;
-    my $conf = shift;
-
-    $session->run_apt_command(
-	{ COMMAND => [$conf->get('APT_GET'), '-uy', '-o', 'Dpkg::Options::=--force-confold', 'dist-upgrade'],
-	  ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
-	  USER => 'root',
-	  DIR => '/' });
-    return $?;
-}
-
-sub clean ($$) {
-    my $session = shift;
-    my $conf = shift;
-
-    $session->run_apt_command(
-	{ COMMAND => [$conf->get('APT_GET'), '-y', 'clean'],
-	  ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
-	  USER => 'root',
-	  DIR => '/' });
-    return $?;
-}
-
-sub autoclean ($$) {
-    my $session = shift;
-    my $conf = shift;
-
-    $session->run_apt_command(
-	{ COMMAND => [$conf->get('APT_GET'), '-y', 'autoclean'],
-	  ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
-	  USER => 'root',
-	  DIR => '/' });
-    return $?;
-}
-
-sub autoremove ($$) {
-    my $session = shift;
-    my $conf = shift;
-
-    $session->run_apt_command(
-	{ COMMAND => [$conf->get('APT_GET'), '-y', 'autoremove'],
-	  ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
-	  USER => 'root',
-	  DIR => '/' });
-    return $?;
-}
+sub generate_keys ($$);
 
 sub basesetup ($$) {
     my $session = shift;
@@ -213,7 +139,6 @@ sub basesetup ($$) {
 	{ COMMAND => ['/usr/bin/debconf-set-selections'],
 	  PIPE => 'out',
 	  USER => 'root',
-	  CHROOT => 1,
 	  PRIORITY => 0,
 	  DIR => '/' });
 
@@ -238,12 +163,31 @@ sub shell ($$) {
     my $conf = shift;
 
     $session->run_command(
-	{ COMMAND => [$Sbuild::Sysconfig::programs{'SHELL'}],
+	{ COMMAND => ['/bin/sh'],
 	  PRIORITY => 1,
+	  USER => $conf->get('USERNAME'),
 	  STREAMIN => \*STDIN,
 	  STREAMOUT => \*STDOUT,
 	  STREAMERR => \*STDERR });
     return $?
+}
+
+sub hold_packages ($$@) {
+    my $session = shift;
+    my $conf = shift;
+
+    my $status = set_package_status($session, $conf, "hold", @_);
+
+    return $status;
+}
+
+sub unhold_packages ($$@) {
+    my $session = shift;
+    my $conf = shift;
+
+    my $status = set_package_status($session, $conf, "install", @_);
+
+    return $status;
 }
 
 sub list_packages ($$@) {
@@ -251,9 +195,8 @@ sub list_packages ($$@) {
     my $conf = shift;
 
     $session->run_command(
-	{COMMAND => [$conf->get('DPKG'), '--list', @_],
+	{COMMAND => ['dpkg', '--list', @_],
 	 USER => 'root',
-	 CHROOT => 1,
 	 PRIORITY => 0});
     return $?;
 }
@@ -264,10 +207,9 @@ sub set_package_status ($$$@) {
     my $status = shift;
 
     my $pipe = $session->pipe_command(
-	{COMMAND => [$conf->get('DPKG'), '--set-selections'],
+	{COMMAND => ['dpkg', '--set-selections'],
 	 PIPE => 'out',
 	 USER => 'root',
-	 CHROOT => 1,
 	 PRIORITY => 0});
 
     if (!$pipe) {
@@ -282,6 +224,47 @@ sub set_package_status ($$$@) {
     if (!close $pipe) {
 	print STDERR "Can't run dpkg --set-selections in chroot\n";
     }
+
+    return $?;
+}
+
+sub generate_keys ($$) {
+    my $host = shift;
+    my $conf = shift;
+
+    my ($tmpfh, $tmpfilename) = tempfile();
+    print $tmpfh <<"EOF";
+Key-Type: RSA
+Key-Length: 1024
+Name-Real: Sbuild Signer
+Name-Comment: Sbuild Build Dependency Archive Key
+Name-Email: buildd-tools-devel\@lists.alioth.debian.org
+Expire-Date: 0
+EOF
+    print $tmpfh '%secring ' . $conf->get('SBUILD_BUILD_DEPENDS_SECRET_KEY') . "\n";
+    print $tmpfh '%pubring ' . $conf->get('SBUILD_BUILD_DEPENDS_PUBLIC_KEY') . "\n";
+    print $tmpfh '%commit' . "\n";
+    close($tmpfh);
+
+    my @command = ('gpg', '--no-default-keyring', '--batch', '--gen-key',
+                   $tmpfilename);
+    $host->run_command(
+        { COMMAND => \@command,
+	  USER => $conf->get('USERNAME'),
+          PRIORITY => 0,
+          DIR => '/'});
+    if ($?) {
+        return $?;
+    }
+
+    # Secret keyring needs to be readable by 'sbuild' group.
+    @command = ('chmod', '640',
+                $conf->get('SBUILD_BUILD_DEPENDS_SECRET_KEY'));
+    $host->run_command(
+        { COMMAND => \@command,
+	  USER => $conf->get('USERNAME'),
+          PRIORITY => 0,
+          DIR => '/'});
 
     return $?;
 }

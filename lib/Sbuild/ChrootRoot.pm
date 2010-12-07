@@ -25,7 +25,6 @@ package Sbuild::ChrootRoot;
 use strict;
 use warnings;
 
-use Sbuild::Conf;
 use Sbuild::ChrootPlain;
 
 BEGIN {
@@ -44,9 +43,9 @@ sub new {
     my $self = $class->SUPER::new($conf, '/');
     bless($self, $class);
 
-    # Only run split, because plain makes no guarantee that networking
-    # works inside the chroot.
-    $self->set('Split', 1);
+    # There's no difference between split and unsplit when running on
+    # the root filesystem.
+    $self->set('Split', 0);
 
     return $self;
 }

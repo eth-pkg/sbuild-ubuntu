@@ -23,17 +23,17 @@ use strict;
 use warnings;
 
 use Getopt::Long;
-use Sbuild qw(help_text version_text usage_error);
+use Sbuild qw(help_text version_text usage_error check_group_membership);
 use Sbuild::Utility qw(setup cleanup shutdown);
-use Sbuild::ChrootSetup qw(list_packages set_package_status);
-use Sbuild::Conf;
+use Sbuild::ChrootSetup qw(unhold_packages list_packages);
+use Sbuild::Conf qw();
 use Sbuild::OptionsBase;
 
-my $conf = Sbuild::Conf->new();
+my $conf = Sbuild::Conf::new();
 exit 1 if !defined($conf);
 my $options = Sbuild::OptionsBase->new($conf, "sbuild-unhold", "1");
 exit 1 if !defined($options);
-$conf->check_group_membership();
+check_group_membership();
 
 usage_error("sbuild-unhold", "Incorrect number of options") if (@ARGV < 2);
 
@@ -48,7 +48,7 @@ foreach (@ARGV) {
 }
 print STDOUT ".\n\n";
 
-my $status = set_package_status($session, $conf, "install", @ARGV);
+my $status = unhold_packages($session, $conf, @ARGV);
 $status >>= 8;
 
 list_packages($session, $conf, @ARGV);

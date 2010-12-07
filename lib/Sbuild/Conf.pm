@@ -1,7 +1,7 @@
 #
 # Conf.pm: configuration library for sbuild
 # Copyright © 2005      Ryan Murray <rmurray@debian.org>
-# Copyright © 2006-2009 Roger Leigh <rleigh@debian.org>
+# Copyright © 2006-2010 Roger Leigh <rleigh@debian.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,34 +36,53 @@ BEGIN {
     use Exporter ();
     our (@ISA, @EXPORT);
 
-    @ISA = qw(Exporter Sbuild::ConfBase);
+    @ISA = qw(Exporter);
 
-    @EXPORT = qw();
+    @EXPORT = qw(new setup read);
 }
 
-sub init_allowed_keys {
-    my $self = shift;
+sub new ();
+sub setup ($);
+sub read ($);
 
-    $self->SUPER::init_allowed_keys();
+sub new () {
+    my $conf = Sbuild::ConfBase->new();
+    Sbuild::Conf::setup($conf);
+    Sbuild::Conf::read($conf);
+
+    return $conf;
+}
+
+sub setup ($) {
+    my $conf = shift;
 
     my $validate_program = sub {
-	my $self = shift;
+	my $conf = shift;
 	my $entry = shift;
 	my $key = $entry->{'NAME'};
-	my $program = $self->get($key);
+	my $program = $conf->get($key);
 
 	die "$key binary is not defined"
 	    if !defined($program) || !$program;
 
+	# Emulate execvp behaviour by searching the binary in the PATH.
+	my @paths = split(/:/, $conf->get('PATH'));
+	# Also consider the empty path for absolute locations.
+	push (@paths, '');
+	my $found = 0;
+	foreach my $path (@paths) {
+	    $found = 1 if (-x File::Spec->catfile($path, $program));
+	}
+
 	die "$key binary '$program' does not exist or is not executable"
-	    if !-x $program;
+	    if !$found;
     };
 
     my $validate_directory = sub {
-	my $self = shift;
+	my $conf = shift;
 	my $entry = shift;
 	my $key = $entry->{'NAME'};
-	my $directory = $self->get($key);
+	my $directory = $conf->get($key);
 
 	die "$key directory is not defined"
 	    if !defined($directory) || !$directory;
@@ -73,24 +92,24 @@ sub init_allowed_keys {
     };
 
     my $validate_append_version = sub {
-	my $self = shift;
+	my $conf = shift;
 	my $entry = shift;
 
-	if (defined($self->get('APPEND_TO_VERSION')) &&
-	    $self->get('APPEND_TO_VERSION') &&
-	    $self->get('BUILD_SOURCE') != 0) {
+	if (defined($conf->get('APPEND_TO_VERSION')) &&
+	    $conf->get('APPEND_TO_VERSION') &&
+	    $conf->get('BUILD_SOURCE') != 0) {
 	    # See <http://bugs.debian.org/475777> for details
 	    die "The --append-to-version option is incompatible with a source upload\n";
 	}
 
-	if ($self->get('BUILD_SOURCE') &&
-	    $self->get('BIN_NMU')) {
+	if ($conf->get('BUILD_SOURCE') &&
+	    $conf->get('BIN_NMU')) {
 	    print STDERR "Not building source package for binNMU\n";
-	    $self->_set_value('BUILD_SOURCE', 0);
+	    $conf->_set_value('BUILD_SOURCE', 0);
 	}
     };
 
-    our $HOME = $self->get('HOME');
+    our $HOME = $conf->get('HOME');
 
     my %sbuild_keys = (
 	'CHROOT'				=> {
@@ -104,98 +123,98 @@ sub init_allowed_keys {
 	},
 	'SUDO'					=> {
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
 
 		# Only validate if needed.
-		if ($self->get('CHROOT_MODE') eq 'split' ||
-		    ($self->get('CHROOT_MODE') eq 'schroot' &&
-		     $self->get('CHROOT_SPLIT'))) {
-		    $validate_program->($self, $entry);
+		if ($conf->get('CHROOT_MODE') eq 'split' ||
+		    ($conf->get('CHROOT_MODE') eq 'schroot' &&
+		     $conf->get('CHROOT_SPLIT'))) {
+		    $validate_program->($conf, $entry);
 
 		    local (%ENV) = %ENV; # make local environment
 		    $ENV{'DEBIAN_FRONTEND'} = "noninteractive";
 		    $ENV{'APT_CONFIG'} = "test_apt_config";
-		    $ENV{'SHELL'} = $Sbuild::Sysconfig::programs{'SHELL'};
+		    $ENV{'SHELL'} = '/bin/sh';
 
-		    my $sudo = $self->get('SUDO');
+		    my $sudo = $conf->get('SUDO');
 		    chomp( my $test_df = `$sudo sh -c 'echo \$DEBIAN_FRONTEND'` );
 		    chomp( my $test_ac = `$sudo sh -c 'echo \$APT_CONFIG'` );
 		    chomp( my $test_sh = `$sudo sh -c 'echo \$SHELL'` );
 
 		    if ($test_df ne "noninteractive" ||
 			$test_ac ne "test_apt_config" ||
-			$test_sh ne $Sbuild::Sysconfig::programs{'SHELL'}) {
+			$test_sh ne '/bin/sh') {
 			print STDERR "$sudo is stripping APT_CONFIG, DEBIAN_FRONTEND and/or SHELL from the environment\n";
-			print STDERR "'Defaults:" . $self->get('USERNAME') . " env_keep+=\"APT_CONFIG DEBIAN_FRONTEND SHELL\"' is not set in /etc/sudoers\n";
+			print STDERR "'Defaults:" . $conf->get('USERNAME') . " env_keep+=\"APT_CONFIG DEBIAN_FRONTEND SHELL\"' is not set in /etc/sudoers\n";
 			die "$sudo is incorrectly configured"
 		    }
 		}
 	    },
-	    DEFAULT => $Sbuild::Sysconfig::programs{'SUDO'}
+	    DEFAULT => 'sudo'
 	},
 	'SU'					=> {
 	    CHECK => $validate_program,
-	    DEFAULT => $Sbuild::Sysconfig::programs{'SU'}
+	    DEFAULT => 'su'
 	},
 	'SCHROOT'				=> {
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
 
 		# Only validate if needed.
-		if ($self->get('CHROOT_MODE') eq 'schroot') {
-		    $validate_program->($self, $entry);
+		if ($conf->get('CHROOT_MODE') eq 'schroot') {
+		    $validate_program->($conf, $entry);
 		}
 	    },
-	    DEFAULT => $Sbuild::Sysconfig::programs{'SCHROOT'}
+	    DEFAULT => 'schroot'
 	},
 	'SCHROOT_OPTIONS'			=> {
 	    DEFAULT => ['-q']
 	},
 	'FAKEROOT'				=> {
-	    DEFAULT => $Sbuild::Sysconfig::programs{'FAKEROOT'}
+	    DEFAULT => 'fakeroot'
 	},
 	'APT_GET'				=> {
 	    CHECK => $validate_program,
-	    DEFAULT => $Sbuild::Sysconfig::programs{'APT_GET'}
+	    DEFAULT => 'apt-get'
 	},
 	'APT_CACHE'				=> {
 	    CHECK => $validate_program,
-	    DEFAULT => $Sbuild::Sysconfig::programs{'APT_CACHE'}
+	    DEFAULT => 'apt-cache'
 	},
 	'APTITUDE'				=> {
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
 
 		# Only validate if needed.
-		if ($self->get('BUILD_DEP_RESOLVER') eq 'aptitude') {
-		    $validate_program->($self, $entry);
+		if ($conf->get('BUILD_DEP_RESOLVER') eq 'aptitude') {
+		    $validate_program->($conf, $entry);
 		}
 	    },
-	    DEFAULT => $Sbuild::Sysconfig::programs{'APTITUDE'}
+	    DEFAULT => 'aptitude'
 	},
 	'DPKG_BUILDPACKAGE_USER_OPTIONS'	=> {
 	    DEFAULT => []
 	},
 	'DPKG_SOURCE'				=> {
 	    CHECK => $validate_program,
-	    DEFAULT => $Sbuild::Sysconfig::programs{'DPKG_SOURCE'}
+	    DEFAULT => 'dpkg-source'
 	},
 	'DPKG_SOURCE_OPTIONS'			=> {
 	    DEFAULT => []
 	},
 	'DCMD'					=> {
 	    CHECK => $validate_program,
-	    DEFAULT => $Sbuild::Sysconfig::programs{'DCMD'}
+	    DEFAULT => 'dcmd'
 	},
 	'MD5SUM'				=> {
 	    CHECK => $validate_program,
-	    DEFAULT => $Sbuild::Sysconfig::programs{'MD5SUM'}
+	    DEFAULT => 'md5sum'
 	},
 	'AVG_TIME_DB'				=> {
 	    DEFAULT => "$Sbuild::Sysconfig::paths{'SBUILD_LOCALSTATE_DIR'}/avg-build-times"
@@ -217,10 +236,10 @@ sub init_allowed_keys {
 	},
 	'LOG_DIR'				=> {
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
-		my $directory = $self->get($key);
+		my $directory = $conf->get($key);
 
 		my $log_dir_available = 1;
 		if ($directory && ! -d $directory &&
@@ -229,20 +248,20 @@ sub init_allowed_keys {
 		    $log_dir_available = 0;
 		}
 
-		$self->set('LOG_DIR_AVAILABLE', $log_dir_available);
+		$conf->set('LOG_DIR_AVAILABLE', $log_dir_available);
 	    },
 	    DEFAULT => "$HOME/logs"
 	},
 	'LOG_DIR_AVAILABLE'			=> {},
 	'MAILTO'				=> {
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
 
 		die "mailto not set\n"
-		    if !$self->get('MAILTO') &&
-		    $self->get('SBUILD_MODE') eq "buildd";
+		    if !$conf->get('MAILTO') &&
+		    $conf->get('SBUILD_MODE') eq "buildd";
 	    },
 	    DEFAULT => ""
 	},
@@ -260,26 +279,26 @@ sub init_allowed_keys {
 	},
 	'PURGE_BUILD_DEPS'			=> {
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
 
 		die "Bad purge mode \'" .
-		    $self->get('PURGE_BUILD_DEPS') . "\'"
-		    if !isin($self->get('PURGE_BUILD_DEPS'),
+		    $conf->get('PURGE_BUILD_DEPS') . "\'"
+		    if !isin($conf->get('PURGE_BUILD_DEPS'),
 			     qw(always successful never));
 	    },
 	    DEFAULT => 'always'
 	},
 	'PURGE_BUILD_DIRECTORY'			=> {
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
 
 		die "Bad purge mode \'" .
-		    $self->get('PURGE_BUILD_DIRECTORY') . "\'"
-		    if !isin($self->get('PURGE_BUILD_DIRECTORY'),
+		    $conf->get('PURGE_BUILD_DIRECTORY') . "\'"
+		    if !isin($conf->get('PURGE_BUILD_DIRECTORY'),
 			     qw(always successful never));
 	    },
 	    DEFAULT => 'always'
@@ -301,13 +320,6 @@ sub init_allowed_keys {
 	'STALLED_PKG_TIMEOUT'			=> {
 	    DEFAULT => 150 # minutes
 	},
-	'SRCDEP_LOCK_DIR'			=> {
-	    # Note: inside chroot only
-	    DEFAULT => "/var/lib/sbuild/srcdep-lock"
-	},
-	'SRCDEP_LOCK_WAIT'			=> {
-	    DEFAULT => 1 # minutes
-	},
 	'MAX_LOCK_TRYS'				=> {
 	    DEFAULT => 120
 	},
@@ -316,12 +328,12 @@ sub init_allowed_keys {
 	},
 	'CHROOT_MODE'				=> {
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
 
-		die "Bad chroot mode \'" . $self->get('CHROOT_MODE') . "\'"
-		    if !isin($self->get('CHROOT_MODE'),
+		die "Bad chroot mode \'" . $conf->get('CHROOT_MODE') . "\'"
+		    if !isin($conf->get('CHROOT_MODE'),
 			     qw(schroot sudo));
 	    },
 	    DEFAULT => 'schroot'
@@ -360,8 +372,9 @@ sub init_allowed_keys {
 	'INDIVIDUAL_STALLED_PKG_TIMEOUT'	=> {
 	    DEFAULT => {}
 	},
-	'PATH'					=> {
-	    DEFAULT => "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/X11R6/bin:/usr/games"
+	'ENVIRONMENT_FILTER'			=> {
+	    DEFAULT => ['^DEB(SIGN)?_[A-Z_]+$',
+	    		'^(C(PP|XX)?|LD|F)FLAGS(_APPEND)?$']
 	},
 	'LD_LIBRARY_PATH'			=> {
 	    DEFAULT => undef
@@ -395,14 +408,14 @@ sub init_allowed_keys {
 	},
 	'CHECK_DEPENDS_ALGORITHM'		=> {
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
 
 		die '$key: Invalid build-dependency checking algorithm \'' .
-		    $self->get($key) .
+		    $conf->get($key) .
 		    "'\nValid algorthms are 'first-only' and 'alternatives'\n"
-		    if !isin($self->get($key),
+		    if !isin($conf->get($key),
 			     qw(first-only alternatives));
 	    },
 	    DEFAULT => 'first-only'
@@ -455,34 +468,34 @@ sub init_allowed_keys {
 	'BUILD_DEP_RESOLVER'			=> {
 	    DEFAULT => 'internal',
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
 
 		die '$key: Invalid build-dependency resolver \'' .
-		    $self->get($key) .
+		    $conf->get($key) .
 		    "'\nValid algorthms are 'internal', 'apt' and 'aptitude'\n"
-		    if !isin($self->get($key),
+		    if !isin($conf->get($key),
 			     qw(internal apt aptitude));
 	    },
 	},
 	'LINTIAN'				=> {
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
 
 		# Only validate if needed.
-		if ($self->get('RUN_LINTIAN')) {
-		    $validate_program->($self, $entry);
+		if ($conf->get('RUN_LINTIAN')) {
+		    $validate_program->($conf, $entry);
 		}
 	    },
-	    DEFAULT => $Sbuild::Sysconfig::programs{'LINTIAN'},
+	    DEFAULT => 'lintian'
 	},
 	'RUN_LINTIAN'				=> {
 	    CHECK => sub {
-		my $self = shift;
-		$self->check('LINTIAN');
+		my $conf = shift;
+		$conf->check('LINTIAN');
 	    },
 	    DEFAULT => 0
 	},
@@ -491,21 +504,21 @@ sub init_allowed_keys {
 	},
 	'PIUPARTS'				=> {
 	    CHECK => sub {
-		my $self = shift;
+		my $conf = shift;
 		my $entry = shift;
 		my $key = $entry->{'NAME'};
 
 		# Only validate if needed.
-		if ($self->get('RUN_PIUPARTS')) {
-		    $validate_program->($self, $entry);
+		if ($conf->get('RUN_PIUPARTS')) {
+		    $validate_program->($conf, $entry);
 		}
 	    },
-	    DEFAULT => $Sbuild::Sysconfig::programs{'PIUPARTS'},
+	    DEFAULT => 'piuparts'
 	},
 	'RUN_PIUPARTS'				=> {
 	    CHECK => sub {
-		my $self = shift;
-		$self->check('PIUPARTS');
+		my $conf = shift;
+		$conf->check('PIUPARTS');
 	    },
 	    DEFAULT => 0
 	},
@@ -532,21 +545,27 @@ sub init_allowed_keys {
 	'RESOLVE_VIRTUAL'				=> {
 	    DEFAULT => 0
 	},
+	'SBUILD_BUILD_DEPENDS_SECRET_KEY'		=> {
+	    DEFAULT => '/var/lib/sbuild/apt-keys/sbuild-key.sec'
+	},
+	'SBUILD_BUILD_DEPENDS_PUBLIC_KEY'		=> {
+	    DEFAULT => '/var/lib/sbuild/apt-keys/sbuild-key.pub'
+	},
     );
 
-    $self->set_allowed_keys(\%sbuild_keys);
-    Sbuild::DB::ClientConf::add_keys($self);
+    $conf->set_allowed_keys(\%sbuild_keys);
+    Sbuild::DB::ClientConf::setup($conf);
 }
 
-sub read_config {
-    my $self = shift;
+sub read ($) {
+    my $conf = shift;
 
     # Set here to allow user to override.
-    if (-t STDIN && -t STDOUT && $self->get('VERBOSE') == 0) {
-	$self->set('VERBOSE', 1);
+    if (-t STDIN && -t STDOUT && $conf->get('VERBOSE') == 0) {
+	$conf->set('VERBOSE', 1);
     }
 
-    my $HOME = $self->get('HOME');
+    my $HOME = $conf->get('HOME');
 
     # Variables are undefined, so config will default to DEFAULT if unset.
     my $mailprog = undef;
@@ -580,8 +599,6 @@ sub read_config {
     my @toolchain_regex;
     undef @toolchain_regex;
     my $stalled_pkg_timeout = undef;
-    my $srcdep_lock_dir = undef;
-    my $srcdep_lock_wait = undef;
     my $max_lock_trys = undef;
     my $lock_interval = undef;
     my $apt_policy = undef;
@@ -601,6 +618,7 @@ sub read_config {
     my %individual_stalled_pkg_timeout;
     undef %individual_stalled_pkg_timeout;
     my $path = undef;
+    my $environment_filter = undef;
     my $ld_library_path = undef;
     my $maintainer_name = undef;
     my $uploader_name = undef;
@@ -642,146 +660,115 @@ sub read_config {
 	}
     }
 
+    # Needed before any program validation.
+    $conf->set('PATH', $path);
     # Set before APT_GET or APTITUDE to allow correct validation.
-    $self->set('BUILD_DEP_RESOLVER', $build_dep_resolver);
-    $self->set('RESOLVE_VIRTUAL', $resolve_virtual);
-    $self->set('CORE_DEPENDS', $core_depends);
-    $self->set('ARCH', $arch);
-    $self->set('DISTRIBUTION', $distribution);
-    $self->set('DEBUG', $debug);
-    $self->set('DPKG', $dpkg);
-    $self->set('MAILPROG', $mailprog);
-    $self->set('ARCHIVE', $archive);
-    $self->set('CHROOT', $chroot);
-    $self->set('BUILD_ARCH_ALL', $build_arch_all);
-    $self->set('SUDO',  $sudo);
-    $self->set('SU', $su);
-    $self->set('SCHROOT', $schroot);
-    $self->set('SCHROOT_OPTIONS', $schroot_options);
-    $self->set('FAKEROOT', $fakeroot);
-    $self->set('APT_GET', $apt_get);
-    $self->set('APT_CACHE', $apt_cache);
-    $self->set('APTITUDE', $aptitude);
-    $self->set('DPKG_SOURCE', $dpkg_source);
-    $self->set('DPKG_SOURCE_OPTIONS', $dpkg_source_opts);
-    $self->set('DCMD', $dcmd);
-    $self->set('MD5SUM', $md5sum);
-    $self->set('AVG_TIME_DB', $avg_time_db);
-    $self->set('AVG_SPACE_DB', $avg_space_db);
-    $self->set('STATS_DIR', $stats_dir);
-    $self->set('PACKAGE_CHECKLIST', $package_checklist);
-    $self->set('BUILD_ENV_CMND', $build_env_cmnd);
-    $self->set('PGP_OPTIONS', $pgp_options);
-    $self->set('LOG_DIR', $log_dir);
-    $self->set('MAILTO', $mailto);
-    $self->set('MAILTO_HASH', \%mailto)
+    $conf->set('BUILD_DEP_RESOLVER', $build_dep_resolver);
+    $conf->set('RESOLVE_VIRTUAL', $resolve_virtual);
+    $conf->set('CORE_DEPENDS', $core_depends);
+    $conf->set('ARCH', $arch);
+    $conf->set('DISTRIBUTION', $distribution);
+    $conf->set('DEBUG', $debug);
+    $conf->set('MAILPROG', $mailprog);
+    $conf->set('ARCHIVE', $archive);
+    $conf->set('CHROOT', $chroot);
+    $conf->set('BUILD_ARCH_ALL', $build_arch_all);
+    $conf->set('SUDO',  $sudo);
+    $conf->set('SU', $su);
+    $conf->set('SCHROOT', $schroot);
+    $conf->set('SCHROOT_OPTIONS', $schroot_options);
+    $conf->set('FAKEROOT', $fakeroot);
+    $conf->set('APT_GET', $apt_get);
+    $conf->set('APT_CACHE', $apt_cache);
+    $conf->set('APTITUDE', $aptitude);
+    $conf->set('DPKG_SOURCE', $dpkg_source);
+    $conf->set('DPKG_SOURCE_OPTIONS', $dpkg_source_opts);
+    $conf->set('DCMD', $dcmd);
+    $conf->set('MD5SUM', $md5sum);
+    $conf->set('AVG_TIME_DB', $avg_time_db);
+    $conf->set('AVG_SPACE_DB', $avg_space_db);
+    $conf->set('STATS_DIR', $stats_dir);
+    $conf->set('PACKAGE_CHECKLIST', $package_checklist);
+    $conf->set('BUILD_ENV_CMND', $build_env_cmnd);
+    $conf->set('PGP_OPTIONS', $pgp_options);
+    $conf->set('LOG_DIR', $log_dir);
+    $conf->set('MAILTO', $mailto);
+    $conf->set('MAILTO_HASH', \%mailto)
 	if (%mailto);
-    $self->set('MAILFROM', $mailfrom);
-    $self->set('COMPRESS_BUILD_LOG_MAILS', $compress_build_log_mails);
-    $self->set('PURGE_BUILD_DEPS', $purge_build_deps);
-    $self->set('PURGE_BUILD_DIRECTORY', $purge_build_directory);
-    $self->set('TOOLCHAIN_REGEX', \@toolchain_regex)
+    $conf->set('MAILFROM', $mailfrom);
+    $conf->set('COMPRESS_BUILD_LOG_MAILS', $compress_build_log_mails);
+    $conf->set('PURGE_BUILD_DEPS', $purge_build_deps);
+    $conf->set('PURGE_BUILD_DIRECTORY', $purge_build_directory);
+    $conf->set('TOOLCHAIN_REGEX', \@toolchain_regex)
 	if (@toolchain_regex);
-    $self->set('STALLED_PKG_TIMEOUT', $stalled_pkg_timeout);
-    $self->set('SRCDEP_LOCK_DIR', $srcdep_lock_dir);
-    $self->set('SRCDEP_LOCK_WAIT', $srcdep_lock_wait);
-    $self->set('MAX_LOCK_TRYS', $max_lock_trys);
-    $self->set('LOCK_INTERVAL', $lock_interval);
-    $self->set('APT_POLICY', $apt_policy);
-    $self->set('CHECK_WATCHES', $check_watches);
-    $self->set('CHECK_SPACE', $check_space);
-    $self->set('IGNORE_WATCHES_NO_BUILD_DEPS',
+    $conf->set('STALLED_PKG_TIMEOUT', $stalled_pkg_timeout);
+    $conf->set('MAX_LOCK_TRYS', $max_lock_trys);
+    $conf->set('LOCK_INTERVAL', $lock_interval);
+    $conf->set('APT_POLICY', $apt_policy);
+    $conf->set('CHECK_WATCHES', $check_watches);
+    $conf->set('CHECK_SPACE', $check_space);
+    $conf->set('IGNORE_WATCHES_NO_BUILD_DEPS',
 	       \@ignore_watches_no_build_deps)
 	if (@ignore_watches_no_build_deps);
-    $self->set('WATCHES', \%watches)
+    $conf->set('WATCHES', \%watches)
 	if (%watches);
-    $self->set('CHROOT_MODE', $chroot_mode);
-    $self->set('CHROOT_SPLIT', $chroot_split);
-    $self->set('SBUILD_MODE', $sbuild_mode);
-    $self->set('FORCE_ORIG_SOURCE', $force_orig_source);
-    $self->set('BUILD_SOURCE', $build_source);
-    $self->set('CHROOT_SETUP_SCRIPT', $chroot_setup_script);
-    $self->set('INDIVIDUAL_STALLED_PKG_TIMEOUT',
+    $conf->set('CHROOT_MODE', $chroot_mode);
+    $conf->set('CHROOT_SPLIT', $chroot_split);
+    $conf->set('SBUILD_MODE', $sbuild_mode);
+    $conf->set('FORCE_ORIG_SOURCE', $force_orig_source);
+    $conf->set('BUILD_SOURCE', $build_source);
+    $conf->set('CHROOT_SETUP_SCRIPT', $chroot_setup_script);
+    $conf->set('INDIVIDUAL_STALLED_PKG_TIMEOUT',
 	       \%individual_stalled_pkg_timeout)
 	if (%individual_stalled_pkg_timeout);
-    $self->set('PATH', $path);
-    $self->set('LD_LIBRARY_PATH', $ld_library_path);
-    $self->set('MAINTAINER_NAME', $maintainer_name);
-    $self->set('UPLOADER_NAME', $uploader_name);
-    $self->set('KEY_ID', $key_id);
-    $self->set('APT_CLEAN', $apt_clean);
-    $self->set('APT_UPDATE', $apt_update);
-    $self->set('APT_UPGRADE', $apt_upgrade);
-    $self->set('APT_DISTUPGRADE', $apt_distupgrade);
-    $self->set('APT_ALLOW_UNAUTHENTICATED', $apt_allow_unauthenticated);
-    $self->set('CHECK_DEPENDS_ALGORITHM', $check_depends_algorithm);
-    $self->set('JOB_FILE', $job_file);
+    $conf->set('ENVIRONMENT_FILTER', $environment_filter);
+    $conf->set('LD_LIBRARY_PATH', $ld_library_path);
+    $conf->set('MAINTAINER_NAME', $maintainer_name);
+    $conf->set('UPLOADER_NAME', $uploader_name);
+    $conf->set('KEY_ID', $key_id);
+    $conf->set('APT_CLEAN', $apt_clean);
+    $conf->set('APT_UPDATE', $apt_update);
+    $conf->set('APT_UPGRADE', $apt_upgrade);
+    $conf->set('APT_DISTUPGRADE', $apt_distupgrade);
+    $conf->set('APT_ALLOW_UNAUTHENTICATED', $apt_allow_unauthenticated);
+    $conf->set('CHECK_DEPENDS_ALGORITHM', $check_depends_algorithm);
+    $conf->set('JOB_FILE', $job_file);
 
-    $self->set('MAILTO',
-	       $self->get('MAILTO_HASH')->{$self->get('DISTRIBUTION')})
-	if defined($self->get('DISTRIBUTION')) &&
-	   $self->get('DISTRIBUTION') &&
-	   $self->get('MAILTO_HASH')->{$self->get('DISTRIBUTION')};
+    $conf->set('MAILTO',
+	       $conf->get('MAILTO_HASH')->{$conf->get('DISTRIBUTION')})
+	if defined($conf->get('DISTRIBUTION')) &&
+	   $conf->get('DISTRIBUTION') &&
+	   $conf->get('MAILTO_HASH')->{$conf->get('DISTRIBUTION')};
 
-    $self->set('SIGNING_OPTIONS',
-	       "-m".$self->get('MAINTAINER_NAME')."")
-	if defined $self->get('MAINTAINER_NAME');
-    $self->set('SIGNING_OPTIONS',
-	       "-e".$self->get('UPLOADER_NAME')."")
-	if defined $self->get('UPLOADER_NAME');
-    $self->set('SIGNING_OPTIONS',
-	       "-k".$self->get('KEY_ID')."")
-	if defined $self->get('KEY_ID');
-    $self->set('MAINTAINER_NAME', $self->get('UPLOADER_NAME')) if defined $self->get('UPLOADER_NAME');
-    $self->set('MAINTAINER_NAME', $self->get('KEY_ID')) if defined $self->get('KEY_ID');
-    $self->set('BUILD_DIR', $build_dir);
+    $conf->set('SIGNING_OPTIONS',
+	       "-m".$conf->get('MAINTAINER_NAME')."")
+	if defined $conf->get('MAINTAINER_NAME');
+    $conf->set('SIGNING_OPTIONS',
+	       "-e".$conf->get('UPLOADER_NAME')."")
+	if defined $conf->get('UPLOADER_NAME');
+    $conf->set('SIGNING_OPTIONS',
+	       "-k".$conf->get('KEY_ID')."")
+	if defined $conf->get('KEY_ID');
+    $conf->set('MAINTAINER_NAME', $conf->get('UPLOADER_NAME')) if defined $conf->get('UPLOADER_NAME');
+    $conf->set('MAINTAINER_NAME', $conf->get('KEY_ID')) if defined $conf->get('KEY_ID');
+    $conf->set('BUILD_DIR', $build_dir);
 
-    if (!defined($self->get('MAINTAINER_NAME')) &&
-	$self->get('BIN_NMU')) {
+    if (!defined($conf->get('MAINTAINER_NAME')) &&
+	$conf->get('BIN_NMU')) {
 	die "A maintainer name, uploader name or key ID must be specified in .sbuildrc,\nor use -m, -e or -k, when performing a binNMU\n";
     }
-    $self->set('RUN_LINTIAN', $run_lintian);
-    $self->set('LINTIAN', $lintian);
-    $self->set('LINTIAN_OPTIONS', $lintian_opts);
-    $self->set('RUN_PIUPARTS', $run_piuparts);
-    $self->set('PIUPARTS', $piuparts);
-    $self->set('PIUPARTS_OPTIONS', $piuparts_opts);
-    $self->set('PIUPARTS_ROOT_ARGS', $piuparts_root_args);
-    $self->set('EXTERNAL_COMMANDS', $external_commands);
-    push(@{${$self->get('EXTERNAL_COMMANDS')}{"chroot-setup-commands"}},
+    $conf->set('RUN_LINTIAN', $run_lintian);
+    $conf->set('LINTIAN', $lintian);
+    $conf->set('LINTIAN_OPTIONS', $lintian_opts);
+    $conf->set('RUN_PIUPARTS', $run_piuparts);
+    $conf->set('PIUPARTS', $piuparts);
+    $conf->set('PIUPARTS_OPTIONS', $piuparts_opts);
+    $conf->set('PIUPARTS_ROOT_ARGS', $piuparts_root_args);
+    $conf->set('EXTERNAL_COMMANDS', $external_commands);
+    push(@{${$conf->get('EXTERNAL_COMMANDS')}{"chroot-setup-commands"}},
         $chroot_setup_script) if ($chroot_setup_script);
-    $self->set('LOG_EXTERNAL_COMMAND_OUTPUT', $log_external_command_output);
-    $self->set('LOG_EXTERNAL_COMMAND_ERROR', $log_external_command_error);
-}
-
-sub check_group_membership ($) {
-    my $self = shift;
-
-    # Skip for root
-    return if ($< == 0);
-
-    my $user = getpwuid($<);
-    my ($name,$passwd,$gid,$members) = getgrnam("sbuild");
-
-    if (!$gid) {
-	die "Group sbuild does not exist";
-    }
-
-    my $in_group = 0;
-    my @groups = getgroups();
-    push @groups, getgid();
-    foreach (@groups) {
-	($name, $passwd, $gid, $members) = getgrgid($_);
-	$in_group = 1 if defined($name) && $name eq 'sbuild';
-    }
-
-    if (!$in_group) {
-	print STDERR "User $user is not currently a member of group sbuild, but is in the system group database\n";
-	print STDERR "You need to log in again to gain sbuild group priveleges\n";
-	exit(1);
-    }
-
-    return;
+    $conf->set('LOG_EXTERNAL_COMMAND_OUTPUT', $log_external_command_output);
+    $conf->set('LOG_EXTERNAL_COMMAND_ERROR', $log_external_command_error);
 }
 
 1;

@@ -40,18 +40,14 @@ use Dpkg::Control;
 
 use Sbuild qw($devnull binNMU_version version_compare split_version copy isin send_build_log debug df);
 use Sbuild::Base;
-use Sbuild::ChrootSetup qw(clean update upgrade distupgrade);
 use Sbuild::ChrootInfoSchroot;
 use Sbuild::ChrootInfoSudo;
 use Sbuild::ChrootRoot;
 use Sbuild::Sysconfig qw($version $release_date);
-use Sbuild::Conf;
 use Sbuild::LogBase qw($saved_stdout);
 use Sbuild::Sysconfig;
 use Sbuild::Utility qw(check_url download parse_file dsc_files);
-use Sbuild::AptResolver;
-use Sbuild::AptitudeResolver;
-use Sbuild::InternalResolver;
+use Sbuild::Resolver qw(get_resolver);
 
 BEGIN {
     use Exporter ();
@@ -76,7 +72,6 @@ sub new {
     $self->set('Chroot Build Dir', '');
     $self->set('Max Lock Trys', 120);
     $self->set('Lock Interval', 5);
-    $self->set('Srcdep Lock Count', 0);
     $self->set('Pkg Status', 'pending');
     $self->set('Pkg Status Trigger', undef);
     $self->set('Pkg Start Time', 0);
@@ -84,6 +79,8 @@ sub new {
     $self->set('Pkg Fail Stage', 0);
     $self->set('Build Start Time', 0);
     $self->set('Build End Time', 0);
+    $self->set('Install Start Time', 0);
+    $self->set('Install End Time', 0);
     $self->set('This Time', 0);
     $self->set('This Space', 0);
     $self->set('This Watches', {});
@@ -91,12 +88,13 @@ sub new {
     $self->set('Host', Sbuild::ChrootRoot->new($self->get('Config')));
     # Host execution defaults
     my $host_defaults = $self->get('Host')->get('Defaults');
-    $host_defaults->{'CHROOT'} = 0;
     $host_defaults->{'USER'} = $self->get_conf('USERNAME');
     $host_defaults->{'DIR'} = $self->get_conf('HOME');
     $host_defaults->{'STREAMIN'} = $devnull;
     $host_defaults->{'ENV'}->{'LC_ALL'} = 'POSIX';
-    $host_defaults->{'ENV'}->{'SHELL'} = $Sbuild::Sysconfig::programs{'SHELL'};
+    $host_defaults->{'ENV'}->{'SHELL'} = '/bin/sh';
+    # Note, this should never fail.  But, we should handle failure anyway.
+    $self->get('Host')->begin_session();
 
     $self->set('Session', undef);
     $self->set('Dependency Resolver', undef);
@@ -143,9 +141,7 @@ sub set_dsc {
     if (-d $dsc) {
 	my $host = $self->get('Host');
 	my $pipe = $host->pipe_command(
-	    { COMMAND => [$Sbuild::Sysconfig::programs{'DPKG_PARSECHANGELOG'},
-			  "-l" . abs_path($dsc) . "/debian/changelog"],
-	      CHROOT => 0,
+	    { COMMAND => ['dpkg-parsechangelog', '-l' . abs_path($dsc) . '/debian/changelog'],
 	      PRIORITY => 0,
 	    });
 
@@ -270,19 +266,6 @@ sub run {
 
     $self->set_status('building');
 
-    if ($self->get_conf('BUILD_DEP_RESOLVER') eq "apt") {
-	$self->set('Dependency Resolver',
-		   Sbuild::AptResolver->new($self));
-    } elsif ($self->get_conf('BUILD_DEP_RESOLVER') eq "aptitude") {
-	$self->set('Dependency Resolver',
-		   Sbuild::AptitudeResolver->new($self));
-    } else {
-	$self->set('Dependency Resolver',
-		   Sbuild::InternalResolver->new($self));
-    }
-    my $resolver = $self->get('Dependency Resolver');
-
-
     $self->set('Pkg Start Time', time);
     $self->set('Pkg End Time', $self->get('Pkg Start Time'));
 
@@ -333,7 +316,6 @@ sub run {
 	    { COMMAND => [$self->get_conf('FAKEROOT'),
 			  'debian/rules',
 			  'clean'],
-	      CHROOT => 0,
 	      DIR => $self->get('Debian Source Dir'),
 	      PRIORITY => 0,
 	    });
@@ -350,7 +332,6 @@ sub run {
 	push @dpkg_source_command, $self->get('Debian Source Dir');
 	$self->get('Host')->run_command(
 	    { COMMAND => \@dpkg_source_command,
-	      CHROOT => 0,
 	      DIR => $self->get_conf('BUILD_DIR'),
 	      PRIORITY => 0,
 	    });
@@ -375,46 +356,51 @@ sub run {
 	$self->log("Error creating chroot session: skipping " .
 		   $self->get('Package') . "\n");
 	$self->set_status('failed');
-	goto cleanup_session;
+	goto cleanup_unlocked_session;
     }
 
     $self->set('Session', $session);
     $self->set('Arch', $self->chroot_arch());
 
     $self->set('Chroot Dir', $session->get('Location'));
+    # TODO: Don't hack the build location in; add a means to customise
+    # the chroot directly.  i.e. allow changing of /build location.
     $self->set('Chroot Build Dir',
 	       tempdir($self->get_conf('USERNAME') . '-' .
 		       $self->get('Package_SVersion') . '-' .
 		       $self->get('Arch') . '-XXXXXX',
-		       DIR => $session->get('Build Location')));
-    # TODO: Don't hack the build location in; add a means to customise
-    # the chroot directly.
-    $session->set('Build Location', $self->get('Chroot Build Dir'));
+		       DIR =>  $session->get('Location') . "/build"));
 
     # Needed so chroot commands log to build log
     $session->set('Log Stream', $self->get('Log Stream'));
+    $host->set('Log Stream', $self->get('Log Stream'));
 
     # Chroot execution defaults
     my $chroot_defaults = $session->get('Defaults');
     $chroot_defaults->{'DIR'} =
-	$session->strip_chroot_path($session->get('Build Location'));
+	$session->strip_chroot_path($self->get('Chroot Build Dir'));
     $chroot_defaults->{'STREAMIN'} = $devnull;
     $chroot_defaults->{'STREAMOUT'} = $self->get('Log Stream');
     $chroot_defaults->{'STREAMERR'} = $self->get('Log Stream');
     $chroot_defaults->{'ENV'}->{'LC_ALL'} = 'POSIX';
-    $chroot_defaults->{'ENV'}->{'SHELL'} = $Sbuild::Sysconfig::programs{'SHELL'};
+    $chroot_defaults->{'ENV'}->{'SHELL'} = '/bin/sh';
 
-    $self->set('Session', $session);
+    my $resolver = get_resolver($self->get('Config'), $session, $host);
+    $resolver->set('Log Stream', $self->get('Log Stream'));
+    $resolver->set('Arch', $self->get('Arch'));
+    $self->set('Dependency Resolver', $resolver);
 
     # Lock chroot so it won't be tampered with during the build.
     if (!$session->lock_chroot($self->get('Package_SVersion'), $$, $self->get_conf('USERNAME'))) {
 	goto cleanup_unlocked_session;
     }
 
+    $resolver->setup();
+
     # Clean APT cache.
     $self->set('Pkg Fail Stage', 'apt-get-clean');
     if ($self->get_conf('APT_CLEAN')) {
-	if (clean($session, $self->get('Config'))) {
+	if ($resolver->clean()) {
 	    # Since apt-clean was requested specifically, fail on
 	    # error when not in buildd mode.
 	    $self->log("apt-get clean failed\n");
@@ -428,7 +414,7 @@ sub run {
     # Update APT cache.
     $self->set('Pkg Fail Stage', 'apt-get-update');
     if ($self->get_conf('APT_UPDATE')) {
-	if (update($session, $self->get('Config'))) {
+	if ($resolver->update()) {
 	    # Since apt-update was requested specifically, fail on
 	    # error when not in buildd mode.
 	    $self->log("apt-get update failed\n");
@@ -441,7 +427,7 @@ sub run {
     if ($self->get_conf('APT_DISTUPGRADE')) {
 	$self->set('Pkg Fail Stage', 'apt-get-distupgrade');
 	if ($self->get_conf('APT_DISTUPGRADE')) {
-	    if (distupgrade($session, $self->get('Config'))) {
+	    if ($resolver->distupgrade()) {
 		# Since apt-distupgrade was requested specifically, fail on
 		# error when not in buildd mode.
 		$self->log("apt-get dist-upgrade failed\n");
@@ -454,7 +440,7 @@ sub run {
     } elsif ($self->get_conf('APT_UPGRADE')) {
 	$self->set('Pkg Fail Stage', 'apt-get-upgrade');
 	if ($self->get_conf('APT_UPGRADE')) {
-	    if (upgrade($session, $self->get('Config'))) {
+	    if ($resolver->upgrade()) {
 		# Since apt-upgrade was requested specifically, fail on
 		# error when not in buildd mode.
 		$self->log("apt-get upgrade failed\n");
@@ -484,6 +470,8 @@ sub run {
 				 $self->get_conf('LOG_EXTERNAL_COMMAND_OUTPUT'),
 				 $self->get_conf('LOG_EXTERNAL_COMMAND_ERROR'));
 
+    $self->set('Install Start Time', time);
+    $self->set('Install End Time', $self->get('Install Start Time'));
     $resolver->add_dependencies('CORE', join(", ", @{$self->get_conf('CORE_DEPENDS')}) , "", "", "");
     if (!$resolver->install_deps('core', 'CORE')) {
 	$self->log("Core source dependencies not satisfied; skipping");
@@ -519,8 +507,11 @@ sub run {
 		   $self->get('Package') . "\n");
 	goto cleanup_packages;
     }
+    $self->set('Install End Time', time);
 
     $resolver->dump_build_environment();
+
+    $self->prepare_watches(keys %{$resolver->get('Changes')->{'installed'}});
 
     if ($self->build()) {
 	$self->set_status('successful');
@@ -561,24 +552,23 @@ sub run {
     my $is_cloned_session = (defined ($session->get('Session Purged')) &&
 			     $session->get('Session Purged') == 1) ? 1 : 0;
 
+    if ($purge_build_directory) {
+	# Purge package build directory
+	$self->log("Purging " . $self->get('Chroot Build Dir') . "\n");
+	my $bdir = $self->get('Session')->strip_chroot_path($self->get('Chroot Build Dir'));
+	$self->get('Session')->run_command(
+	    { COMMAND => ['rm', '-rf', $bdir],
+	      USER => 'root',
+	      PRIORITY => 0,
+	      DIR => '/' });
+    }
+
     # Purge non-cloned session
     if ($is_cloned_session) {
 	$self->log("Not cleaning session: cloned chroot in use\n");
 	$end_session = 0
 	    if ($purge_build_directory == 0 || $purge_build_deps == 0);
     } else {
-	if ($purge_build_directory) {
-	    # Purge package build directory
-	    $self->log("Purging " . $self->get('Chroot Build Dir') . "\n");
-	    my $bdir = $self->get('Session')->strip_chroot_path($self->get('Chroot Build Dir'));
-	    $self->get('Session')->run_command(
-		{ COMMAND => ['rm', '-rf', $bdir],
-		  USER => 'root',
-		  CHROOT => 1,
-		  PRIORITY => 0,
-		  DIR => '/' });
-	}
-
 	if ($purge_build_deps) {
 	    # Removing dependencies
 	    $resolver->uninstall_deps();
@@ -588,6 +578,7 @@ sub run {
     }
 
   cleanup_session:
+    $resolver->cleanup();
     # Unlock chroot now it's cleaned up and ready for other users.
     $session->unlock_chroot();
 
@@ -683,14 +674,14 @@ sub fetch_source_files {
       retry:
 	$self->log("Checking available source versions...\n");
 
-	my $pipe = $self->get('Session')->pipe_apt_command(
+	my $pipe = $self->get('Dependency Resolver')->pipe_apt_command(
 	    { COMMAND => [$self->get_conf('APT_CACHE'),
 			  '-q', 'showsrc', "$pkg"],
 	      USER => $self->get_conf('USERNAME'),
 	      PRIORITY => 0,
 	      DIR => '/'});
 	if (!$pipe) {
-	    $self->log("Can't open pipe to $conf::apt_cache: $!\n");
+	    $self->log("Can't open pipe to ".$self->get_conf('APT_UPDATE').": $!\n");
 	    return 0;
 	}
 
@@ -731,7 +722,7 @@ sub fetch_source_files {
 	    if (!$retried) {
 		$self->log_subsubsection("Update APT");
 		# try to update apt's cache if nothing found
-		update($self->get('Session'), $self->get('Config'));
+		$self->get('Dependency Resolver')->update();
 		$retried = 1;
 		goto retry;
 	    }
@@ -749,7 +740,7 @@ sub fetch_source_files {
 	    push(@fetched, "$build_dir/$_");
 	}
 
-	my $pipe2 = $self->get('Session')->pipe_apt_command(
+	my $pipe2 = $self->get('Dependency Resolver')->pipe_apt_command(
 	    { COMMAND => [$self->get_conf('APT_GET'), '--only-source', '-q', '-d', 'source', "$pkg=$ver"],
 	      USER => $self->get_conf('USERNAME'),
 	      PRIORITY => 0}) || return 0;
@@ -803,6 +794,7 @@ sub fetch_source_files {
 	    my $msg = "$dsc: $arch not in arch list or does not match any arch ";
 	    $msg .= "wildcards: $dscarchs -- skipping\n";
 	    $self->log($msg);
+	    $self->set_status('skipped');
 	    $self->set('Pkg Fail Stage', "arch-check");
 	    return 0;
 	}
@@ -839,7 +831,6 @@ sub run_command {
 	    $err = $defaults->{'STREAMERR'} if ($log_error);
 	    $self->get('Host')->run_command(
 		{ COMMAND => \@{$command},
-		    CHROOT => 0,
 		    PRIORITY => 0,
 		    STREAMOUT => $out,
 		    STREAMERR => $err,
@@ -851,7 +842,6 @@ sub run_command {
 	    $self->get('Session')->run_command(
 		{ COMMAND => \@{$command},
 		    USER => $self->get_conf('USERNAME'),
-		    CHROOT => 1,
 		    PRIORITY => 0,
 		    STREAMOUT => $out,
 		    STREAMERR => $err,
@@ -943,19 +933,12 @@ sub run_lintian {
     $self->log_subsubsection("lintian");
 
     my $lintian = $self->get_conf('LINTIAN');
-    if (! -x $lintian) {
-        my $why = "$lintian does not exist or is not executable";
-        $self->log_error("Lintian run failed ($why)\n");
-        return 0;
-    }
-
     my @lintian_command = ($lintian);
     push @lintian_command, @{$self->get_conf('LINTIAN_OPTIONS')} if
         ($self->get_conf('LINTIAN_OPTIONS'));
     push @lintian_command, $self->get('Changes File');
     $self->get('Host')->run_command(
         { COMMAND => \@lintian_command,
-          CHROOT => 0,
           PRIORITY => 0,
         });
     my $status = $? >> 8;
@@ -982,17 +965,11 @@ sub run_piuparts {
     $self->log_subsubsection("piuparts");
 
     my $piuparts = $self->get_conf('PIUPARTS');
-    if (! -x $piuparts) {
-        my $why = "$piuparts does not exist or is not executable";
-        $self->log_error("Piuparts run failed ($why)\n");
-        return 0;
-    }
-
     my @piuparts_command;
     if (scalar(@{$self->get_conf('PIUPARTS_ROOT_ARGS')})) {
 	push @piuparts_command, @{$self->get_conf('PIUPARTS_ROOT_ARGS')};
     } else {
-	push @piuparts_command, $Sbuild::Sysconfig::programs{'SUDO'}, '--';
+	push @piuparts_command, 'sudo', '--';
     }
     push @piuparts_command, $piuparts;
     push @piuparts_command, @{$self->get_conf('PIUPARTS_OPTIONS')} if
@@ -1000,7 +977,6 @@ sub run_piuparts {
     push @piuparts_command, $self->get('Changes File');
     $self->get('Host')->run_command(
         { COMMAND => \@piuparts_command,
-          CHROOT => 0,
           PRIORITY => 0,
         });
     my $status = $? >> 8;
@@ -1054,7 +1030,6 @@ sub build {
 		    { COMMAND => [$self->get_conf('DPKG_SOURCE'),
 				  '-x', $dscfile, $dscdir],
 		      USER => $self->get_conf('USERNAME'),
-		      CHROOT => 1,
 		      PRIORITY => 0});
 	if ($?) {
 	    $self->log("FAILED [dpkg-source died]\n");
@@ -1077,7 +1052,7 @@ sub build {
 	# check if the unpacked tree is really the version we need
 	$dscdir = $self->get('Session')->strip_chroot_path($dscdir);
 	my $pipe = $self->get('Session')->pipe_command(
-	    { COMMAND => [$Sbuild::Sysconfig::programs{'DPKG_PARSECHANGELOG'}],
+	    { COMMAND => ['dpkg-parsechangelog'],
 	      USER => $self->get_conf('USERNAME'),
 	      PRIORITY => 0,
 	      DIR => $dscdir});
@@ -1100,8 +1075,7 @@ sub build {
 
     $self->log_subsubsection("Check disc space");
     $self->set('Pkg Fail Stage', "check-space");
-    my $du = $Sbuild::Sysconfig::programs{'DU'};
-    my $current_usage = `"$du" -k -s "$dscdir"`;
+    my $current_usage = `du -k -s "$dscdir"`;
     $current_usage =~ /^(\d+)/;
     $current_usage = $1;
     if ($current_usage) {
@@ -1112,10 +1086,8 @@ sub build {
 	    # TODO: Only purge in a single place.
 	    $self->log("Purging $build_dir\n");
 	    $self->get('Session')->run_command(
-		{ COMMAND => [$Sbuild::Sysconfig::programs{'RM'},
-			      '-rf', $build_dir],
+		{ COMMAND => ['rm', '-rf', $build_dir],
 		  USER => 'root',
-		  CHROOT => 1,
 		  PRIORITY => 0,
 		  DIR => '/' });
 	    return 0;
@@ -1200,10 +1172,8 @@ sub build {
     if (-f "$self->{'Chroot Dir'}/etc/ld.so.conf" &&
 	! -r "$self->{'Chroot Dir'}/etc/ld.so.conf") {
 	$self->get('Session')->run_command(
-	    { COMMAND => [$Sbuild::Sysconfig::programs{'CHMOD'},
-			  'a+r', '/etc/ld.so.conf'],
+	    { COMMAND => ['chmod', 'a+r', '/etc/ld.so.conf'],
 	      USER => 'root',
-	      CHROOT => 1,
 	      PRIORITY => 0,
 	      DIR => '/' });
 
@@ -1252,7 +1222,6 @@ sub build {
 	ENV => $buildenv,
 	USER => $self->get_conf('USERNAME'),
 	SETSID => 1,
-	CHROOT => 1,
 	PRIORITY => 0,
 	DIR => $bdir
     };
@@ -1279,7 +1248,6 @@ sub build {
 			  '-e',
 			  "kill( \"$signal\", -$pid )"],
 	      USER => 'root',
-	      CHROOT => 1,
 	      PRIORITY => 0,
 	      DIR => '/' });
 
@@ -1309,6 +1277,8 @@ sub build {
     $self->set('Pkg End Time', time);
     $self->write_stats('build-time',
 		       $self->get('Build End Time')-$self->get('Build Start Time'));
+    $self->write_stats('install-download-time',
+		       $self->get('Install End Time')-$self->get('Install Start Time'));
     my $date = strftime("%Y%m%d-%H%M",localtime($self->get('Build End Time')));
     $self->log_sep();
     $self->log("Build finished at $date\n");
@@ -1483,6 +1453,20 @@ sub read_build_essential {
 	warn "Cannot open $self->{'Chroot Dir'}/usr/share/doc/build-essential/list: $!\n";
     }
 
+    # Workaround http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=602571
+    if (open( F, "$self->{'Chroot Dir'}/etc/lsb-release" )) {
+        while( <F> ) {
+            if ($_ eq "DISTRIB_ID=Ubuntu\n") {
+                @essential = grep(!/^sysvinit$/, @essential);
+                last;
+            }
+        }
+        close( F );
+    }
+    else {
+        warn "Cannot open $self->{'Chroot Dir'}/etc/lsb-release: $!\n";
+    }
+
     return join( ", ", @essential );
 }
 
@@ -1492,10 +1476,9 @@ sub check_space {
     my $sum = 0;
 
     foreach (@files) {
-	my $pipe = $self->get('Session')->pipe_command(
-	    { COMMAND => [$Sbuild::Sysconfig::programs{'DU'}, '-k', '-s', $_],
+	my $pipe = $self->get('Host')->pipe_command(
+	    { COMMAND => ['du', '-k', '-s', $_],
 	      USER => $self->get_conf('USERNAME'),
-	      CHROOT => 0,
 	      PRIORITY => 0,
 	      DIR => '/'});
 
@@ -1517,26 +1500,14 @@ sub check_space {
 
 sub prepare_watches {
     my $self = shift;
-    my $dependencies = shift;
     my @instd = @_;
-    my(@dep_on, $dep, $pkg, $prg);
+    my($pkg, $prg);
 
-    @dep_on = @instd;
-    foreach $dep (@$dependencies) {
-	if ($dep->{'Neg'} && $dep->{'Package'} =~ /^needs-no-(\S+)/) {
-	    push( @dep_on, $1 );
-	}
-	elsif ($dep->{'Package'} !~ /^\*/ && !$dep->{'Neg'}) {
-	    foreach (scalar($dep), @{$dep->{'Alternatives'}}) {
-		push( @dep_on, $_->{'Package'} );
-	    }
-	}
-    }
     # init %this_watches to names of packages which have not been
     # installed as source dependencies
     $self->set('This Watches', {});
     foreach $pkg (keys %{$self->get_conf('WATCHES')}) {
-	if (isin( $pkg, @dep_on )) {
+	if (isin( $pkg, @instd )) {
 	    debug("Excluding from watch: $pkg\n");
 	    next;
 	}
@@ -1656,6 +1627,8 @@ sub generate_stats {
     $self->add_stat('Space', $self->get('This Space'));
     $self->add_stat('Build-Time',
 		    $self->get('Build End Time')-$self->get('Build Start Time'));
+    $self->add_stat('Install-Time',
+		    $self->get('Install End Time')-$self->get('Install Start Time'));
     $self->add_stat('Package-Time',
 		    $self->get('Pkg End Time')-$self->get('Pkg Start Time'));
     $self->add_stat('Build-Space', $self->get('This Space'));
@@ -1729,10 +1702,8 @@ sub chroot_arch {
     my $self = shift;
 
     my $pipe = $self->get('Session')->pipe_command(
-	{ COMMAND => [$self->get_conf('DPKG'),
-		      '--print-architecture'],
+	{ COMMAND => ['dpkg', '--print-architecture'],
 	  USER => $self->get_conf('USERNAME'),
-	  CHROOT => 1,
 	  PRIORITY => 0,
 	  DIR => '/' }) || return undef;
 
@@ -1855,8 +1826,8 @@ sub close_build_log {
 
     my $filename = $self->get('Log File');
 
-    # Only report success or failure
-    if ($self->get_status() ne "successful") {
+    # building status at this point means failure.
+    if ($self->get_status() eq "building") {
 	$self->set_status('failed');
     }
 
@@ -1959,41 +1930,6 @@ sub add_space_entry {
 	$db{$pkg} = "$space $space";
     }
     untie %db;
-}
-
-sub log_section {
-    my $self = shift;
-    my $section = shift;
-
-    $self->log("\n");
-    $self->log('╔', '═' x 78, '╗', "\n");
-    $self->log('║', " $section ", ' ' x (80 - length($section) - 4), '║', "\n");
-    $self->log('╚', '═' x 78, '╝', "\n\n");
-}
-
-sub log_subsection {
-    my $self = shift;
-    my $section = shift;
-
-    $self->log("\n");
-    $self->log('┌', '─' x 78, '┐', "\n");
-    $self->log('│', " $section ", ' ' x (80 - length($section) - 4), '│', "\n");
-    $self->log('└', '─' x 78, '┘', "\n\n");
-}
-
-sub log_subsubsection {
-    my $self = shift;
-    my $section = shift;
-
-    $self->log("\n");
-    $self->log("$section\n");
-    $self->log('─' x (length($section)), "\n\n");
-}
-
-sub log_sep {
-    my $self = shift;
-
-    $self->log('─' x 80, "\n");
 }
 
 1;
