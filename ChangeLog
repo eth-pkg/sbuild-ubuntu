@@ -1,3 +1,35 @@
+commit 8069028a1d7f8b443979a16ecb0d3c9ca8b784a2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Dec 8 21:49:17 2010 +0000
+
+    debian: Bump version to 0.60.7-1 and close #606278
+
+commit bb4d721972cee1ec021172a373cc098d4b66f343
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Dec 8 21:48:59 2010 +0000
+
+    NEWS: Bump version to 0.60.7
+
+commit 655e87d831bacf849f3894e69c0768a5b2964499
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Dec 8 20:34:28 2010 +0000
+
+    Sbuild::AptitudeResolver: Restore use of Aptitude::ProblemResolver::Hints::KeepDummy
+
+commit 9c7c5eeda7f2b7e1be16c52ea9335f3343f12d05
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Dec 8 11:03:32 2010 +0000
+
+    Sbuild::ResolverBase: Print message to inform user GPG keys are being generated
+    
+    This can take some time and appear as if sbuild had hung.
+
+commit f4769f9b36e7dcbeeae440a27c642166dc4c262b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Dec 8 10:56:52 2010 +0000
+
+    Sbuild::ResolverBase: Dummy package creation is inside the chroot filesystem
+
 commit 5ab0fee2dd35730c7dfc8c8f0c5ba1a335b968a1
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Tue Dec 7 21:26:36 2010 +0000
