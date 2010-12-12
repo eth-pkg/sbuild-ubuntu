@@ -142,6 +142,67 @@ sub update {
     return $?;
 }
 
+sub update_archive {
+    my $self = shift;
+
+    if (!$self->get_conf('APT_UPDATE_ARCHIVE_ONLY')) {
+	# Update with apt-get; causes complete archive update
+	$self->run_apt_command(
+	    { COMMAND => [$self->get_conf('APT_GET'), 'update'],
+	      ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
+	      USER => 'root',
+	      DIR => '/' });
+	return $?;
+    } else {
+	# Example archive list names:
+	#_tmp_resolver-XXXXXX_apt%5farchive_._Packages
+	#_tmp_resolver-XXXXXX_apt%5farchive_._Release
+	#_tmp_resolver-XXXXXX_apt%5farchive_._Release.gpg
+	#_tmp_resolver-XXXXXX_apt%5farchive_._Sources
+
+	# Update lists directly; only updates local archive
+
+	# Filename quoting for safety taken from apt URItoFileName and
+	# QuoteString.
+	my $session = $self->get('Session');
+	my $dummy_dir = $self->get('Dummy package path');
+	my $dummy_archive_dir = $session->strip_chroot_path($dummy_dir.'/apt_archive/./');
+	my @chars = split('', $dummy_archive_dir);
+
+	foreach(@chars) {
+	    if (index('\\|{}[]<>"^~_=!@#$%^&*', $_) != -1 || # "Bad" characters
+		!m/[[:print:]]/ || # Not printable
+		ord($_) == 0x25 || # Percent '%' char
+		ord($_) <= 0x20 || # Control chars
+		ord($_) >= 0x7f) { # Control chars
+		$_ = sprintf("%%%02x", ord($_));
+	    }
+	}
+
+	my $uri = join('', @chars);
+	$uri =~ s;/;_;g; # Escape slashes
+
+	foreach my $file ("Packages", "Release", "Release.gpg", "Sources") {
+	    $session->run_command(
+		{ COMMAND => ['cp', $dummy_archive_dir . '/' . $file,
+			      '/var/lib/apt/lists/' . $uri . $file],
+		  USER => 'root',
+		  PRIORITY => 0 });
+	    if ($?) {
+		$self->log("Failed to copy file from dummy archive to apt lists.\n");
+		return 1;
+	    }
+        }
+
+	$self->run_apt_command(
+	    { COMMAND => [$self->get_conf('APT_CACHE'), 'gencaches'],
+	      ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
+	      USER => 'root',
+	      DIR => '/' });
+	return $?;
+    }
+}
+
 sub upgrade {
     my $self = shift;
 
@@ -449,11 +510,11 @@ sub setup_apt_archive {
     #Prepare a path to build a dummy package containing our deps:
     if (! defined $self->get('Dummy package path')) {
         $self->set('Dummy package path',
-
 		   tempdir('resolver' . '-XXXXXX',
-			   DIR => $session->get('Location') . "/tmp"));
+			   DIR => $self->get('Chroot Build Dir')));
     }
     my $dummy_dir = $self->get('Dummy package path');
+    my $dummy_gpghome = $dummy_dir . '/gpg';
     my $dummy_archive_dir = $dummy_dir . '/apt_archive';
     my $dummy_release_file = $dummy_archive_dir . '/Release';
     my $dummy_archive_seckey = $dummy_archive_dir . '/sbuild-key.sec';
@@ -468,7 +529,12 @@ sub setup_apt_archive {
         $self->cleanup_apt_archive();
         return 0;
     }
-    if (!(-d $dummy_archive_dir || mkdir $dummy_archive_dir)) {
+    if (!(-d $dummy_gpghome || mkdir $dummy_gpghome, 0700)) {
+        $self->log_warning('Could not create build-depends dummy gpg home dir ' . $dummy_gpghome . ': ' . $!);
+        $self->cleanup_apt_archive();
+        return 0;
+    }
+    if (!(-d $dummy_archive_dir || mkdir $dummy_archive_dir, 0755)) {
         $self->log_warning('Could not create build-depends dummy archive dir ' . $dummy_archive_dir . ': ' . $!);
         $self->cleanup_apt_archive();
         return 0;
@@ -614,6 +680,8 @@ EOF
     copy($self->get_conf('SBUILD_BUILD_DEPENDS_PUBLIC_KEY'), $dummy_archive_pubkey) unless
         (-f $dummy_archive_pubkey);
     my @gpg_command = ('gpg', '--yes', '--no-default-keyring',
+                       '--homedir',
+                       $session->strip_chroot_path($dummy_gpghome),
                        '--secret-keyring',
                        $session->strip_chroot_path($dummy_archive_seckey),
                        '--keyring',
@@ -750,6 +818,7 @@ EOF
           DIR => '/'});
     if ($?) {
         $env->{'APT_CONFIG'} = $apt_config_value;
+	unlink $tmpfilename;
         return 0;
     }
 
@@ -761,14 +830,17 @@ EOF
           DIR => '/'});
     if (!defined($pipe)) {
         $env->{'APT_CONFIG'} = $apt_config_value;
+	unlink $tmpfilename;
         return 0;
     }
     $env->{'APT_CONFIG'} = $apt_config_value;
+
 
     # Write output to Release file path.
     my ($releasefh);
     if (!open($releasefh, '>', $self->get('Dummy Release file'))) {
         close $pipe;
+	unlink $tmpfilename;
         return 0;
     }
 
@@ -777,6 +849,9 @@ EOF
     }
     close $releasefh;
     close $pipe;
+
+    # Remove config file.  Note also removed on failure paths above.
+    unlink $tmpfilename;
 
     return 1;
 }

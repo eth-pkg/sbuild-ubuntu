@@ -1,3 +1,92 @@
+commit a6c2d650cf23d6135873b9c01711e955146618f4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 12 20:00:17 2010 +0000
+
+    Sbuild::Conf: Update and upgrade the build chroot by default
+    
+    Having an up-to-date chroot prior to installing any build dependencies
+    means it's less likely to break the chroot when removing the packages
+    post-build.  This is because we're starting and ending at the same
+    baseline state.  If the chroot is out of date, then it becomes possible
+    to break the package manager because packages to reinstall are no
+    longer available, or there are version mismatches etc., which require
+    manual intervention to get back to a clean state.
+
+commit d07d68b36b2708c4a7f7acfff8d3be5c4eec8264
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 12 19:56:26 2010 +0000
+
+    Sbuild::ResolverBase: run_apt_ftparchive unlinks its configuration
+    
+    Don't litter /tmp with temporary files
+
+commit 8b2b123b9c2e40295bed2f44844b2c9a64c363ad
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 12 19:55:39 2010 +0000
+
+    Sbuild::ResolverBase: update_archive uses correctly quoted perl string
+    
+    Also regenerate apt caches after lists update
+
+commit 68be0d2f30b6fb2581f3531f9ab530fcf11d5b8c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 12 19:25:49 2010 +0000
+
+    debian: Document gpg and local archive changes
+
+commit c51c5850ab9a432d797113c270061bb60a20f41b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 12 18:19:28 2010 +0000
+
+    Sbuild::ResolverBase: update_archive updates apt lists directly
+    
+    New function, used by AptResolver and AptitudeResolver.  This
+    copies the archive lists files directly into the appropriate
+    files under /var/lib/apt/lists in the chroot, saving the need
+    for a full "apt-get update", since we don't want for the remote
+    mirrors to change during a build.  This also speeds up the
+    build by reducing the updates from three times to one.
+
+commit f65d8d4738e399016e70c9565346ce35db8e7686
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 12 18:18:31 2010 +0000
+
+    Sbuild::ResolverBase: Use an empty directory for gpghome
+    
+    This is more secure, untrusted/unwanted files can't be present.
+
+commit e813533b55ac3312f3cf4d7cc8f47db826ad227e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 12 18:17:37 2010 +0000
+
+    Sbuild::ResolverBase: Create resolver directory in build dir
+    
+    This puts all writable files in a single place, and also makes
+    cleanup on failure automatic.
+
+commit cb1a21e0ab52998b60e9d402d74452faacbbbaa1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 12 11:53:10 2010 +0000
+
+    debian: Bump version to 0.60.8-1 and close #606668
+
+commit d6bf62715c9522c86a98286aea0031d15f38a322
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 12 11:51:26 2010 +0000
+
+    NEWS: Bump version to 0.60.8
+
+commit fc4d5c9ab4547e850327acc4186248f0e108d0de
+Author: Simon McVittie <smcv@debian.org>
+Date:   Fri Dec 10 18:25:41 2010 +0000
+
+    Use gpg --homedir to avoid the user's gpg.conf completely
+    
+    My gpg.conf uses a non-default secret keyring on a filesystem inaccessible
+    by sbuild, causing builds to fail.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
 commit 8069028a1d7f8b443979a16ecb0d3c9ca8b784a2
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Wed Dec 8 21:49:17 2010 +0000
