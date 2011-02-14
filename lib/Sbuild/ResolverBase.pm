@@ -393,7 +393,8 @@ sub run_apt {
     my @apt_command = ($self->get_conf('APT_GET'), '--purge',
 	'-o', 'DPkg::Options::=--force-confold',
 	'-o', 'DPkg::Options::=--refuse-remove-essential',
-	'-q', '--no-install-recommends');
+	'-o', 'APT::Install-Recommends=false',
+	'-q');
     push @apt_command, '--allow-unauthenticated' if
 	($self->get_conf('APT_ALLOW_UNAUTHENTICATED'));
     push @apt_command, "$mode", $action, @packages;
@@ -758,17 +759,15 @@ sub generate_keys {
         return 1;
     }
 
-    my $host = $self->get('Host');
-
-    $self->log("Generating GPG local archive signing key...\n");
-    if (Sbuild::ChrootSetup::generate_keys($host, $self->get('Config'))) {
-	# Since apt-distupgrade was requested specifically, fail on
-	# error when not in buildd mode.
-	$self->log("Generating gpg keys failed\n");
-	return 0;
-    }
-
-    return 1;
+    $self->log_error("Local archive GPG signing key not found\n");
+    $self->log_info("Please generate a key with 'sbuild-update --keygen'\n");
+    $self->log_info("Note that on machines with scarce entropy, you may wish ".
+		    "to generate the key with this command on another machine ".
+		    "and copy the public and private keypair to '" .
+		    $self->get_conf('SBUILD_BUILD_DEPENDS_PUBLIC_KEY')
+		    ."' and '".
+		    $self->get_conf('SBUILD_BUILD_DEPENDS_SECRET_KEY') ."'\n");
+    return 0;
 }
 
 # Function that runs apt-ftparchive

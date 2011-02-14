@@ -1,3 +1,307 @@
+commit 2e9d85edbd65c7098dd3111fef409ae4fde742ee
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 23:46:01 2011 +0000
+
+    debian: Tidy changelog
+
+commit 2fcc42f58f41e9e7bdaed7a55050c7193d577c1d
+Merge: e47c957 8bd411c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 21:46:13 2011 +0000
+
+    Merge remote branch 'origin/buildd-0.60.0'
+
+commit e47c95773ce6d6ee7e845b6b5d11dc3f1bb95ff1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 20:38:19 2011 +0000
+
+    debian: Closes #608972
+
+commit b84421f05734f891dac2709aba17eb68465656e9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 20:36:56 2011 +0000
+
+    sbuild.1: Document local apt archive
+
+commit d6ccdf0a9de3dae0e86ed67c210733aed13421ca
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 20:27:27 2011 +0000
+
+    sbuild.1: Drop source-dependencies environment variable docs
+
+commit 67de5f80575b7d2e5e62c7795eba4d94afb85098
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 20:26:23 2011 +0000
+
+    sbuild.1: There is now only one sbuild version
+
+commit e58d8976727fa771f823652a67473e27a98c8541
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 20:07:49 2011 +0000
+
+    debian: Close #608971
+
+commit 498c29bda2f1d92bdfb846a908ef5446be2834e6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 20:06:12 2011 +0000
+
+    sbuild.conf: Document that $apt_allow_unauthenticated is for apt-secure.
+
+commit fc9144efbd3c521104c3b0d335f0e92c8575445b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 20:01:11 2011 +0000
+
+    debian: Close #613401
+
+commit f67710dd5ede7d34b6777475640049c7f8074784
+Author: Sebastian Harl <tokkee@debian.org>
+Date:   Mon Feb 14 19:58:45 2011 +0000
+
+    Sbuild::Options: Add --no-arch-all command line option.
+    
+    This allows overriding of '$build_arch_all = 1;' (in .sbuildrc) on the
+    command line.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 80ed8aa0a27e21dc7162bf24c8d09c8686fd9e78
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 19:55:39 2011 +0000
+
+    NEWS: Document --arch check
+
+commit 8d88fe6cfc874c8aeadbe59540214fcc8be49136
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 19:54:50 2011 +0000
+
+    debian: Close #609151
+
+commit d31a1179c2bb15ab38fe70439041ddf206afd437
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 19:49:40 2011 +0000
+
+    Sbuild::Build: Don't allow the build and chroot architectures to differ
+    
+    Previously, we allowed the chroot arch to supercede the host/build
+    architecture specified with --arch.  We now check for this to avoid
+    building for the wrong architecture.
+
+commit 11e42dfff33c8aac4e5b7fcdee2ccadcf02c56b7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 19:38:33 2011 +0000
+
+    debian: Close #608412
+
+commit ddd6db2d327ca94a31235763b843e10b93c20a6a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Feb 14 19:37:11 2011 +0000
+
+    debian: sbuild postrm purges generated files
+
+commit 5a983515b3c1edf8fc31797f4538aad7769c15a5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Feb 13 23:27:20 2011 +0000
+
+    debian: Close #607606
+
+commit f72d65e1d8f40218f7b9dbaf86dc8af6f5dbc9ef
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Feb 13 22:47:31 2011 +0000
+
+    debian: Close #610997
+
+commit ce0fb70b0ae4128eaca18e5d7a25aeea47e4ae37
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Feb 13 22:45:50 2011 +0000
+
+    sbuild.conf: Correct syntax of $envionment_filter
+
+commit d6cf14dd8e345fb5fcd0776ce4cea341241bc817
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Feb 13 22:44:56 2011 +0000
+
+    sbuild.conf: Update $environment_filter to include PATH
+
+commit 60c3d810e36c5917ae387c3b21aa38918b0e0014
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Feb 13 22:42:30 2011 +0000
+
+    debian: Close #610997
+
+commit 7ec6f8eca1ed4aaa5f729f44880e3225379f33c8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Feb 13 22:41:35 2011 +0000
+
+    Sbuild::Conf: ENVIRONMENT_FILTER permits use of PATH
+
+commit f8c593104c3033d918ecd0780b829277a2d3d358
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jan 16 17:07:42 2011 +0000
+
+    debian: Close #610007
+
+commit a4fb37b5fa1650c5645ee774a2c4e960b72cc4a3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jan 13 20:12:57 2011 +0000
+
+    debian: Close #609811
+
+commit e18373fc4157460ad84e58a4cb7f94d616fdfa6e
+Author: Marc Deslauriers <marc.deslauriers@ubuntu.com>
+Date:   Thu Jan 13 20:10:09 2011 +0000
+
+    lib/Sbuild/ResolverBase.pm: use -o APT::Install-Recommends=false
+    
+    Use "-o APT::Install-Recommends=false" instead of
+    --no-install-recommends as it is not a valid option in Dapper schroots.
+    
+    This is Ubuntu-specific and can be removed once Dapper goes EoL.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 27175af08d84de246b6a572615f2998feb734d0c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jan 3 21:19:29 2011 +0000
+
+    debian: Close #608789
+
+commit dbf152d502e4816eac1ff4ffd2ead9b93e05e40c
+Author: Modestas Vainius <modax@debian.org>
+Date:   Mon Jan 3 02:29:50 2011 +0200
+
+    AptitudeResolver: define a custom SolutionCost.
+    
+    aptitude 0.6.2 release replaced resolver tiers with resolver costs. sbuild
+    AptitudeResolver used to rely on resolver tiers to deliver the following
+    behaviour:
+    
+    1) Install non-default versions only if there is no solution among default (aka
+    candidate) package versions.
+    2) Solution should contain versions from sources with the highest possible
+    priority (when pulling from non-default versions).
+    
+    While default SolutionCost (i.e. "safety, priority") configuration is supposed
+    to deliver this, it's apparently not enough. In particular:
+    
+    1) "priority" cost component is broken in aptitude releases up to 0.6.3-3.2
+    (see #608786). It does not prioritize non-default versions by their
+    pin-priorities.  However, thanks to Non-Default-Level safety level, the issue
+    does not affect configurations which have apt sources at two (one default and
+    one non-default) or fewer pin priorities. As a result, standard buildd
+    configurations (unstable, experimental, backports) are not affected by this
+    bug.
+    
+    2) Once Non-Default safety level is breached, it is hard to guess what set of
+    non-default versions the solution will produce (it will be based on the "score"
+    criteria that is not easily predictable). Yet requirements are pretty clear: we
+    want as few non-default versions as possible. Fortunately, we can tell aptitude
+    that.
+    
+    So sbuild custom SolutionCost achieves the following:
+    
+    1) it gets the safest solution (tries only default versions first, then a mix of
+    default and non-default versions),
+    2) installs versions from the highest possible pin-priority source,
+    3) installs as few non-default versions as possible,
+    4) and finally picks a solution with the best score.
+    
+    See /usr/share/doc/aptitude/html/en/ch02s03s04.html (aptitude-doc-en package)
+    for more information on aptitude resolver cost calculation.
+    
+    Signed-off-by: Modestas Vainius <modax@debian.org>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit a47aa6af592d340603c401c9e7dd16ebb0e48ccd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jan 3 21:06:00 2011 +0000
+
+    debian: Close #608659
+
+commit 74cbd18e1fa7e2efb89937d46248a9bbc3b87e36
+Author: Modestas Vainius <modax@debian.org>
+Date:   Sun Jan 2 15:28:18 2011 +0200
+
+    Do not filter out environment variables starting with DEBIAN_ by default.
+    
+    Notably, the fix enables export of DEBIAN_FRONTEND=noninteractive in the build
+    environment.
+    
+    Signed-off-by: Modestas Vainius <modax@debian.org>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit b57b76d1a835e9a01b826de43c7022cb1ab21690
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Dec 31 14:14:38 2010 +0000
+
+    debian: Close #608429
+
+commit b0e2f406f5accf2f6e89832c39d1181084edb72c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Dec 31 14:12:25 2010 +0000
+
+    Sbuild::ChrootPlain: Don't use sudo when already root
+
+commit cf52e3bde5023340eae19d782567880bbbd9b9cf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Dec 31 11:56:45 2010 +0000
+
+    debian: Close #608414
+
+commit 61deae6fd46404c26bd233738b004cbdba57122e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Dec 31 11:53:50 2010 +0000
+
+    sbuild-createchroot: Fix permissions of chroot and configuration
+    
+    chroot directory and any created parents are 0775.
+    schroot configuration is 0644.
+
+commit 4f484d6ad87345c1efdd4818bcd6d60293f91e17
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Dec 31 11:53:22 2010 +0000
+
+    sbuild-createchroot: Don't import all exported members of Sbuild::Conf
+
+commit 12eb962111d9e384d31cd54af39046ad081b31c9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Dec 30 17:57:01 2010 +0000
+
+    debian: Bump version to 0.60.9-1 and close #607945
+
+commit f57e4e271e55f488e7ffc026d6be3cedea469295
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Dec 30 17:54:37 2010 +0000
+
+    NEWS: Bump version to 0.60.9
+
+commit fb790792a9433d469fa808f6613bdc0bf1f3ee21
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Dec 30 17:53:15 2010 +0000
+
+    Sbuild::ResolverBase: Don't automatically generate archive signing key
+    
+    If the local archive signing key is not present, do not automatically
+    generate it.  This can cause issues on systems with scarce entropy.
+    Print an error message plus instructions on how to generate the key.
+
+commit 11d82b1fdec6d15b1911f60f8802a70a218ebdfb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Dec 30 17:51:50 2010 +0000
+
+    Sbuild::Build: Add newline to log message
+
+commit 8bd411cf6aaa7f6f6b76245ecec6b5c88db52f2e
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Dec 18 15:08:33 2010 +0100
+
+    bin/create-chroot.sh: update for properly signed security
+
+commit 0fc02677171bc1cc90f250540af17389c39db204
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Dec 16 19:49:11 2010 +0100
+
+    etc/99builddsourceslist: update for properly signed security
+
 commit a6c2d650cf23d6135873b9c01711e955146618f4
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sun Dec 12 20:00:17 2010 +0000

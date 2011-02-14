@@ -1,3 +1,52 @@
+sbuild (0.60.9-1) unstable; urgency=low
+
+  * New release.
+  * sbuild:
+    - Don't automatically generate local archive signing key if
+      missing (Closes: #607945).  If missing, abort build with an error
+      message and instructions for how to generate the key.
+    - Do not filter out environment variables starting with DEBIAN_ by
+      default (Closes: #608659).  Thanks to Modestas Vainius.
+    - Do not filter out PATH environment variable (Closes: #610997).
+      Note this is not the user's PATH, but the $path in sbuild.conf.
+    - Aptitude resolver defines a custom SolutionCost in order to
+      improve resolver behaviour (Closes: #608789).  Thanks to
+      Modestas Vainius.
+    - When running apt-get, use "-o APT::Install-Recommends=false"
+      rather than "--no-install-recommends" in order to support older
+      releases (Closes: #609811).  Thanks to Marc Deslauriers.
+    - Purging the package removes generated files in /etc/sbuild/chroot
+      and /var/lib/sbuild (Closes: #608412).
+    - The architecture specified with --arch (defaulting to the host
+      system architecture) must match the chroot architecture
+      (Closes: #609151).  This was previously allowed to be superceded
+      by the chroot architecture.  This change is to avoid any abiguity
+      regarding the host/build architecture for the package being built.
+    - Add --no-arch-all option to force not building arch-all packages
+      (Closes: #613401).  Thanks to Sebastian Harl for this patch.
+  * sbuild-createchroot:
+    - Use less restrictive permissions on chroot directory and schroot
+      configuration file (Closes: #608414).  The chroot now has 0755
+      permissions, and the schroot configuration 0644.
+    - Don't require sudo access (Closes: #608429).  The
+      Sbuild::ChrootPlain module used to run commands inside the newly-
+      created chroot was using sudo to run commands when already
+      running as root.  sudo is no longer used when root.
+    - Remove use statement which prevented command-line options being
+      registered (Closes: #610007, #607606).  Command-line options now
+      work correctly.
+  * sbuild.conf:
+    - $environment filter is syntactically correct (Closes: #610997).
+      Thanks to Jakub Wilk.
+    - $apt_allow_unauthenticated is documented to use apt-secure(8)
+      (Closes: #608971).
+  * sbuild.1:
+    - Document the temporary local archive used by the apt and aptitude
+      build dependency resolvers to store and install dummy dependency
+      packages (Closes: #608972).
+
+ -- Roger Leigh <rleigh@debian.org>  Mon, 14 Feb 2011 20:37:05 +0000
+
 sbuild (0.60.8-1) unstable; urgency=low
 
   * New release.

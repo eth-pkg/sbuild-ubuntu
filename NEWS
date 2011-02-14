@@ -1,11 +1,19 @@
 NEWS                                                            -*- outline -*-
 ----
 
-Welcome to sbuild 0.60.8.  Please read these release notes carefully.
+Welcome to sbuild 0.60.9.  Please read these release notes carefully.
 
 Full installation instructions are provided in the INSTALL file.  The
 README file also contains more specific notes regarding building and
 configuration.
+
+* Major changes in 0.60.9:
+
+  1) The architecture specified with --arch (defaulting to the host
+     system architecture) must match the chroot architecture.  This
+     was previously allowed to be superceded by the chroot
+     architecture.  This change is to avoid any abiguity regarding the
+     host/build architecture for the package being built.
 
 * Major changes in 0.60.8:
 
