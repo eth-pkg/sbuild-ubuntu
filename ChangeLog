@@ -1,3 +1,80 @@
+commit 74d5dada13bc6bf34781d88a9508199c06a08192
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Feb 23 13:10:24 2011 +0000
+
+    sbuild.conf: Fix typo in $resolve_alternatives
+
+commit c2741662ba7c8d79fb41cdb958c04851ca3ac0f0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Feb 23 13:09:06 2011 +0000
+
+    debian: Tidy changelog
+
+commit 794c40b0dee186dbbfa91625b735f8f52af6ab43
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Feb 23 13:07:39 2011 +0000
+
+    debian: Document aptitude use of dpkg --force-confold
+
+commit a114e0c2245442986c95e901757da834392c2fe7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Feb 23 13:06:59 2011 +0000
+
+    Buildd::DistConf: Don't use init_allowed_keys
+
+commit d85946cd004c6dee4262dcafc30beb773a9ba897
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Feb 23 13:00:33 2011 +0000
+
+    sbuild.conf: Correct $resolve_alternatives to use proper name
+
+commit 570640acf6c31e6c3d7338983b3fdbe36e16e8c9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Feb 19 12:58:33 2011 +0000
+
+    Sbuild::AptitudeResolver: Run dpkg with --force-confold
+    
+    This was already done for apt and internal, and was causing a number
+    of packages to FTBFS,
+
+commit d8f453ea7f1414d3a30421e5d7aaca043455fb21
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Feb 23 12:09:50 2011 +0000
+
+    debian: Bump version to 0.61.0-1
+
+commit a70e8e2b9c7403a9b06abe440eb55291de0851dd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Feb 23 12:09:22 2011 +0000
+
+    NEWS: Bump version to 0.61.0
+
+commit 96efc522f6309d91a08bb76019cd00742570e39d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Feb 23 12:02:10 2011 +0000
+
+    Sbuild::ResolverBase: Implement alternative stripping
+    
+    The apt and aptitude resolvers now only use the first alternative
+    in alternative dependencies.  This does not include architecture-
+    specific alternatives, which are reduced prior to stripping.
+    
+    This feature is configurable ($resolve_alternatives), defaulting
+    to being enabled.  For suites which can take advantage of
+    alterntatives (e.g. backports), this may be disabled.  For unstable,
+    where we want the strict consistency and reproducibility guaranteed
+    by stripping, this makes the apt and aptitude resolvers behave
+    exactly like the internal resolver.
+
+commit 5a9a0cf451190f440f48b82890457f848aa912b6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Feb 23 12:01:22 2011 +0000
+
+    Sbuild::Build: Add missing fail stages
+    
+    If a build failed very early, the fail stage wasn't initialised
+    and was incorrectly reported.
+
 commit 2e9d85edbd65c7098dd3111fef409ae4fde742ee
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Mon Feb 14 23:46:01 2011 +0000

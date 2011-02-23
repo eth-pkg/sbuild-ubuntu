@@ -1,5 +1,5 @@
 Package: sbuild
-Version: 0.60.9
-Release-Date: 14 Feb 2011
+Version: 0.61.0
+Release-Date: 23 Feb 2011
 Released-By: Roger Leigh <rleigh@debian.org>
-Git-Tag: release/sbuild-0.60.9
+Git-Tag: release/sbuild-0.61.0
