@@ -21,8 +21,6 @@
 
 include $(top_srcdir)/scripts/global.mk
 
-SUBDIRS = DB
-
 perlmodsbuilddir = $(perlmoddir)/Sbuild
 
 MODULES =			\
@@ -37,6 +35,7 @@ MODULES =			\
 	ChrootInfo.pm		\
 	ChrootInfoSchroot.pm	\
 	ChrootInfoSudo.pm	\
+	Exception.pm		\
 	ResolverBase.pm		\
 	AptitudeResolver.pm	\
 	AptResolver.pm		\

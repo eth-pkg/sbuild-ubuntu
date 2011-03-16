@@ -31,7 +31,7 @@ use Buildd::Base;
 use Sbuild qw($devnull df);
 use Sbuild::Sysconfig;
 use Sbuild::ChrootRoot;
-use Sbuild::DB::Client;
+use Buildd::Client;
 use Cwd;
 
 BEGIN {
@@ -117,7 +117,6 @@ sub run {
   MAINLOOP:
     while( 1 ) {
 	$self->check_restart();
-	$self->read_config();
 
         my ( $dist_config, $pkg_ver) = get_next_REDO($self);
         $self->do_build( $dist_config, $pkg_ver) if $pkg_ver;
@@ -496,11 +495,17 @@ sub do_build {
         ."$todo->{'pv'}\n");
     $self->write_stats("builds", 1);
 
-    my @sbuild_args = ( 'nice', '-n', $self->get_conf('NICE_LEVEL'), 'sbuild',
+    my @sbuild_args = ();
+    if ($self->get_conf('NICE_LEVEL') != 0) {
+	@sbuild_args = ( 'nice', '-n', $self->get_conf('NICE_LEVEL') );
+    }
+
+    push @sbuild_args, 'sbuild',
 			'--apt-update',
 			'--batch',
 			"--stats-dir=" . $self->get_conf('HOME') . "/stats",
-			"--dist=" . $dist_config->get('DIST_NAME') );
+			"--dist=" . $dist_config->get('DIST_NAME');
+
     #multi-archive-buildd keeps the mailto configuration in the builddrc, so
     #this needs to be passed over to sbuild. If the buildd config doesn't have
     #it, we hope that the address is configured in .sbuildrc and the right one:

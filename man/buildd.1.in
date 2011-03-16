@@ -13,7 +13,8 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program.  If not, see
 .\" <http://www.gnu.org/licenses/>.
-.TH BUILDD 1 "@RELEASE_DATE@" "Version @VERSION@" "Debian sbuild"
+.so defs.man
+.TH BUILDD 1 "\*[RELEASE_DATE]" "Version \*[VERSION]" "Debian sbuild"
 .SH NAME
 buildd \- package autobuilder daemon
 .SH SYNOPSIS
@@ -59,6 +60,7 @@ Copyright \[co] 2005      Michael Banck <mbanck\@debian.org>
 Copyright \[co] 2005-2008 Roger Leigh <rleigh\@debian.org>
 .fi
 .SH "SEE ALSO"
+.BR buildd.conf (5),
 .BR buildd\-mail (1),
 .BR buildd\-uploader (1),
 .BR buildd\-watcher (1),

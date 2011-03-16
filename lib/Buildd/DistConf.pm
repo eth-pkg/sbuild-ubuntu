@@ -27,7 +27,7 @@ use warnings;
 
 use Sbuild::ConfBase;
 use Sbuild::Sysconfig;
-use Sbuild::DB::ClientConf qw();
+use Buildd::ClientConf qw();
 
 BEGIN {
     use Exporter ();
@@ -38,17 +38,17 @@ BEGIN {
     @EXPORT = qw(new_hash setup read_hash);
 }
 
-sub new_hash ($);
+sub new_hash (@);
 sub setup ($);
 sub read_hash ($$);
 
-sub new_hash ($) {
-    my $data = shift;
+sub new_hash (@) {
+    my %opts = @_;
 
-    my $queue_config = Sbuild::ConfBase->new();
+    my $queue_config = Sbuild::ConfBase->new(%opts);
 
     Buildd::DistConf::setup($queue_config);
-    Buildd::DistConf::read_hash($queue_config, $data);
+    Buildd::DistConf::read_hash($queue_config, $opts{'HASH'});
 
     return $queue_config;
 }
@@ -128,7 +128,7 @@ sub setup ($) {
 
     $conf->set_allowed_keys(\%buildd_dist_keys);
 
-    Sbuild::DB::ClientConf::setup($conf);
+    Buildd::ClientConf::setup($conf);
 }
 
 sub read_hash($$) {

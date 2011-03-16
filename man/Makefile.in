@@ -76,19 +76,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(srcdir)/buildd-mail.1.in $(srcdir)/buildd-uploader.1.in \
-	$(srcdir)/buildd-vlog.1.in $(srcdir)/buildd-watcher.1.in \
-	$(srcdir)/buildd.1.in $(srcdir)/sbuild-abort.1.in \
-	$(srcdir)/sbuild-adduser.8.in $(srcdir)/sbuild-apt.1.in \
-	$(srcdir)/sbuild-checkpackages.1.in \
-	$(srcdir)/sbuild-createchroot.8.in $(srcdir)/sbuild-hold.1.in \
-	$(srcdir)/sbuild-setup.7.in $(srcdir)/sbuild-shell.1.in \
-	$(srcdir)/sbuild-stats.1.in $(srcdir)/sbuild-update.1.in \
-	$(srcdir)/sbuild.1.in $(srcdir)/wanna-build-catdb.1.in \
-	$(srcdir)/wanna-build-mail.1.in \
-	$(srcdir)/wanna-build-merge-packages.1.in \
-	$(srcdir)/wanna-build-statistics.1.in \
-	$(srcdir)/wanna-build.1.in $(top_srcdir)/scripts/global.mk
+	$(srcdir)/defs.man.in $(top_srcdir)/scripts/global.mk
 subdir = man
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -96,13 +84,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES = buildd.1 buildd-mail.1 buildd-uploader.1 \
-	buildd-vlog.1 buildd-watcher.1 sbuild.1 sbuild-abort.1 \
-	sbuild-adduser.8 sbuild-apt.1 sbuild-checkpackages.1 \
-	sbuild-createchroot.8 sbuild-hold.1 sbuild-setup.7 \
-	sbuild-shell.1 sbuild-stats.1 sbuild-update.1 wanna-build.1 \
-	wanna-build-catdb.1 wanna-build-mail.1 \
-	wanna-build-merge-packages.1 wanna-build-statistics.1
+CONFIG_CLEAN_FILES = defs.man
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
@@ -134,8 +116,9 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 man1dir = $(mandir)/man1
-am__installdirs = "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man7dir)" \
-	"$(DESTDIR)$(man8dir)"
+am__installdirs = "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man5dir)" \
+	"$(DESTDIR)$(man7dir)" "$(DESTDIR)$(man8dir)"
+man5dir = $(mandir)/man5
 man7dir = $(mandir)/man7
 man8dir = $(mandir)/man8
 NROFF = nroff
@@ -150,21 +133,29 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BUILDD_CONF = @BUILDD_CONF@
 BUILDD_SYSCONF_DIR = @BUILDD_SYSCONF_DIR@
+CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXDEPMODE = @CXXDEPMODE@
+CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
+DEPDIR = @DEPDIR@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
+EXEEXT = @EXEEXT@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
+OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -179,6 +170,7 @@ RELEASE_DATE = @RELEASE_DATE@
 SBUILD_CHROOT_CHECKS = @SBUILD_CHROOT_CHECKS@
 SBUILD_COMPAT = @SBUILD_COMPAT@
 SBUILD_CONF = @SBUILD_CONF@
+SBUILD_DATA_DIR = @SBUILD_DATA_DIR@
 SBUILD_LIBEXEC_DIR = @SBUILD_LIBEXEC_DIR@
 SBUILD_SYSCONF_DIR = @SBUILD_SYSCONF_DIR@
 SCHROOT_CONF = @SCHROOT_CONF@
@@ -187,14 +179,14 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
-WANNA_BUILD_CONF = @WANNA_BUILD_CONF@
-WANNA_BUILD_LIBEXEC_DIR = @WANNA_BUILD_LIBEXEC_DIR@
-WANNA_BUILD_SYSCONF_DIR = @WANNA_BUILD_SYSCONF_DIR@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_CXX = @ac_ct_CXX@
+am__include = @am__include@
 am__leading_dot = @am__leading_dot@
+am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
@@ -242,11 +234,13 @@ top_srcdir = @top_srcdir@
 perlmoddir = $(PERL_MODULE_DIR)
 man_MANS = \
 	buildd.1			\
+	buildd.conf.5			\
 	buildd-mail.1			\
 	buildd-uploader.1		\
 	buildd-vlog.1			\
 	buildd-watcher.1		\
 	sbuild.1			\
+	sbuild.conf.5			\
 	sbuild-abort.1			\
 	sbuild-adduser.8		\
 	sbuild-apt.1			\
@@ -256,12 +250,15 @@ man_MANS = \
 	sbuild-setup.7			\
 	sbuild-shell.1			\
 	sbuild-stats.1			\
-	sbuild-update.1			\
-	wanna-build.1			\
-	wanna-build-catdb.1		\
-	wanna-build-mail.1		\
-	wanna-build-merge-packages.1	\
-	wanna-build-statistics.1
+	sbuild-update.1
+
+CLEANFILES = \
+	sbuild.conf.man			\
+	buildd.conf.man
+
+EXTRA_DIST = \
+	defs.man.in			\
+	$(addsuffix .in, $(man_MANS))
 
 all: all-am
 
@@ -296,47 +293,7 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-buildd.1: $(top_builddir)/config.status $(srcdir)/buildd.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-buildd-mail.1: $(top_builddir)/config.status $(srcdir)/buildd-mail.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-buildd-uploader.1: $(top_builddir)/config.status $(srcdir)/buildd-uploader.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-buildd-vlog.1: $(top_builddir)/config.status $(srcdir)/buildd-vlog.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-buildd-watcher.1: $(top_builddir)/config.status $(srcdir)/buildd-watcher.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild.1: $(top_builddir)/config.status $(srcdir)/sbuild.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild-abort.1: $(top_builddir)/config.status $(srcdir)/sbuild-abort.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild-adduser.8: $(top_builddir)/config.status $(srcdir)/sbuild-adduser.8.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild-apt.1: $(top_builddir)/config.status $(srcdir)/sbuild-apt.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild-checkpackages.1: $(top_builddir)/config.status $(srcdir)/sbuild-checkpackages.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild-createchroot.8: $(top_builddir)/config.status $(srcdir)/sbuild-createchroot.8.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild-hold.1: $(top_builddir)/config.status $(srcdir)/sbuild-hold.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild-setup.7: $(top_builddir)/config.status $(srcdir)/sbuild-setup.7.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild-shell.1: $(top_builddir)/config.status $(srcdir)/sbuild-shell.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild-stats.1: $(top_builddir)/config.status $(srcdir)/sbuild-stats.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-sbuild-update.1: $(top_builddir)/config.status $(srcdir)/sbuild-update.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-wanna-build.1: $(top_builddir)/config.status $(srcdir)/wanna-build.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-wanna-build-catdb.1: $(top_builddir)/config.status $(srcdir)/wanna-build-catdb.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-wanna-build-mail.1: $(top_builddir)/config.status $(srcdir)/wanna-build-mail.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-wanna-build-merge-packages.1: $(top_builddir)/config.status $(srcdir)/wanna-build-merge-packages.1.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-wanna-build-statistics.1: $(top_builddir)/config.status $(srcdir)/wanna-build-statistics.1.in
+defs.man: $(top_builddir)/config.status $(srcdir)/defs.man.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-man1: $(man_MANS)
 	@$(NORMAL_INSTALL)
@@ -376,6 +333,44 @@ uninstall-man1:
 	test -z "$$files" || { \
 	  echo " ( cd '$(DESTDIR)$(man1dir)' && rm -f" $$files ")"; \
 	  cd "$(DESTDIR)$(man1dir)" && rm -f $$files; }
+install-man5: $(man_MANS)
+	@$(NORMAL_INSTALL)
+	test -z "$(man5dir)" || $(MKDIR_P) "$(DESTDIR)$(man5dir)"
+	@list=''; test -n "$(man5dir)" || exit 0; \
+	{ for i in $$list; do echo "$$i"; done; \
+	l2='$(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
+	  sed -n '/\.5[a-z]*$$/p'; \
+	} | while read p; do \
+	  if test -f $$p; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; echo "$$p"; \
+	done | \
+	sed -e 'n;s,.*/,,;p;h;s,.*\.,,;s,^[^5][0-9a-z]*$$,5,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,' | \
+	sed 'N;N;s,\n, ,g' | { \
+	list=; while read file base inst; do \
+	  if test "$$base" = "$$inst"; then list="$$list $$file"; else \
+	    echo " $(INSTALL_DATA) '$$file' '$(DESTDIR)$(man5dir)/$$inst'"; \
+	    $(INSTALL_DATA) "$$file" "$(DESTDIR)$(man5dir)/$$inst" || exit $$?; \
+	  fi; \
+	done; \
+	for i in $$list; do echo "$$i"; done | $(am__base_list) | \
+	while read files; do \
+	  test -z "$$files" || { \
+	    echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(man5dir)'"; \
+	    $(INSTALL_DATA) $$files "$(DESTDIR)$(man5dir)" || exit $$?; }; \
+	done; }
+
+uninstall-man5:
+	@$(NORMAL_UNINSTALL)
+	@list=''; test -n "$(man5dir)" || exit 0; \
+	files=`{ for i in $$list; do echo "$$i"; done; \
+	l2='$(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
+	  sed -n '/\.5[a-z]*$$/p'; \
+	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^5][0-9a-z]*$$,5,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
+	test -z "$$files" || { \
+	  echo " ( cd '$(DESTDIR)$(man5dir)' && rm -f" $$files ")"; \
+	  cd "$(DESTDIR)$(man5dir)" && rm -f $$files; }
 install-man7: $(man_MANS)
 	@$(NORMAL_INSTALL)
 	test -z "$(man7dir)" || $(MKDIR_P) "$(DESTDIR)$(man7dir)"
@@ -506,7 +501,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(MANS)
 installdirs:
-	for dir in "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man7dir)" "$(DESTDIR)$(man8dir)"; do \
+	for dir in "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man5dir)" "$(DESTDIR)$(man7dir)" "$(DESTDIR)$(man8dir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -526,6 +521,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -571,7 +567,7 @@ install-info: install-info-am
 
 install-info-am:
 
-install-man: install-man1 install-man7 install-man8
+install-man: install-man1 install-man5 install-man7 install-man8
 
 install-pdf: install-pdf-am
 
@@ -600,37 +596,73 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-man
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
+uninstall-man: uninstall-man1 uninstall-man5 uninstall-man7 \
+	uninstall-man8
 
-uninstall-man: uninstall-man1 uninstall-man7 uninstall-man8
-
-.MAKE: install-am install-data-am install-strip
+.MAKE: install-am install-data-am install-strip uninstall-am
 
 .PHONY: all all-am check check-am clean clean-generic distclean \
 	distclean-generic distdir dvi dvi-am html html-am info info-am \
 	install install-am install-data install-data-am \
 	install-data-hook install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-man1 install-man7 \
-	install-man8 install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-generic pdf pdf-am ps ps-am uninstall \
-	uninstall-am uninstall-man uninstall-man1 uninstall-man7 \
+	install-info-am install-man install-man1 install-man5 \
+	install-man7 install-man8 install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
+	pdf-am ps ps-am uninstall uninstall-am uninstall-hook \
+	uninstall-man uninstall-man1 uninstall-man5 uninstall-man7 \
 	uninstall-man8
 
+
+sbuild.conf.man: $(abs_top_srcdir)/tools/sbuild-dumpconfig
+	PERL5LIB=$(abs_top_srcdir)/lib:$(abs_top_builddir)/lib \
+	  $< sbuild man > $@
+
+buildd.conf.man: $(abs_top_srcdir)/tools/sbuild-dumpconfig
+	PERL5LIB=$(abs_top_srcdir)/lib:$(abs_top_builddir)/lib \
+	  $< buildd man > $@
+
+sbuild.conf.5: sbuild.conf.5.in defs.man sbuild.conf.man
+	soelim $< > $@
+
+buildd.conf.5: buildd.conf.5.in defs.man buildd.conf.man
+	soelim $< > $@
+
+%.1: %.1.in defs.man
+	soelim $< > $@
+
+%.5: %.5.in defs.man
+	soelim $< > $@
+
+%.7: %.7.in defs.man
+	soelim $< > $@
+
+%.8: %.8.in defs.man
+	soelim $< > $@
 
 install-data-hook:
 	ln -sf sbuild-hold.1 $(DESTDIR)$(man1dir)/sbuild-unhold.1
 	ln -sf sbuild-update.1 $(DESTDIR)$(man1dir)/sbuild-upgrade.1
 	ln -sf sbuild-update.1 $(DESTDIR)$(man1dir)/sbuild-distupgrade.1
 	ln -sf sbuild-update.1 $(DESTDIR)$(man1dir)/sbuild-clean.1
-	ln -sf wanna-build-catdb.1 $(DESTDIR)$(man1dir)/wanna-build-catgdbm.1
-	ln -sf wanna-build-catdb.1 $(DESTDIR)$(man1dir)/wanna-build-catmldbm.1
-	ln -sf wanna-build-merge-packages.1 $(DESTDIR)$(man1dir)/wanna-build-merge-quinn.1
 	ln -sf buildd-mail.1 $(DESTDIR)$(man1dir)/buildd-mail-wrapper.1
 	ln -sf sbuild-abort.1 $(DESTDIR)$(man1dir)/buildd-abort.1
 	ln -sf sbuild-update.1 $(DESTDIR)$(man1dir)/buildd-update-chroots.1
 	ln -sf sbuild-createchroot.8 $(DESTDIR)$(man8dir)/buildd-make-chroot.8
+
+uninstall-hook:
+	$(RM) $(DESTDIR)$(man1dir)/sbuild-unhold.1
+	$(RM) $(DESTDIR)$(man1dir)/sbuild-upgrade.1
+	$(RM) $(DESTDIR)$(man1dir)/sbuild-distupgrade.1
+	$(RM) $(DESTDIR)$(man1dir)/sbuild-clean.1
+	$(RM) $(DESTDIR)$(man1dir)/buildd-mail-wrapper.1
+	$(RM) $(DESTDIR)$(man1dir)/buildd-abort.1
+	$(RM) $(DESTDIR)$(man1dir)/buildd-update-chroots.1
+	$(RM) $(DESTDIR)$(man8dir)/buildd-make-chroot.8
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

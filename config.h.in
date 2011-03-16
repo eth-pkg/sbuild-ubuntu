@@ -55,7 +55,7 @@
 #undef SBUILD_CONF
 
 /* Package data directory */
-#undef SBUILD_DATADIR
+#undef SBUILD_DATA_DIR
 
 /* Enable debugging */
 #undef SBUILD_DEBUG
@@ -75,9 +75,6 @@
 /* Package libexec directory */
 #undef SBUILD_LIBEXEC_DIR
 
-/* Package module directory */
-#undef SBUILD_MODULEDIR
-
 /* Platform type, used to modify run-time platform-specific behaviour */
 #undef SBUILD_PLATFORM
 
@@ -89,12 +86,3 @@
 
 /* Version number of package */
 #undef VERSION
-
-/* wanna-build config file path */
-#undef WANNA_BUILD_CONF
-
-/* Package libexec directory */
-#undef WANNA_BUILD_LIBEXEC_DIR
-
-/* wanna-build system configuration directory */
-#undef WANNA_BUILD_SYSCONF_DIR

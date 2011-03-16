@@ -25,13 +25,21 @@ sbuildsysconfdir = $(SBUILD_SYSCONF_DIR)
 sbuildsysconf_DATA = sbuild.conf
 
 builddsysconfdir = $(BUILDD_SYSCONF_DIR)
-builddsysconf_DATA = buildd.conf wanna-build.conf
+builddsysconf_DATA = buildd.conf
 
 exampleconfdir = $(docdir)/examples
 exampleconf_DATA = example.sbuildrc
 
 COMPAT_SETUP = 25nssdatabases 99builddsourceslist
 SETUP =
+
+sbuild.conf: $(abs_top_srcdir)/tools/sbuild-dumpconfig
+	PERL5LIB=$(abs_top_srcdir)/lib:$(abs_top_builddir)/lib \
+	  $< sbuild config > $@
+
+buildd.conf: $(abs_top_srcdir)/tools/sbuild-dumpconfig
+	PERL5LIB=$(abs_top_srcdir)/lib:$(abs_top_builddir)/lib \
+	  $< buildd config > $@
 
 schrootsetupdir = $(SCHROOT_SYSCONF_DIR)/setup.d
 if SBUILD_COMPAT
@@ -61,13 +69,22 @@ install-data-hook:
 	  done;									\
 	done
 
+uninstall-hook:
+	for profile in $(PROFILES); do 						\
+	  for file in "profiles/$$profile"/*; do						\
+	    $(RM) "$(DESTDIR)$(SCHROOT_SYSCONF_DIR)/$$profile/$$(basename $$file)";	\
+	  done;									\
+	done
+
+CLEANFILES =		\
+	sbuild.conf	\
+	buildd.conf
+
 clean-local:
 	$(RM) -rf profiles
 	$(RM) -f profiles-stamp
 
 EXTRA_DIST =			\
-	$(sbuildsysconf_DATA)	\
-	$(builddsysconf_DATA)	\
 	$(exampleconf_DATA)	\
 	$(COMPAT_SETUP)		\
 	$(SETUP)		\

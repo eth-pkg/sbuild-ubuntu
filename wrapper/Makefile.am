@@ -1,7 +1,7 @@
 # sbuild Makefile template
 #
 #
-# Copyright © 2004-2007  Roger Leigh <rleigh@debian.org>
+# Copyright © 2004-2011  Roger Leigh <rleigh@debian.org>
 #
 # sbuild is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -21,18 +21,13 @@
 
 include $(top_srcdir)/scripts/global.mk
 
-perlmodsbuilddbdir = $(perlmoddir)/Sbuild/DB
+sbuildlibexecdir = $(SBUILD_LIBEXEC_DIR)
 
-MODULES =			\
-	Client.pm		\
-	ClientConf.pm		\
-	Base.pm			\
-	Info.pm			\
-	MLDBM.pm		\
-	Postgres.pm
+DEFS=-DSBUILD_LIBEXEC_DIR=\"$(SBUILD_LIBEXEC_DIR)\"
 
-perlmodsbuilddb_DATA =	\
-	$(MODULES)
+sbuildlibexec_PROGRAMS = sbuild-schroot
 
-EXTRA_DIST =		\
-	$(MODULES)
+sbuild_schroot_SOURCES = 	\
+	wrapper.cc		\
+	util.h			\
+	util.cc

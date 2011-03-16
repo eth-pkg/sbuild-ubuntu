@@ -121,6 +121,8 @@ AC_SUBST([SBUILD_CHROOT_CHECKS], [$chroot_checks])
 AM_CONDITIONAL([SBUILD_CHROOT_CHECKS], [test "$enable_chroot_checks" = "yes"])
 
 # Checks for programs.
+AC_PROG_CXX
+AC_LANG([C++])
 
 # Check for host platform
 AC_CANONICAL_HOST
@@ -213,11 +215,6 @@ AC_SUBST(SBUILD_LIBEXEC_DIR)
 AH_TEMPLATE(SBUILD_LIBEXEC_DIR, [Package libexec directory])
 AC_DEFINE_UNQUOTED(SBUILD_LIBEXEC_DIR, ["$SBUILD_LIBEXEC_DIR"])
 
-WANNA_BUILD_LIBEXEC_DIR="${PACKAGE_LIBEXEC_DIR}/wanna-build"
-AC_SUBST(WANNA_BUILD_LIBEXEC_DIR)
-AH_TEMPLATE(WANNA_BUILD_LIBEXEC_DIR, [Package libexec directory])
-AC_DEFINE_UNQUOTED(WANNA_BUILD_LIBEXEC_DIR, ["$WANNA_BUILD_LIBEXEC_DIR"])
-
 dnl Set PACKAGE_LOCALSTATE_DIR in config.h.
 AH_TEMPLATE(PACKAGE_LOCALSTATE_DIR, [Package localstate directory])
 if test "x${localstatedir}" = 'x${prefix}/var'; then
@@ -288,40 +285,24 @@ SCHROOT_SYSCONF_DIR="${SCHROOT_SYSCONF_DIR}/schroot"
 AC_DEFINE_UNQUOTED([SCHROOT_SYSCONF_DIR], ["$SCHROOT_SYSCONF_DIR"])
 AC_SUBST([SCHROOT_SYSCONF_DIR])
 
-dnl Set WANNA_BUILD_SYSCONF_DIR in config.h.
-AH_TEMPLATE(WANNA_BUILD_SYSCONF_DIR, [wanna-build system configuration directory])
-if test "x${sysconfdir}" = 'x${prefix}/etc'; then
-  if test "x${prefix}" = "xNONE"; then
-    WANNA_BUILD_SYSCONF_DIR="${ac_default_prefix}/etc"
-  else
-    WANNA_BUILD_SYSCONF_DIR="${prefix}/etc"
-  fi
-else
-  WANNA_BUILD_SYSCONF_DIR="${sysconfdir}"
-fi
-WANNA_BUILD_SYSCONF_DIR="${WANNA_BUILD_SYSCONF_DIR}/buildd"
-AC_DEFINE_UNQUOTED([WANNA_BUILD_SYSCONF_DIR], ["$WANNA_BUILD_SYSCONF_DIR"])
-AC_SUBST([WANNA_BUILD_SYSCONF_DIR])
-
 SCHROOT_CONF="${SCHROOT_SYSCONF_DIR}/schroot.conf"
 AC_SUBST([SCHROOT_CONF])
 
 AH_TEMPLATE(BUILDD_CONF, [buildd config file path])
 AC_DEFINE_UNQUOTED(BUILDD_CONF, ["$BUILDD_CONF"])
 
-WANNA_BUILD_CONF="${WANNA_BUILD_SYSCONF_DIR}/wanna-build.conf"
-AC_SUBST([WANNA_BUILD_CONF])
-
-AH_TEMPLATE(WANNA_BUILD_CONF, [wanna-build config file path])
-AC_DEFINE_UNQUOTED(WANNA_BUILD_CONF, ["$WANNA_BUILD_CONF"])
-
-AH_TEMPLATE(SBUILD_DATADIR, [Package data directory])
-SBUILD_DATADIR="${PACKAGE_DATA_DIR}/${PACKAGE_VERSION}"
-AC_DEFINE_UNQUOTED(SBUILD_DATADIR, ["$SBUILD_DATADIR"])
-
-AH_TEMPLATE(SBUILD_MODULEDIR, [Package module directory])
-SBUILD_MODULEDIR="${PACKAGE_LIB_DIR}/${PACKAGE_VERSION}/modules"
-AC_DEFINE_UNQUOTED(SBUILD_MODULEDIR, ["$SBUILD_MODULEDIR"])
+AH_TEMPLATE(SBUILD_DATA_DIR, [Package data directory])
+if test "x${datadir}" = 'x${prefix}/share' || test "x${datadir}" = 'x${datarootdir}'; then
+  if test "x${prefix}" = "xNONE"; then
+    SBUILD_DATA_DIR="${ac_default_prefix}/share/sbuild"
+  else
+    SBUILD_DATA_DIR="${prefix}/share/sbuild"
+  fi
+else
+  SBUILD_DATA_DIR="${datadir}/sbuild"
+fi
+AC_SUBST(SBUILD_DATA_DIR)
+AC_DEFINE_UNQUOTED(SBUILD_DATA_DIR, ["$SBUILD_DATA_DIR"])
 
 dnl Configure which files to generate.
 AC_CONFIG_FILES([Makefile])
@@ -332,31 +313,9 @@ AC_CONFIG_FILES([etc/Makefile])
 AC_CONFIG_FILES([lib/Makefile])
 AC_CONFIG_FILES([lib/Buildd/Makefile])
 AC_CONFIG_FILES([lib/Sbuild/Makefile])
-AC_CONFIG_FILES([lib/Sbuild/DB/Makefile])
-AC_CONFIG_FILES([lib/WannaBuild/Makefile])
 AC_CONFIG_FILES([lib/Sbuild/Sysconfig.pm])
 AC_CONFIG_FILES([man/Makefile])
-AC_CONFIG_FILES([man/buildd.1])
-AC_CONFIG_FILES([man/buildd-mail.1])
-AC_CONFIG_FILES([man/buildd-uploader.1])
-AC_CONFIG_FILES([man/buildd-vlog.1])
-AC_CONFIG_FILES([man/buildd-watcher.1])
-AC_CONFIG_FILES([man/sbuild.1])
-AC_CONFIG_FILES([man/sbuild-abort.1])
-AC_CONFIG_FILES([man/sbuild-adduser.8])
-AC_CONFIG_FILES([man/sbuild-apt.1])
-AC_CONFIG_FILES([man/sbuild-checkpackages.1])
-AC_CONFIG_FILES([man/sbuild-createchroot.8])
-AC_CONFIG_FILES([man/sbuild-hold.1])
-AC_CONFIG_FILES([man/sbuild-setup.7])
-AC_CONFIG_FILES([man/sbuild-shell.1])
-AC_CONFIG_FILES([man/sbuild-stats.1])
-AC_CONFIG_FILES([man/sbuild-update.1])
-AC_CONFIG_FILES([man/wanna-build.1])
-AC_CONFIG_FILES([man/wanna-build-catdb.1])
-AC_CONFIG_FILES([man/wanna-build-mail.1])
-AC_CONFIG_FILES([man/wanna-build-merge-packages.1])
-AC_CONFIG_FILES([man/wanna-build-statistics.1])
+AC_CONFIG_FILES([man/defs.man])
 AC_CONFIG_FILES([test/Makefile])
 AC_CONFIG_FILES([test/perl-syntax],
 		[chmod +x test/perl-syntax])
@@ -376,6 +335,8 @@ AC_CONFIG_FILES([test/sbuild-clean],
 		[chmod +x test/sbuild-clean])
 AC_CONFIG_FILES([test/sbuild],
 		[chmod +x test/sbuild])
+AC_CONFIG_FILES([tools/Makefile])
+AC_CONFIG_FILES([wrapper/Makefile])
 
 dnl Output the generated config.status script.
 AC_OUTPUT

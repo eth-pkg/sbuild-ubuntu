@@ -1,8 +1,6 @@
-#!/usr/bin/perl
 #
-# wanna-build-mail: mail interface to wanna-build
-# Copyright © 1998 Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
-# Copyright © 2009 Roger Leigh <rleigh@debian.org>
+# Exception.pm: exceptions for sbuild
+# Copyright © 2011 Roger Leigh <rleigh@debian.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,26 +18,17 @@
 #
 #######################################################################
 
+package Sbuild::Exception;
+
 use strict;
 use warnings;
 
-use WannaBuild::Conf;
-use WannaBuild::Options;
-use WannaBuild::Mail;
+use Exception::Class (
+    'Sbuild::Exception::Base',
 
-my $conf = WannaBuild::Conf::new();
-exit 1 if !defined($conf);
-my $options = WannaBuild::Options->new($conf, "wanna-build", 1);
-exit 1 if !defined($options);
-my $mail = WannaBuild::Mail->new($conf);
-exit 1 if !defined($mail);
+    'Sbuild::Exception::Build' => { isa => 'Sbuild::Exception::Base',
+				    fields => [ 'info', 'status', 'failstage' ] }
 
-# All logging is to standard out and error; no log stream to set.
-my $status = $mail->run();
+    );
 
-exit $status;
-
-END {
-    #TODO: unlink real tempfile
-#    unlink( $tmpf );
-}
+1;

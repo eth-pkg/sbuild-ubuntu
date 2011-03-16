@@ -132,21 +132,29 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BUILDD_CONF = @BUILDD_CONF@
 BUILDD_SYSCONF_DIR = @BUILDD_SYSCONF_DIR@
+CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXDEPMODE = @CXXDEPMODE@
+CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
+DEPDIR = @DEPDIR@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
+EXEEXT = @EXEEXT@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
+OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -161,6 +169,7 @@ RELEASE_DATE = @RELEASE_DATE@
 SBUILD_CHROOT_CHECKS = @SBUILD_CHROOT_CHECKS@
 SBUILD_COMPAT = @SBUILD_COMPAT@
 SBUILD_CONF = @SBUILD_CONF@
+SBUILD_DATA_DIR = @SBUILD_DATA_DIR@
 SBUILD_LIBEXEC_DIR = @SBUILD_LIBEXEC_DIR@
 SBUILD_SYSCONF_DIR = @SBUILD_SYSCONF_DIR@
 SCHROOT_CONF = @SCHROOT_CONF@
@@ -169,14 +178,14 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
-WANNA_BUILD_CONF = @WANNA_BUILD_CONF@
-WANNA_BUILD_LIBEXEC_DIR = @WANNA_BUILD_LIBEXEC_DIR@
-WANNA_BUILD_SYSCONF_DIR = @WANNA_BUILD_SYSCONF_DIR@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_CXX = @ac_ct_CXX@
+am__include = @am__include@
 am__leading_dot = @am__leading_dot@
+am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
@@ -225,7 +234,7 @@ perlmoddir = $(PERL_MODULE_DIR)
 sbuildsysconfdir = $(SBUILD_SYSCONF_DIR)
 sbuildsysconf_DATA = sbuild.conf
 builddsysconfdir = $(BUILDD_SYSCONF_DIR)
-builddsysconf_DATA = buildd.conf wanna-build.conf
+builddsysconf_DATA = buildd.conf
 exampleconfdir = $(docdir)/examples
 exampleconf_DATA = example.sbuildrc
 COMPAT_SETUP = 25nssdatabases 99builddsourceslist
@@ -236,9 +245,11 @@ schrootsetupdir = $(SCHROOT_SYSCONF_DIR)/setup.d
 PROFILES = \
 	buildd
 
+CLEANFILES = \
+	sbuild.conf	\
+	buildd.conf
+
 EXTRA_DIST = \
-	$(sbuildsysconf_DATA)	\
-	$(builddsysconf_DATA)	\
 	$(exampleconf_DATA)	\
 	$(COMPAT_SETUP)		\
 	$(SETUP)		\
@@ -434,6 +445,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -510,8 +522,9 @@ ps-am:
 
 uninstall-am: uninstall-builddsysconfDATA uninstall-exampleconfDATA \
 	uninstall-sbuildsysconfDATA uninstall-schrootsetupSCRIPTS
-
-.MAKE: install-am install-data-am install-strip
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
+.MAKE: install-am install-data-am install-strip uninstall-am
 
 .PHONY: all all-am all-local check check-am clean clean-generic \
 	clean-local distclean distclean-generic distdir dvi dvi-am \
@@ -527,8 +540,17 @@ uninstall-am: uninstall-builddsysconfDATA uninstall-exampleconfDATA \
 	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
 	pdf-am ps ps-am uninstall uninstall-am \
 	uninstall-builddsysconfDATA uninstall-exampleconfDATA \
-	uninstall-sbuildsysconfDATA uninstall-schrootsetupSCRIPTS
+	uninstall-hook uninstall-sbuildsysconfDATA \
+	uninstall-schrootsetupSCRIPTS
 
+
+sbuild.conf: $(abs_top_srcdir)/tools/sbuild-dumpconfig
+	PERL5LIB=$(abs_top_srcdir)/lib:$(abs_top_builddir)/lib \
+	  $< sbuild config > $@
+
+buildd.conf: $(abs_top_srcdir)/tools/sbuild-dumpconfig
+	PERL5LIB=$(abs_top_srcdir)/lib:$(abs_top_builddir)/lib \
+	  $< buildd config > $@
 
 profiles: profiles-stamp
 profiles-stamp: genprofile
@@ -545,6 +567,13 @@ install-data-hook:
 	  $(MKDIR_P) "$(DESTDIR)$(SCHROOT_SYSCONF_DIR)/$$profile";			\
 	  for file in "profiles/$$profile"/*; do						\
 	    $(INSTALL_DATA) "$$file" "$(DESTDIR)$(SCHROOT_SYSCONF_DIR)/$$profile";	\
+	  done;									\
+	done
+
+uninstall-hook:
+	for profile in $(PROFILES); do 						\
+	  for file in "profiles/$$profile"/*; do						\
+	    $(RM) "$(DESTDIR)$(SCHROOT_SYSCONF_DIR)/$$profile/$$(basename $$file)";	\
 	  done;									\
 	done
 

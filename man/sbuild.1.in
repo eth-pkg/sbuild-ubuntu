@@ -15,7 +15,8 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program.  If not, see
 .\" <http://www.gnu.org/licenses/>.
-.TH SBUILD 1 "@RELEASE_DATE@" "Version @VERSION@" "Debian sbuild"
+.so defs.man
+.TH SBUILD 1 "\*[RELEASE_DATE]" "Version \*[VERSION]" "Debian sbuild"
 .SH NAME
 sbuild \- build debian packages from source
 .SH SYNOPSIS
@@ -45,6 +46,7 @@ sbuild \- build debian packages from source
 .RB [ \-\-dpkg-source-opts=\fIoptions\fP ]
 .RB [ \-p \[or] \-\-purge=\fPpurge-mode\fP ]
 .RB [ \-\-purge\-deps=\fPpurge-mode\fP ]
+.RB [ \-\-keep\-session ]
 .RB [ \-b \[or] \-\-batch]
 .RB [ \-n \[or] \-\-nolog ]
 .RB [ \-\-run\-lintian ]
@@ -226,6 +228,11 @@ build. Possible values are \fBalways\fR, \fBnever\fR, and \fBsuccessful\fR.
 \fIpurge-mode\fR determines if the build dependencies will be removed after a
 build. Possible values are \fBalways\fR, \fBnever\fR, and \fBsuccessful\fR.
 .TP
+.BR "\-\-keep\-session"
+Don't end the schroot session following a build.  This is useful in conjunction
+with \fI\-\-purge\fP and \fI\-\-purge\-deps\fP options when using snapshot
+chroots, since without it, the snapshot will be deleted.
+.TP
 .BR \-s ", " "\-\-source"
 Also build source package, i.e. use dpkg\-buildpackage without \-B.
 .TP
@@ -323,9 +330,21 @@ external commands to run via \fIchroot-setup-commands\fP.
 .TP
 .BR "\-\-build\-dep\-resolver=\fIresolver\fP"
 Use the specified resolver to handle selecting the build dependencies.
-Supported resolvers are \fIinternal\fP (the default) and \fIaptitude\fP.  The
-latter tries to be smarter but is also slower.  It may be of some help when
-trying to pull build dependencies from an extra suite, like \fIexperimental\fP.
+Supported resolvers are \fIapt\fP (the default), \fIaptitude\fP and
+\fIinternal\fP (deprecated).  The apt resolver is the most appropriate resolver
+for most users, for building for unstable, stable and other distributions.  If
+alternative build dependencies are used (excluding architecture restrictions),
+only the first alternative will be used; the others will be ignored.  The
+aptitude resolver is very similar, but smarter and slower, and it will consider
+all alternatives by default; it is suited to more complex situations, such as
+building packages for the experimental distribution, where packages need
+installing from multiple suites (\fIunstable\fP and \fIexperimental\fP).  Due
+to performance and other issues (bug #139615), aptitude is not recommended for
+use by default.  The internal resolver is much older, contains several
+significant deficiencies such as not being able to handle complex alternative
+and virtual dependencies, and is deprecated.  Like apt, it only uses the first
+alternative build dependency when multiple alternatives exist.  It is not
+recommended for future use, and will be removed in the future.
 .SH EXTERNAL COMMANDS
 Support to run external commands during an sbuild run is provided. A set of
 external commands can be run at various stages of a build. Providing commands to
@@ -471,6 +490,7 @@ Copyright \[co] 2005      Michael Banck <mbanck\@debian.org>
 Copyright \[co] 2005-2009 Roger Leigh <rleigh\@debian.org>
 .fi
 .SH "SEE ALSO"
+.BR sbuild.conf (5),
 .BR sbuild\-abort (1),
 .BR sbuild\-adduser (8),
 .BR sbuild\-apt (1),

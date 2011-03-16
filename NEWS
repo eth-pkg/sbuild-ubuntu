@@ -1,11 +1,121 @@
 NEWS                                                            -*- outline -*-
 ----
 
-Welcome to sbuild 0.61.0.  Please read these release notes carefully.
+Welcome to sbuild 0.62.0.  Please read these release notes carefully.
 
 Full installation instructions are provided in the INSTALL file.  The
 README file also contains more specific notes regarding building and
 configuration.
+
+* Major changes in 0.62.0:
+
+  1) 'apt' is now the default build dependency resolver.  Users should
+     not see any significant changes compared with the old 'internal'
+     resolver.  Please note that you may need to generate a GPG key
+     for the local archive created for dependency package
+     installation, if one does not already exist; see sbuild-update
+     (--keygen) for further details.
+
+  2) The 'internal' build dependency resolver is deprecated.  It is
+     not recommended for future use, and will be removed once it is no
+     longer used by the buildd infrastructure.  Please use the 'apt'
+     resolver as a drop-in replacement.
+
+  3) The 'aptitude' build dependency resolver will, unlike 'apt' and
+     'internal', consider alternative dependencies by default, rather
+     than only using the first alternative.  This is intended to both
+     preserve backward compatibility, and make the 'aptitude' resolver
+     the preferred choice for more complex situations, such as
+     building for experimental.
+
+  4) sbuild.conf and buildd.conf are now automatically generated from
+     the help text and defaults in the source code.  This means that
+     the examples will always be syntactically correct, the help text
+     will always be current, and the defaults will always match the
+     defaults in the source code.
+
+  5) All of the allowed values in sbuild.conf and buildd.conf are now
+     documented in the new sbuild.conf(5) and buildd.conf(5) manual
+     pages, respectively.  Like sbuild.conf, this is entirely
+     generated from the source code, so will always match the defaults
+     for the same sbuild version.
+
+  6) Non-scalar (or reference) types are deprecated in sbuild.conf.
+     This is because it is not possible to tell the difference between
+     an empty and an undefined value.  Values using array or hash
+     types should use the equivalent array reference or hash
+     reference, which have been supported for some time.  The old
+     style array and hash values will remain supported for now, but
+     will be removed in a future release.
+
+  7) sbuild now performs an apt dist-upgrade at the start of each
+     build by default, rather than an upgrade.  This is to reduce the
+     amount of manual administration required to keep chroots up to
+     date, and is not much more risky than upgrade in this context.
+
+  8) A new option, --keep-session, has been added.  This prevents the
+     automatic removal of session-managed snapshot chroots.
+     Previously, snapshots would not be deleted if purging of the
+     build directory or build dependencies was disabled, but this was
+     not always desirable, hence it is now configurable separately.
+
+  9) Internally, building and other actions in the chroot are
+     performed by the 'sbuild' system user, where previously the user
+     invoking sbuild would be used instead.  The aim of this change is
+     to separate privileges to increase security and reduce the chance
+     of accidental or deliberate tampering of the build environment.
+     While the latter is not addressed by these changes, this will be
+     taken care of during future architectural changes.
+
+ 10) In order to handle errors more robustly, the build code now has
+     initial support for exception handling.  Normal operation will
+     not be affected, but fatal errors may be logged in a different
+     order than seen previously.  Fatal errors will now be seen at the
+     end of the build log, which should make it easier to spot
+     problems.
+
+ 11) sbuild now always cleans up fully when receiving a termination
+     signal such as SIGINT or SIGTERM.  Note that you may need to wait
+     while the cleanup actions are performed, or the current task is
+     completed prior to initiating cleanup.  When running
+     interactively, hitting Ctrl-C will sent SIGINT to the entire
+     process group; doing this while apt-get or aptitude are running
+     will potentially leave dpkg in an inconsistent state, so aborting
+     at this point is not recommended.  Sending a SIGTERM to the
+     sbuild process will always work cleanly.
+
+ 12) Long paths such as the chroot location and the build directory
+     inside the chroot are now filtered in the build log and replaced
+     with small, constant, abbreviations.  This makes the build logs
+     comparable between builds with tools such as diff(1).
+
+ 13) Logging messages have been improved, and important messages are
+     now coloured when running interactively (does not affect log
+     files).  Errors, warnings and informational messages are coloured
+     red, yellow and green, respectively.  Build status is coloured
+     green for success and red for all failure conditions.
+
+ 14) The sbuild package build directory created inside the chroot now
+     has a reduced name length.  It's now /build/packagename-XXXXXX
+     where XXXXXX are random characters.  This helps reduce the chance
+     of hitting path length restrictions on some architectures,
+     particularly when using sockets.
+
+ 15) Build log mails are now compressed and mailed in MIME format by
+     default, together with a copy of the .changes file.  The old
+     behaviour (plain mailing of uncompressed logs) may be restored by
+     setting $mime_build_log_mails=0 in the configuration, and
+     compression may also be disabled in the MIME mails by setting
+     $compress_build_log_mails=0.  Note that it is no longer possible
+     to send compressed log mails unless MIME mailing is enabled.
+
+ 16) The wanna-build database has been removed entirely.  This part of
+     the sbuild package was not used, and was not maintained for some
+     time.  Users wishing to use wanna-build should investigate the
+     version in the wanna-build.git repository used by the Debian
+     autobuilding infrastructure.  This version is actively maintained
+     and in continual use.
+
 
 * Major changes in 0.61.0:
 
