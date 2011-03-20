@@ -1,3 +1,27 @@
+commit 516552e446a47e5908ca3b17dc5ebaa172962066
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Mar 20 23:06:58 2011 +0000
+
+    debian: Bump version to 0.62.1-1 and fix sbuild-schroot wrapper
+
+commit 767defee367ff548f14c6347aff899307c52e7d5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Mar 20 23:06:37 2011 +0000
+
+    NEWS: Document sbuild-schroot permissions checking fix
+
+commit 9607fdaacebe9c4008efbeaaaa7defa5ec36ce56
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Mar 20 22:58:58 2011 +0000
+
+    Sbuild::ResolverBase: Remove File::Path dependency
+
+commit a4527c3dfc782204b6d1c6b28818e52249aef9f6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Mar 20 22:36:25 2011 +0000
+
+    wrapper: Enforce group access checks
+
 commit 07bf64f9c1c9664b2a7562412bacaba316faf802
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Wed Mar 16 18:57:32 2011 +0000
