@@ -216,8 +216,9 @@ sub get_next_WANNABUILD {
 sub get_next_REDO {
     my $self = shift;
     my ( $dist_config, $pkg_ver);
-    foreach $dist_config (@{$self->get_conf('DISTRIBUTIONS')}) {
-	$pkg_ver = $self->get_from_REDO( $dist_config );
+    foreach my $current_dist_config (@{$self->get_conf('DISTRIBUTIONS')}) {
+	$pkg_ver = $self->get_from_REDO( $current_dist_config );
+        $dist_config = $current_dist_config;
         last if defined($pkg_ver);
     }
     return ( $dist_config, $pkg_ver);
@@ -367,7 +368,13 @@ sub do_wanna_build {
 #                  $self->handle_prevfailed( $dist_config, grep( /^\Q$pkg\E_/, @_ ) );
 #              } else {
 #                  push( @output, grep( /^\Q$pkg\E_/, @_ ) );
-            my $fields = { 'changelog' => 'extra-changelog', 'binNMU' => 'binNMU', 'extra-depends' => 'extra-depends', 'extra-conflicts' => 'extra-conflicts' };
+            my $fields = { 'changelog' => 'extra-changelog',
+			   'binNMU' => 'binNMU',
+			   'extra-depends' => 'extra-depends',
+			   'extra-conflicts' => 'extra-conflicts',
+			   'build_dep_resolver' => 'build_dep_resolver',
+			   'arch_all' => 'arch_all',
+			 };
             for my $f (keys %$fields) {
                 $ret->{$f} = $pkgd->{$fields->{$f}} if $pkgd->{$fields->{$f}};
             }
@@ -502,9 +509,15 @@ sub do_build {
 
     push @sbuild_args, 'sbuild',
 			'--apt-update',
+			'--no-apt-upgrade',
+			'--no-apt-distupgrade',
 			'--batch',
 			"--stats-dir=" . $self->get_conf('HOME') . "/stats",
 			"--dist=" . $dist_config->get('DIST_NAME');
+
+    if ($dist_config->get('SIGN_WITH')) {
+	push @sbuild_args, '--keyid=' . $dist_config->get('SIGN_WITH');
+    }
 
     #multi-archive-buildd keeps the mailto configuration in the builddrc, so
     #this needs to be passed over to sbuild. If the buildd config doesn't have
@@ -514,8 +527,12 @@ sub do_build {
     }
     #Some distributions (bpo, experimental) require a more complex dep resolver.
     #Ask sbuild to use another build-dep resolver if the config says so:
-    if ($dist_config->get('BUILD_DEP_RESOLVER')) {
-	push @sbuild_args, '--build-dep-resolver=' . $dist_config->get('BUILD_DEP_RESOLVER');
+    if ($dist_config->get('BUILD_DEP_RESOLVER') || $todo->{'build_dep_resolver'}) {
+	push @sbuild_args, '--build-dep-resolver=' . ($dist_config->get('BUILD_DEP_RESOLVER') || $todo->{'build_dep_resolver'});
+    }
+    # Check if we need to build the arch:all.
+    if (defined($todo->{'arch_all'}) && $todo->{'arch_all'}) {
+	push @sbuild_args, '--arch-all';
     }
     push ( @sbuild_args, "--arch=" . $dist_config->get('BUILT_ARCHITECTURE') )
 	if $dist_config->get('BUILT_ARCHITECTURE');
@@ -581,6 +598,11 @@ sub do_build {
 	    $giveback = 0;
 	    $self->log("sbuild of $todo->{'pv'} succeeded -- marking as built in wanna-build\n");
 	    $db->run_query('--built', '--dist=' . $dist_config->get('DIST_NAME'), $todo->{'pv'});
+
+	    if ($dist_config->get('SIGN_WITH') && $dist_config->get('BUILT_ARCHITECTURE')) {
+		# XXX: Check if signature is present.
+		$self->move_to_upload($dist_config, $todo->{'pv'}, $todo->{'binNMU'});
+	    }
 	} elsif ($status ==  2) {
 	    $giveback = 0;
 	    $self->log("sbuild of $todo->{'pv'} failed with status $status (build failed) -- marking as attempted in wanna-build\n");
@@ -640,6 +662,33 @@ EOF
 	$main::sbuild_fails = 0;
     }
     $self->log("Build finished.\n");
+}
+
+sub move_to_upload {
+    my $self = shift;
+    my $dist_config = shift;
+    my $pv = shift;
+    my $binNMUver = shift;
+
+    my $arch = $dist_config->get('BUILT_ARCHITECTURE');
+    my $upload_dir = $dist_config->get('DUPLOAD_LOCAL_QUEUE_DIR');
+
+    if ($binNMUver) {
+        $pv .= '+b' . $binNMUver;
+    }
+
+    my $pkg_noepoch = $pv;
+    $pkg_noepoch =~ s/_\d*:/_/;
+
+    my $changes_name = $pkg_noepoch . '_' . $arch . '.changes';
+
+    $self->log("$pv is autosigned, moving to '$upload_dir'\n");
+    system sprintf('dcmd mv %s/build/%s %s/%s/',
+	$self->get_conf('HOME'),
+	$changes_name,
+	$self->get_conf('HOME'),
+	$dist_config->get('DUPLOAD_LOCAL_QUEUE_DIR'));
+    $self->log("$pv moved to '$upload_dir'\n");
 }
 
 sub handle_prevfailed {
@@ -892,12 +941,6 @@ sub check_ssh_master {
 	return 0 if ($wpid == -1 or $wpid == $new_master_pid);
     }
     return 1;
-}
-
-sub read_config {
-    my $self = shift;
-
-    $self->get('Config')->read_config();
 }
 
 sub shutdown {

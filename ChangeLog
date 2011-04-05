@@ -1,3 +1,468 @@
+commit fd9c9216f5c33d20d5b5011655be0f273ee010e7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 5 10:46:54 2011 +0100
+
+    debian: Log colouring is configurable
+
+commit 4e4a7c90dd158394e67611c1880af05807ed6d47
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 5 10:46:15 2011 +0100
+
+    NEWS: Log colouring is configurable
+
+commit 6f8534d2e503245903ce5f0cd81c888f396918ee
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 5 10:45:57 2011 +0100
+
+    Sbuild: Allow log colouring to be disabled
+
+commit 64ff82618b84282a98398ddb3c2d59991e3eeef6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 5 00:26:50 2011 +0100
+
+    debian: Close #620758
+
+commit 9f395ee14caf33352957728a28a2b90ecf7851e1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 5 00:25:18 2011 +0100
+
+    Sbuild::ConfBase: Set MAILTO from hash in DISTRIBUTION SET trigger
+
+commit 6d45c877df377f2cc09ea4e62111dc149cde8226
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 5 00:24:39 2011 +0100
+
+    Sbuild::Conf: Set maintainer name in trigger
+
+commit 328b2f05918edf99d1db8cf8664e00805d7f2579
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 5 00:21:44 2011 +0100
+
+    sbuild: Move binNMU check to top level
+    
+    Must be done after processing options, or else it will never work.
+
+commit 9af4466c20cfb9a31f99cb50a132a433e58cceed
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 5 00:05:19 2011 +0100
+
+    debian: Merge buildd-0.61.0 changes
+
+commit 4bb4614487f3eb2dfcf410121c50406a5dd514ce
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Apr 2 13:43:14 2011 +0200
+
+    [Buildd::Daemon] move_to_upload: fix binNMU uploading
+
+commit b8fba2de0b2c273d2983007135502cc3edc196bc
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Mar 29 20:11:12 2011 +0200
+
+    [Buildd::Daemon] support autosigning of binNMUs
+
+commit 3382ef353c61963d9983a2892731db4f6c9c2f0a
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Mar 28 21:50:39 2011 +0200
+
+    [Sbuild::Conf] adjust ENVIRONMENT_FILTER to be sane
+
+commit b20bb0f6848f8f0b17414ac47f53b523607dc20e
+Author: Philipp Kern <pkern@debian.org>
+Date:   Mon Apr 4 23:46:13 2011 +0100
+
+    Sbuild::Build: Forward port build autosigning
+    
+    Sbuild::Conf: Put SIGNING_OPTIONS into an array instead of overwriting
+      values.
+    Sbuild::Conf: Handle command-line signing options correctly.
+    Sbuild::Build: Invoke debsign post-build.
+      Passing -k to dpkg-buildpackage involves the chroot having access to
+      key material.  Invoking debsign post-build outside of the chroot
+      seems to make much more sense.  It might be interactive at this point
+      but at least for the buildd.d.o case that's not going to happen, so
+      that's ignored in this design.
+    Sbuild::Build: Only try to invoke debsign on successful builds.
+
+commit 6f9df8381a31b9d4ca8928fe8e6f0cdaec9c3d60
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Apr 4 23:18:01 2011 +0100
+
+    Sbuild::Build: Add extra checks when doing binNMU
+    
+    If the maintainer name is unset, this can lead to errors.
+    Note that this should be detected earlier, but check here
+    as well to ensure we never use maintainer name undefined.
+
+commit 5d822d9f99c1601c281cd9cedc337ffeec097beb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Apr 4 22:02:59 2011 +0100
+
+    debian: Close #620112
+
+commit 961752291078ffa5f5dcea15be508917dfa0d15d
+Author: Anders Kaseorg <andersk@mit.edu>
+Date:   Mon Apr 4 21:57:36 2011 +0100
+
+    Sbuild::Build: Improve binNMU changelog handling
+    
+    According to https://wiki.ubuntu.com/MultiarchSpec#Binary%20NMUs ,
+    although a Multi-Arch: same package may not be binNMU’d on individual
+    architectures, it should be possible to schedule a binNMU on all
+    architectures at once, and have the resulting packages remain
+    co-installable.  However, this does not quite work right now for a silly
+    reason: sbuild generates a different timestamp for the binNMU changelog
+    entry in each build, and the differing changelog.gz files break
+    co-installability.
+    
+    This fixes the problem by generating the timestamp in a deterministic way:
+    we just copy the timestamp from the previous changelog entry.  (Since the
+    source has not changed since that time, it seems like as good a time as
+    any to write into the changelog.)
+    
+    Certain automated backport setups that use --append-to-version are also
+    affected by this issue and require this fix as well.
+    
+    Use dpkg-parsechangelog to parse previous changelog entry to acquire
+    all needed information, including the correct date.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 40205e7eb6ba199e7a900f27c12c61edd20a6b7c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Apr 4 18:11:12 2011 +0100
+
+    debian: Close #620589
+
+commit 9a73da4e5c4b261a549d3942b4469ffe4935bdb3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Apr 4 18:10:21 2011 +0100
+
+    NEWS: Document log filtering changes
+
+commit baf300b302d2fab45eaa96c06eea2a95b353600d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Apr 4 18:08:16 2011 +0100
+
+    Sbuild::Conf: Add LOG_FILTER
+    
+    Allows disabling of log filtering.
+
+commit 7bfce2207291c4299f36c85fada45cdb6e43638f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Apr 4 18:05:45 2011 +0100
+
+    Sbuild::Build: Improve clarity of log filtering
+    
+    Surround filter string with "«" and "»" so that strings such as
+    CHROOT and BUILDDIR can't be confused with any actual appearance of
+    the same string in the build log.
+
+commit c8e986d023df635dd8e9fc73a4cf45c4b0510765
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Apr 4 17:45:30 2011 +0100
+
+    debian: Close #620797
+
+commit cefa705393f0ae4c1f38f8d740eea5f77d0a9a78
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Apr 4 17:42:17 2011 +0100
+
+    Sbuild::ResolverBase: sources.list fragments must have 0644 permissions
+    
+    This is needed in order for apt-cache to be able to read them when
+    running as a normal user (not root).
+
+commit ead64a7794af0bbac877746c278b41de37ba94a4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Mar 28 23:51:05 2011 +0100
+
+    Revert "man: Document --suppress-successful-logs"
+    
+    This reverts commit c448d24981d6e405e410f40ff83af726a5931edf.
+
+commit 1bf2b951365ef04ab4492516e32bc0662b8c3cc6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Mar 28 23:50:50 2011 +0100
+
+    Revert "sbuild: Add new option to suppress log mails for successful builds"
+    
+    This reverts commit 81f4ee05f49275fc0417099a9e3f2bd57b3ac001.
+
+commit ef4dc57770f5ef497ace28310bd20abd3a327136
+Author: Modestas Vainius <modax@debian.org>
+Date:   Sun Mar 27 00:56:37 2011 +0200
+
+    Sbuild::Conf: Rename end_session to purge_session
+    
+    Rename:
+        $end_session -> $purge_session
+        END_SESSION -> PURGE_SESSION
+    for consistency with the rest of similar sbuild.conf settings.
+    
+    Also fix PURGE_SESSION key properties (TYPE, HELP, CHECK) which were forgotten
+    after copy&paste from PURGE_BUILD_DEPS.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit c47a8ab88cedc9423aabad7914bb4374952e9cc4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 26 20:52:41 2011 +0000
+
+    debian: Close #619332
+
+commit c703076f82f400ba29990d7f1aee50499698cf13
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 26 20:50:43 2011 +0000
+
+    NEWS: Document --purge-session and $end_session
+
+commit edec8e64208bc31f8dac4d16f5b03099d73ea7c6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 26 20:46:35 2011 +0000
+
+    Sbuild::Conf: END_SESSION allows same purge modes as purge options
+
+commit 466a633a279268bf74db3a385b40d0a70435d73b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 26 20:23:26 2011 +0000
+
+    debian: Close #619526
+
+commit 5df906cd22c7f073edb6a51af8a6d49a5e208aa7
+Author: Marc Deslauriers <marc.deslauriers@ubuntu.com>
+Date:   Sat Mar 26 20:20:27 2011 +0000
+
+    Sbuild::Build: Add work around for wrong build-essential entry on Ubuntu Lucid
+    
+    Work around Lucid issue that has diff listed in build-essential
+    instead of diffutils. This causes schroots that don't have
+    universe enabled to fail to install dependencies. (LP: #741897).
+    This may be worthwhile for Debian users who want to build packages for
+    Ubuntu.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit e40ed8704cc7858065d2e443785c9381fc1b1c69
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 26 20:18:42 2011 +0000
+
+    debian: Close #619002
+
+commit c448d24981d6e405e410f40ff83af726a5931edf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 26 16:28:14 2011 +0000
+
+    man: Document --suppress-successful-logs
+
+commit 81f4ee05f49275fc0417099a9e3f2bd57b3ac001
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 25 16:19:10 2011 +0100
+
+    sbuild: Add new option to suppress log mails for successful builds
+    
+    With autosigning one might just be interested in processing the failed logs as
+    the successful logs do not need any manual handling.
+
+commit 00293ecbb9cd4d639f5d2ad69fd973c66b3fe4f8
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 25 15:48:32 2011 +0100
+
+    [Buildd::Daemon] add arch_all building support
+
+commit f096e18462a2be6117739bab7eadc383a32ec7b5
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Mar 24 21:40:22 2011 +0100
+
+    [Sbuild::Build] invoke debsign post-build
+    
+    Passing -k to dpkg-buildpackage involves the chroot having access to key
+    material.  Invoking debsign post-build outside of the chroot seems to make much
+    more sense.  It might be interactive at this point but at least for the
+    buildd.d.o case that's not going to happen, so that's ignored in this design.
+
+commit c725c0a269282654376aa154043c51596205b928
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Mar 24 20:46:12 2011 +0100
+
+    [Sbuild::Conf] handle command-line signing options correctly
+    
+    SIGNING_OPTIONS put into an array instead of overwriting values.
+
+commit a4d14a3b0b19c120b3ff640badfb8d6ce853cefa
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Mar 24 20:42:29 2011 +0100
+
+    [Sbuild::Build] check correctly for SIGNING_OPTIONS being an ARRAY
+
+commit d8cc7e5bea0d51d7550e2eeb66a36eb75906f365
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Mar 24 19:58:17 2011 +0100
+
+    [Buildd::Uploader] make .changes -> .upload substitution clearer
+
+commit d0de2ffcf4bd31b3235e04938d8e6c7b20aabb9e
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Mar 24 19:22:45 2011 +0100
+
+    [Sbuild::Build] attach a .summary file to MIME build logs
+
+commit 1f688ed937015682b393862c7d8edaaf0295430e
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Mar 24 15:34:26 2011 +0100
+
+    [Sbuild::Build] put KEY_ID into the log mail header if set
+
+commit 914e22d60ccd95ea8cba4733ed698fa81014bc72
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Mar 24 15:29:48 2011 +0100
+
+    [Buildd::Daemon] put signed builds into the upload queue
+
+commit 76bb3689f4ebd1c8a38b936d38c1a13c9e08cdca
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Mar 24 15:07:25 2011 +0100
+
+    [Buildd::Daemon] pass SIGN_WITH as keyid to sbuild
+
+commit da7e48b9b33c289b5342e51dfd822f32ae5767b9
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Mar 24 15:02:45 2011 +0100
+
+    [Buildd::DistConf] SIGN_WITH added as a new variable
+
+commit 7e4e1f96a86c6b624649643fb79657d150a78535
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu Mar 24 14:53:43 2011 +0100
+
+    [Buildd::Daemon] remove unused read_config function
+
+commit 276a761cdbba468d787b4340c5ccec83f76d1a7f
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Mar 19 14:48:55 2011 +0100
+
+    debian/rules: do not install the init script on buildd builds
+
+commit 1759b73076705676e14747c174efe86184928746
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Mar 19 14:44:12 2011 +0100
+
+    debian/buildd.*{inst,rm}: remove 0.58.3-1 upgrade code
+
+commit 66024919a6f64ecec8873b3bc1a34249f5112b94
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sat Feb 19 14:03:52 2011 +0100
+
+    squeeze released: git rid of etch-only code, change codenames in creat-chroot
+
+commit 83012e2f6001c2391c9ebccd339b7e5bed56c1b0
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Mar 13 22:50:09 2011 +0100
+
+    take build_dep_resolver from wanna-build if not locally configured
+
+commit 90d94ba3b20c9bb84f78b0b4ac03170039df1e05
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Mar 26 15:08:15 2011 +0000
+
+    .gitignore: Add newly-generated files
+
+commit 1489e252d1479bb60adc6eef590b86191e5ea847
+Author: Philipp Kern <pkern@debian.org>
+Date:   Fri Mar 25 22:10:35 2011 +0100
+
+    [Buildd::Daemon] fix up retry
+
+commit 085708fe07458005b4c2495d37af705447b0dbf5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 23 23:56:58 2011 +0000
+
+    Sbuild::Build: Don't log repeated schroot deprecation warnings
+    
+    Log only once, then ignore subsequent messages.
+
+commit 65cc424b4e54a8d61a3a451473b750b50b5258dd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 23 23:26:11 2011 +0000
+
+    TODO: Update
+
+commit faca465524877d3a6e77888e96ca96402b541d08
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 23 23:25:57 2011 +0000
+
+    debian: Close #619416
+
+commit e6089d3188af7ff9c24b00f5f310cbf88e8cc62c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 23 23:23:16 2011 +0000
+
+    Sbuild::Conf: Don't output BUILD_DIR by default
+    
+    Since it's build-specific, don't use in sbuild.conf or
+    sbuild.conf(5).
+
+commit 2b7bf4a4bdaf2819b11a7c267e558c8b1f2746dd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 23 12:50:44 2011 +0000
+
+    Sbuild::ConfBase: Warn if $HOME is unset
+
+commit f5ea293c906298ffd2b3f7a974d90d072becdad0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 23 10:40:57 2011 +0000
+
+    debian: Close #619288
+
+commit 53f56cc34a416b60573fb7d0f5fb2ad39e4671c6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Mar 23 10:36:16 2011 +0000
+
+    Sbuild::ConfBase: Don't fail if HOME is unset
+    
+    If HOME not set in the environment, fall back to passwd.pw_dir.
+    Fail outright if passwd entry for the current user does not exist,
+    and don't fall back to LOGNAME or USER in the environment, just
+    take it directly from passwd.
+
+commit b6f226ff0f7477f939b1c6498da526cc0a8be533
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Mar 21 14:53:30 2011 +0000
+
+    debian: Close #619128
+
+commit 45ef2313c76e40cee0bdc13f9405a07217c87f4e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Mar 21 14:52:22 2011 +0000
+
+    wrapper: Allow root to bypass sbuild group membership checks
+
+commit 7f52bf7c7e7881d49e549b0b3e46d53e6bc806d0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Mar 21 14:52:02 2011 +0000
+
+    debian: Bump version to 0.62.2-1 and document new options
+
+commit 7f07ed01fedc85d9ac4c66d4ecfcce4758412333
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Mar 21 14:51:16 2011 +0000
+
+    NEWS: Bump version to 0.62.2 and document new options
+
+commit b192bfc15d13e4f2d1be9b8ac065c0a4b9b556ba
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Mar 21 14:41:32 2011 +0000
+
+    Buildd::Daemon: Don't upgrade or distupgrade running sbuild
+
+commit f311dfece392534f25b03dace02d75fed6997e86
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Mar 21 11:00:33 2011 +0000
+
+    sbuild: Add --no-apt-* options to disable default actions
+    
+    Allows disabling of apt clean, update, upgrade and distupgrade
+    actions.
+
 commit 516552e446a47e5908ca3b17dc5ebaa172962066
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sun Mar 20 23:06:58 2011 +0000

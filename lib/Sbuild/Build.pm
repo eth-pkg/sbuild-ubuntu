@@ -471,8 +471,13 @@ sub run_chroot_session {
 		   tempdir($self->get('Package') . '-XXXXXX',
 			   DIR =>  $session->get('Location') . "/build"));
 
-	$self->build_log_filter($session->strip_chroot_path($self->get('Chroot Build Dir')), 'BUILDDIR');
-	$self->build_log_filter($session->get('Location'), 'CHROOT');
+	my $filter;
+	$filter = $session->strip_chroot_path($self->get('Chroot Build Dir'));
+	$filter =~ s;^/;;;
+	$self->build_log_filter($filter, 'BUILDDIR');
+	$filter = $session->get('Location');
+	$filter =~ s;^/;;;
+	$self->build_log_filter($filter , 'CHROOT');
 	# Need tempdir to be writable and readable by sbuild group.
 	$self->check_abort();
 	$session->run_command(
@@ -530,7 +535,11 @@ sub run_chroot_session {
 
     # End chroot session
     my $session = $self->get('Session');
-    if ($self->get_conf('END_SESSION')) {
+    my $end_session =
+	($self->get_conf('PURGE_SESSION') eq 'always' ||
+	 ($self->get_conf('PURGE_SESSION') eq 'successful' &&
+	  $self->get_status() eq 'successful')) ? 1 : 0;
+    if ($end_session) {
 	$session->end_session();
     } else {
 	$self->log("Keeping session: " . $session->get('Session ID') . "\n");
@@ -1309,7 +1318,7 @@ sub build {
     if ($current_usage) {
 	my $free = df($dscdir);
 	if ($free < 2*$current_usage && $self->get_conf('CHECK_SPACE')) {
-	    Sbuild::Exception::Build->throw(error => "Disc space is probably not sufficient for building.\n",
+	    Sbuild::Exception::Build->throw(error => "Disc space is probably not sufficient for building.",
 					    info => "Source needs $current_usage KiB, while $free KiB is free.)",
 					    failstage => "check-space");
 	} else {
@@ -1318,17 +1327,36 @@ sub build {
     }
 
     if ($self->get_conf('BIN_NMU') || $self->get_conf('APPEND_TO_VERSION')) {
+	if (!$self->get_conf('MAINTAINER_NAME')) {
+	    Sbuild::Exception::Build->throw(error => "No maintainer specified.",
+					    info => 'When making changelog additions for a binNMU or appending a version suffix, a maintainer must be specified for the changelog entry e.g. using $maintainer_name, $uploader_name or $key_id, (or the equivalent command-line options)',
+					    failstage => "check-space");
+	}
+
 	$self->log_subsubsection("Hack binNMU version");
 	if (open( F, "<$dscdir/debian/changelog" )) {
-	    my($firstline, $text);
-	    $firstline = "";
-	    $firstline = <F> while $firstline =~ /^$/;
-	    { local($/); undef $/; $text = <F>; }
+	    my $text = do { local $/; <F> };
 	    close( F );
-	    $firstline =~ /^(\S+)\s+\((\S+)\)\s+([^;]+)\s*;\s*urgency=(\S+)\s*$/;
-	    my ($name, $version, $dists, $urgent) = ($1, $2, $3, $4);
+
+	    my $pipe = $self->get('Session')->pipe_command(
+		{ COMMAND => ['dpkg-parsechangelog'],
+		  USER => $self->get_conf('BUILD_USER'),
+		  PRIORITY => 0,
+		  DIR => $self->get('Session')->strip_chroot_path($dscdir) });
+	    my $clog = do { local $/; <$pipe> };
+	    close($pipe);
+	    if ($?) {
+		$self->log("FAILED [dpkg-parsechangelog died]\n");
+		return 0;
+	    }
+
+	    my ($name) = $clog =~ /^Source:\s*(.*)$/m;
+	    my ($version) = $clog =~ /^Version:\s*(.*)$/m;
+	    my ($dists) = $clog =~ /^Distribution:\s*(.*)$/m;
+	    my ($urgency) = $clog =~ /^Urgency:\s*(.*)$/m;
+	    my ($date) = $clog =~ /^Date:\s*(.*)$/m;
+
 	    my $NMUversion = $self->get('Version');
-	    chomp( my $date = `date -R` );
 	    if (!open( F, ">$dscdir/debian/changelog" )) {
 		$self->log("Can't open debian/changelog for binNMU hack: $!\n");
 		Sbuild::Exception::Build->throw(error => "Can't open debian/changelog for binNMU hack: $!",
@@ -1349,9 +1377,9 @@ sub build {
 	    print F "\n";
 
 	    print F " -- " . $self->get_conf('MAINTAINER_NAME') . "  $date\n\n";
-	    print F $firstline, $text;
+	    print F $text;
 	    close( F );
-	    $self->log("*** Created changelog entry for bin-NMU version $NMUversion\n");
+	    $self->log("Created changelog entry for binNMU version $NMUversion\n");
 	}
 	else {
 	    $self->log("Can't open debian/changelog -- no binNMU hack!\n");
@@ -1433,7 +1461,7 @@ sub build {
 
     if (defined($self->get_conf('SIGNING_OPTIONS')) &&
 	$self->get_conf('SIGNING_OPTIONS')) {
-	if (ref($self->get_conf('SIGNING_OPTIONS') eq 'ARRAY')) {
+	if (ref($self->get_conf('SIGNING_OPTIONS')) eq 'ARRAY') {
 	    push (@{$buildcmd}, @{$self->get_conf('SIGNING_OPTIONS')});
         } else {
 	    push (@{$buildcmd}, $self->get_conf('SIGNING_OPTIONS'));
@@ -1714,11 +1742,15 @@ sub read_build_essential {
     }
 
     # Workaround http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=602571
+    # Also works around Ubuntu Lucid shipping with "diff" instead of
+    # "diffutils": https://bugs.launchpad.net/ubuntu/+source/sbuild/+bug/741897
     if (open( F, "$self->{'Chroot Dir'}/etc/lsb-release" )) {
         while( <F> ) {
             if ($_ eq "DISTRIB_ID=Ubuntu\n") {
                 @essential = grep(!/^sysvinit$/, @essential);
-                last;
+            }
+            if ($_ eq "DISTRIB_CODENAME=lucid\n") {
+                s/^diff$/diffutils/ for (@essential);
             }
         }
         close( F );
@@ -1982,7 +2014,9 @@ sub build_log_filter {
     my $text = shift;
     my $replacement = shift;
 
-    $self->log($self->get('FILTER_PREFIX') . $text . ':' . $replacement . "\n");
+    if ($self->get_conf('LOG_FILTER')) {
+	$self->log($self->get('FILTER_PREFIX') . $text . ':' . $replacement . "\n");
+    }
 }
 
 sub open_build_log {
@@ -2037,15 +2071,18 @@ sub open_build_log {
 	my $nolog = $self->get_conf('NOLOG');
 	my $log = $self->get_conf('LOG_DIR_AVAILABLE');
 	my $verbose = $self->get_conf('VERBOSE');
+	my $log_colour = $self->get_conf('LOG_COLOUR');
 	my @filter = ();
 	my ($text, $replacement);
 	my $filter_regex = "^$filter_prefix(.*):(.*)\$";
+	my @ignore = ();
 
 	while (<STDIN>) {
 	    # Add a replacement pattern to filter (sent from main
 	    # process in log stream).
 	    if (m/$filter_regex/) {
 		($text,$replacement)=($1,$2);
+		$replacement = "«$replacement»";
 		push (@filter, [$text, $replacement]);
 		$_ = "I: NOTICE: Log filtering will replace '$text' with '$replacement'\n";
 	    } else {
@@ -2055,9 +2092,17 @@ sub open_build_log {
 		    s/$text/$replacement/g;
 		}
 	    }
+	    if (m/Deprecated key/ || m/please update your configuration/) {
+		my $skip = 0;
+		foreach my $ignore (@ignore) {
+		    $skip = 1 if ($ignore eq $_);
+		}
+		next if $skip;
+		push(@ignore, $_);
+	    }
 
 	    if ($nolog || $verbose) {
-		if (-t $saved_stdout) {
+		if (-t $saved_stdout && $log_colour) {
 		    my $colour = 'reset';
 		    $colour = 'red' if (m/^E: /);
 		    $colour = 'yellow' if (m/^W: /);
@@ -2068,7 +2113,7 @@ sub open_build_log {
 		}
 
 		print $saved_stdout $_;
-		if (-t $saved_stdout) {
+		if (-t $saved_stdout && $log_colour) {
 		    print $saved_stdout color 'reset';
 		}
 
@@ -2142,6 +2187,15 @@ sub close_build_log {
     $self->log(sprintf("Build needed %02d:%02d:%02d, %dk disc space\n",
 	       $hours, $minutes, $seconds, $space));
 
+    if ($self->get_status() eq "successful") {
+	if (defined($self->get_conf('KEY_ID')) && $self->get_conf('KEY_ID')) {
+	    my $key_id = $self->get_conf('KEY_ID');
+	    $self->log(sprintf("Signature with key '%s' requested:\n", $key_id));
+	    my $changes = $self->get('Package_SVersion') . '_' . $self->get('Arch') . '.changes';
+	    system (sprintf('debsign -k%s %s', $key_id, $changes));
+	}
+    }
+
     my $subject = "Log for " . $self->get_status() .
 	" build of " . $self->get('Package_Version');
     if ($self->get('Arch')) {
@@ -2196,6 +2250,12 @@ sub send_mime_build_log {
 	    Type    => 'multipart/mixed'
 	    );
 
+    # Add the GPG key ID to the mail if present so that it's clear if the log
+    # still needs signing or not.
+    if (defined($self->get_conf('KEY_ID')) && $self->get_conf('KEY_ID')) {
+	$msg->add('Key-ID', $self->get_conf('KEY_ID'));
+    }
+
     if (!$conf->get('COMPRESS_BUILD_LOG_MAILS')) {
 	my $log_part = MIME::Lite->new(
 		Type     => 'text/plain',
@@ -2238,6 +2298,16 @@ sub send_mime_build_log {
 		Filename => basename($changes)
 		);
     }
+
+    my $stats = '';
+    foreach my $stat (sort keys %{$self->get('Summary Stats')}) {
+	$stats .= sprintf("%s: %s\n", $stat, $self->get('Summary Stats')->{$stat});
+    }
+    $msg->attach(
+	Type => 'text/plain',
+	Filename => basename($filename) . '.summary',
+	Data => $stats
+	);
 
     local $SIG{'PIPE'} = 'IGNORE';
 

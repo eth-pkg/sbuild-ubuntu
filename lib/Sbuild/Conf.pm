@@ -107,6 +107,28 @@ sub setup ($) {
 	}
     };
 
+    my $set_signing_option = sub {
+	my $conf = shift;
+	my $entry = shift;
+	my $value = shift;
+	my $key = $entry->{'NAME'};
+	$conf->_set_value($key, $value);
+
+	$conf->set('MAINTAINER_NAME', $conf->get('UPLOADER_NAME'))
+	    if (!$conf->get('MAINTAINER_NAME') &&
+		$conf->get('UPLOADER_NAME'));
+	$conf->set('MAINTAINER_NAME', $conf->get('KEY_ID'))
+	    if (!$conf->get('MAINTAINER_NAME') &&
+		$conf->get('KEY_ID'));
+
+	my @signing_options = ();
+	push @signing_options, "-m".$conf->get('MAINTAINER_NAME')
+	    if defined $conf->get('MAINTAINER_NAME');
+	push @signing_options, "-e".$conf->get('UPLOADER_NAME')
+	    if defined $conf->get('UPLOADER_NAME');
+	$conf->set('SIGNING_OPTIONS', \@signing_options);
+    };
+
     our $HOME = $conf->get('HOME');
 
     my %sbuild_keys = (
@@ -333,6 +355,20 @@ sub setup ($) {
 	    DEFAULT => "$HOME/logs",
 	    HELP => 'Directory for storing build logs'
 	},
+	'LOG_COLOUR'				=> {
+	    TYPE => 'BOOL',
+	    VARNAME => 'log_colour',
+	    GROUP => 'Logging options',
+	    DEFAULT => 1,
+	    HELP => 'Add colour highlighting to interactive log messages (informational, warning and error messages).  Log files will not be coloured.'
+	},
+	'LOG_FILTER'				=> {
+	    TYPE => 'BOOL',
+	    VARNAME => 'log_filter',
+	    GROUP => 'Logging options',
+	    DEFAULT => 1,
+	    HELP => 'Filter variable strings from log messages such as the chroot name and build directory'
+	},
 	'LOG_DIR_AVAILABLE'			=> {
 	    TYPE => 'BOOL',
 	    GROUP => '__INTERNAL',
@@ -455,12 +491,22 @@ sub setup ($) {
 	    DEFAULT => 'always',
 	    HELP => 'When to purge the build directory after a build; possible values are "never", "successful", and "always"'
 	},
-	'END_SESSION'			=> {
-	    TYPE => 'BOOL',
-	    VARNAME => 'end_session',
+	'PURGE_SESSION'			=> {
+	    TYPE => 'STRING',
+	    VARNAME => 'purge_session',
 	    GROUP => 'Chroot options',
-	    DEFAULT => 1,
-	    HELP => 'By default, the chroot session is ended following a build.  When using schroot and cloned chroots such as LVM or Btrfs snapshots, the snapshot is deleted.  If you want to keep the build directory, or inspect the chroot after a build, then by disabling session ending the snapshot will be kept rather than deleted.  This is useful in conjunction with PURGE_BUILD_DEPS and PURGE_BUILD_DIRECTORY.'
+	    CHECK => sub {
+		my $conf = shift;
+		my $entry = shift;
+		my $key = $entry->{'NAME'};
+
+		die "Bad purge mode \'" .
+		    $conf->get('PURGE_SESSION') . "\'"
+		    if !isin($conf->get('PURGE_SESSION'),
+			     qw(always successful never));
+	    },
+	    DEFAULT => 'always',
+	    HELP => 'Purge the schroot session following a build.  This is useful in conjunction with the --purge and --purge-deps options when using snapshot chroots, since by default the snapshot will be deleted. Possible values are "always" (default), "never", and "successful"'
 	},
 	'TOOLCHAIN_REGEX'			=> {
 	    TYPE => 'ARRAY:STRING',
@@ -564,6 +610,8 @@ sub setup ($) {
 	    VARNAME => 'build_dir',
 	    GROUP => 'Core options',
 	    DEFAULT => cwd(),
+	    IGNORE_DEFAULT => 1, # Don't dump class to config
+	    EXAMPLE => '$build_dir = \'/home/pete/build\';',
 	    CHECK => $validate_directory,
 	    HELP => 'This option is deprecated.  Directory for chroot symlinks and sbuild logs.  Defaults to the current directory if unspecified.  It is used as the location of chroot symlinks (obsolete) and for current build log symlinks and some build logs.  There is no default; if unset, it defaults to the current working directory.  $HOME/build is another common configuration.'
 	},
@@ -608,7 +656,11 @@ sub setup ($) {
 	    GROUP => 'Core options',
 	    DEFAULT => ['^PATH$',
 			'^DEB(IAN|SIGN)?_[A-Z_]+$',
-	    		'^(C(PP|XX)?|LD|F)FLAGS(_APPEND)?$'],
+	    		'^(C(PP|XX)?|LD|F)FLAGS(_APPEND)?$',
+			'^USER(NAME)?$',
+			'^LOGNAME$',
+			'^TERM$',
+			'^SHELL$'],
 	    HELP => 'Only environment variables matching one of the regular expressions in this arrayref will be passed to dpkg-buildpackage and other programs run by sbuild.'
 	},
 	'LD_LIBRARY_PATH'			=> {
@@ -623,6 +675,7 @@ sub setup ($) {
 	    VARNAME => 'maintainer_name',
 	    GROUP => 'Maintainer options',
 	    DEFAULT => undef,
+	    SET => $set_signing_option,
 	    HELP => 'Name to use as override in .changes files for the Maintainer field.  The Maintainer field will not be overridden unless set here.'
 	},
 	'UPLOADER_NAME'				=> {
@@ -630,6 +683,7 @@ sub setup ($) {
 	    TYPE => 'STRING',
 	    GROUP => 'Maintainer options',
 	    DEFAULT => undef,
+	    SET => $set_signing_option,
 	    HELP => 'Name to use as override in .changes file for the Changed-By: field.'
 	},
 	'KEY_ID'				=> {
@@ -1038,30 +1092,6 @@ if (\%individual_stalled_pkg_timeout) {
 END
 
     my $custom_setup = <<END;
-\$conf->set('MAILTO',
-	    \$conf->get('MAILTO_HASH')->{\$conf->get('DISTRIBUTION')})
-    if (defined(\$conf->get('DISTRIBUTION')) &&
-	\$conf->get('DISTRIBUTION') &&
-	\$conf->get('MAILTO_HASH')->{\$conf->get('DISTRIBUTION')});
-\$conf->set('SIGNING_OPTIONS',
-	    "-m".\$conf->get('MAINTAINER_NAME')."")
-    if defined \$conf->get('MAINTAINER_NAME');
-\$conf->set('SIGNING_OPTIONS',
-	    "-e".\$conf->get('UPLOADER_NAME')."")
-    if defined \$conf->get('UPLOADER_NAME');
-\$conf->set('SIGNING_OPTIONS',
-	    "-k".\$conf->get('KEY_ID')."")
-    if defined \$conf->get('KEY_ID');
-\$conf->set('MAINTAINER_NAME', \$conf->get('UPLOADER_NAME'))
-    if defined \$conf->get('UPLOADER_NAME');
-\$conf->set('MAINTAINER_NAME', \$conf->get('KEY_ID'))
-    if defined \$conf->get('KEY_ID');
-
-if (!defined(\$conf->get('MAINTAINER_NAME')) &&
-	\$conf->get('BIN_NMU')) {
-	die "A maintainer name, uploader name or key ID must be specified in .sbuildrc,\nor use -m, -e or -k, when performing a binNMU\n";
-}
-
 push(\@{\${\$conf->get('EXTERNAL_COMMANDS')}{"chroot-setup-commands"}},
 \$chroot_setup_script) if (\$chroot_setup_script);
 END
