@@ -1,11 +1,37 @@
 NEWS                                                            -*- outline -*-
 ----
 
-Welcome to sbuild 0.62.2.  Please read these release notes carefully.
+Welcome to sbuild 0.62.3.  Please read these release notes carefully.
 
 Full installation instructions are provided in the INSTALL file.  The
 README file also contains more specific notes regarding building and
 configuration.
+
+* Major changes in 0.62.3:
+
+  1) The apt and internal resolvers will resolve some alternatives
+     even when resolving alternative dependencies is disabled.  For
+     relations involving the same package, the alternative will be
+     permitted when the package names are the same for each
+     alternative.  For example,
+        foo (<< x) | foo (>= y) | bar
+     will be reduced to
+        foo (<< x) | foo (>= y)
+     while
+        foo | bar
+     will be reduced to
+        foo
+
+  2) The sbuild-schroot wrapper has been removed.  This will be moved
+     into the schroot package in its next release.
+
+  3) The schroot "buildd" configuration profile has been moved to the
+     schroot package itself.  This is due to being generated and being
+     architecture-dependent, and sbuild being an arch-all package (the
+     configuration would only be valid for the architecture sbuild was
+     built on).
+
+  4) A new option, "-j", has been added to allow parallel builds.
 
 * Major changes in 0.62.2:
 

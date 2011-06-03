@@ -515,11 +515,13 @@ sub setup_apt_archive {
 			   DIR => $self->get('Chroot Build Dir')));
     }
     $session->run_command(
-	{ COMMAND => ['chown', 'sbuild:sbuild', $session->strip_chroot_path($self->get('Dummy package path'))],
+	{ COMMAND => ['chown', $self->get_conf('BUILD_USER') . ':sbuild',
+		      $session->strip_chroot_path($self->get('Dummy package path'))],
 	  USER => 'root',
 	  DIR => '/' });
     if ($?) {
-	$self->log_error("E: Failed to set sbuild:sbuild ownership on dummy package dir\n");
+	$self->log_error("E: Failed to set " . $self->get_conf('BUILD_USER') .
+			 ":sbuild ownership on dummy package dir\n");
 	return 0;
     }
     $session->run_command(
@@ -552,12 +554,13 @@ sub setup_apt_archive {
         return 0;
     }
     $session->run_command(
-	{ COMMAND => ['chown', 'sbuild:sbuild',
+	{ COMMAND => ['chown', $self->get_conf('BUILD_USER') . ':sbuild',
 		      $session->strip_chroot_path($dummy_gpghome)],
 	  USER => 'root',
 	  DIR => '/' });
     if ($?) {
-	$self->log_error("E: Failed to set sbuild:sbuild ownership on $dummy_gpghome\n");
+	$self->log_error("E: Failed to set " . $self->get_conf('BUILD_USER') .
+			 ":sbuild ownership on $dummy_gpghome\n");
 	return 0;
     }
     if (!(-d $dummy_archive_dir || mkdir $dummy_archive_dir, 0775)) {
@@ -631,12 +634,27 @@ EOF
     $self->log("Merged Build-Depends: $positive\n") if $positive;
     $self->log("Merged Build-Conflicts: $negative\n") if $negative;
 
-    # Filter out all but the first alternative.
+    # Filter out all but the first alternative except in special
+    # cases.
     if (!$self->get_conf('RESOLVE_ALTERNATIVES')) {
 	my $positive_filtered = Dpkg::Deps::AND->new();
 	foreach my $item ($positive->get_deps()) {
-	    my ($first) = $item->get_deps();
-	    $positive_filtered->add($first) if defined $first;
+	    my $alt_filtered = Dpkg::Deps::OR->new();
+	    my @alternatives = $item->get_deps();
+	    my $first = shift @alternatives;
+	    $alt_filtered->add($first) if defined $first;
+	    # Allow foo (rel x) | foo (rel y) as the only acceptable
+	    # form of alternative.  i.e. where the package is the
+	    # same, but different relations are needed, since these
+	    # are effectively a single logical dependency.
+	    foreach my $alt (@alternatives) {
+		if ($first->{'package'} eq $alt->{'package'}) {
+		    $alt_filtered->add($alt);
+		} else {
+		    last;
+		}
+	    }
+	    $positive_filtered->add($alt_filtered);
 	}
 	$positive = $positive_filtered;
     }
@@ -664,12 +682,13 @@ EOF
 		      $dummy_pkg_dir,
 		      $dummy_archive_dir) {
 	$session->run_command(
-	    { COMMAND => ['chown', 'sbuild:sbuild',
+	    { COMMAND => ['chown', $self->get_conf('BUILD_USER') . ':sbuild',
 			  $session->strip_chroot_path($path)],
 	      USER => 'root',
 	      DIR => '/' });
 	if ($?) {
-	    $self->log_error("E: Failed to set sbuild:sbuild ownership on $path\n");
+	    $self->log_error("E: Failed to set " . $self->get_conf('BUILD_USER')
+			   . ":sbuild ownership on $path\n");
 	    return 0;
 	}
     }

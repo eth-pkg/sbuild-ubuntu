@@ -210,7 +210,7 @@ sub setup ($) {
 		    $validate_program->($conf, $entry);
 		}
 	    },
-	    DEFAULT => "$Sbuild::Sysconfig::paths{'SBUILD_LIBEXEC_DIR'}/sbuild-schroot",
+	    DEFAULT => 'schroot',
 	    HELP => 'Path to schroot binary'
 	},
 	'SCHROOT_OPTIONS'			=> {
@@ -659,6 +659,7 @@ sub setup ($) {
 	    		'^(C(PP|XX)?|LD|F)FLAGS(_APPEND)?$',
 			'^USER(NAME)?$',
 			'^LOGNAME$',
+			'^HOME$',
 			'^TERM$',
 			'^SHELL$'],
 	    HELP => 'Only environment variables matching one of the regular expressions in this arrayref will be passed to dpkg-buildpackage and other programs run by sbuild.'

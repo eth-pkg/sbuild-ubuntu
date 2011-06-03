@@ -1,3 +1,350 @@
+commit 4b004185bfb2264e21d650cce3ad091f22cc324b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 11 15:50:55 2011 +0100
+
+    Sbuild: Set HOME=/nonexistent in the build environment
+    
+    Sbuild::Conf: Allow HOME in environment
+    Sbuild::Build: Set HOME=/nonexistent
+    
+    This additionally ensures that HOME is set when current sbuild
+    versions are used with older (1.2.x) versions of schroot where
+    HOME is not set when the -p option is used to preserve the user
+    environment.
+
+commit 99406aec96b0952e1b548ed816ba6e99e296b8ee
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 4 00:08:29 2011 +0100
+
+    debian: Close #629005
+
+commit a0f6242a2822bcb055386c51bd8630abb46bbd25
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 4 00:00:50 2011 +0100
+
+    Sbuild::Utility: Only end session if one exists
+
+commit ac44b441b5a5f881bda829a56918b0d97de7d6e8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jun 3 23:56:12 2011 +0100
+
+    Sbuild::Build: Missing lsb-release is not an error
+
+commit 7a1fe3d277b02f13e06b831166f235947373125b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jun 1 19:39:19 2011 +0100
+
+    Sbuild::Build: Add 'Build Dir' to replace 'Chroot Build Dir'
+    
+    In order to reduce direct access to the build chroot from the host,
+    add 'Build Dir' to store the path to the build inside the chroot,
+    to replace 'Chroot Build dir', which stores the path to the build
+    from the host.
+
+commit e9fa79621c10803f076c7ec3261f87112592369c
+Merge: b293b44 f5c642e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jun 1 11:39:13 2011 +0100
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit b293b44bc97e4d9c5e72d544b0d7d839634c8e02
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jun 1 11:37:05 2011 +0100
+
+    Sbuild::Chroot: Create chroot lock inside chroot
+    
+    To avoid issues with /var/lock being an absolute symlink to
+    /run/lock on the host (which may or may not exist depending upon
+    which Debian version the host is running, and which causes the
+    chroot lock to be shared amongst multiple build chroots), the
+    chroot lock is created and removed inside the chroot.  Inside the
+    chroot, absolute symlinks will always point inside the chroot, so
+    /var/lock will always be a valid (and unshared) location.
+
+commit acae84866e28613ccbfe3dbb501c5f300ddd819c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jun 1 11:35:02 2011 +0100
+
+    debian: sbuild needs apt-utils for dependency package
+
+commit 398c51c569099c201383b0b34aef59abdf1b7853
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jun 1 11:34:41 2011 +0100
+
+    Sbuild::Build: Filter package build directory in log
+
+commit f5c642e0786356ccb58d141dda0dbebf0778227a
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue May 31 23:31:30 2011 +0200
+
+    create-chroot: set check intervals to 0 for the new filesystem
+
+commit 0c0eefab62b93e98ff5fc204dbb7fe8b8051075d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon May 30 16:18:13 2011 +0100
+
+    debian: Document environment logging
+
+commit 1d76274e548eb1da41101cb000c1369cfad65102
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon May 30 12:39:11 2011 +0100
+
+    Sbuild::Build: Log build environment prior to building
+
+commit 6c2060a7420b700e81cd33a78abd981a5567d7d6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon May 30 11:02:05 2011 +0100
+
+    debian: Close #608416
+
+commit 1a64639219183889f44142cb68d308776b4de602
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon May 30 11:00:57 2011 +0100
+
+    sbuild-createchroot: Don't overwrite sudo symlink
+
+commit 60d0fe5fde49afaeaf71877a73edce6bd29ddedb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 17:02:41 2011 +0100
+
+    NEWS: Document -j
+
+commit 8a94f8327bdee954deb62ed12e4969cd4dd5b2fb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 17:01:57 2011 +0100
+
+    debian: Close #626357
+
+commit f3da9667e5763d1f6ba13b7a572c344f5ef80b86
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 17:01:19 2011 +0100
+
+    Sbuild::Options: Add -j option to run parallel builds
+
+commit e631f871e0ec70fc41f93802ca168f3e13b94da2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 16:22:25 2011 +0100
+
+    Sbuild::Build: Simplify lintian status codes
+
+commit a05e7a6a14e67f21987905b3ca37a0cf5b988c63
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 16:22:10 2011 +0100
+
+    debian: Don't package removed files
+
+commit 7584c86cb333e5457cc31c9261bab89911335f12
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 14:29:27 2011 +0100
+
+    debian: Document requirement for schroot >= 1.4.22
+
+commit 6cc2097c04d1ecac9c28d6e84e9d607dbe10caea
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 14:28:34 2011 +0100
+
+    debian: Bump minimum schroot version
+    
+    1.4.22 is required for the buildd profile.
+
+commit 68591471252f9fb7f9cdcd5ce34b2ce84912512f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 14:27:29 2011 +0100
+
+    NEWS: Document buildd profile move to schroot
+
+commit 84ad6f46421f6b5f94c30906eafb4dc3f2a6c3f6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 14:16:10 2011 +0100
+
+    debian: sbuild is arch all again
+
+commit 1c398a4498172d25db29128cfca7415c16c354ad
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 14:23:07 2011 +0100
+
+    NEWS: Remove sbuild-schroot wrapper
+
+commit fe86c4d70da50a03a4376cfec9f3c14200a591c3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 14:22:56 2011 +0100
+
+    debian: Remove sbuild-schroot wrapper
+
+commit b5f31a7c6afec45c6036acb48ad6447819ebefad
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 14:22:33 2011 +0100
+
+    Remove sbuild-schroot wrapper program
+
+commit 8ff97c75246b424f19730befab9393173673f43f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 14:17:32 2011 +0100
+
+    Sbuild::Conf: Use plain schroot binary rather than wrapper
+
+commit 3b5850556d93a7e587d4d45c9f322e86b6680353
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 14:15:48 2011 +0100
+
+    Sbuild::ConfBase: Default BUILD_USER to current user
+
+commit 1242f671fd267319028602f79b8ac1923787baed
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 14:16:54 2011 +0100
+
+    Sbuild: Use BUILD_USER rather than hardcoding sbuild
+
+commit af7c63329c4b6d0c9cd68e04e000e830107027d2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 13:44:11 2011 +0100
+
+    debian: Close #617450
+
+commit a569394e3734f5d532f2c7eaa297b22727abfa6b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 13:43:13 2011 +0100
+
+    Sbuild::Build: Add lintian and piuparts status to summary
+
+commit 5efb94d1696c80d88f28627e8897fe4edc290930
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 13:22:31 2011 +0100
+
+    debian: Close #626826
+
+commit d1e199f2c2b666c477be01ebed872f2bdb298704
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 13:19:48 2011 +0100
+
+    Sbuild::Chroot: Use /var/lib/sbuild/chroot-lock
+    
+    /var/lock may be a symlink to /run/lock on the host, which makes
+    direct access using $target/var/lock impossible from the host.
+    Switch to using /var/lib/sbuild which is guaranteed to be a real
+    directory.
+
+commit 152b9de5e3fe9f9e638000bd278385c8c5da893f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 13:06:46 2011 +0100
+
+    debian: Close #619892
+
+commit 625fb4583dd4400b812a24f7ee91c3f22df54f5c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 13:05:27 2011 +0100
+
+    debian: Lock rather than delete accounts
+    
+    On purge, lock accounts.
+    On installation, unlock.
+
+commit 531a6a9380d2ec7b6b242d60488b8c8fdee7cf02
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 11:02:07 2011 +0100
+
+    debian: Close #622735
+
+commit b0042a56435c4ff1d1e6892c3adfb418bc81ce0e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 11:01:18 2011 +0100
+
+    sbuild-createchroot: Add sbuild user and group before updating
+    
+    basesetup() requires the presence of the sbuild user and group
+    to chown various files/directories.
+
+commit f7c772fa45deaa41bbc35503e4568102cad5daf5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 29 10:16:43 2011 +0100
+
+    debian: Close #627641
+
+commit 377c53c2943b841e311919e30abc13a9e316cd7c
+Author: Daniel Baumann <daniel.baumann@progress-linux.org>
+Date:   Mon May 23 08:04:52 2011 +0200
+
+    Correcting sbuild.postrm to not fail if /etc/sbuild/chroot does not exist (Closes: #627641).
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 04a8737ac4d95d3826ea4c4e9bdce9f93bf8c195
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu May 26 17:27:30 2011 +0100
+
+    debian: Close #627854
+
+commit c09e21745d4e45b5eaa1ed5b3b80cc3a8e0a8873
+Author: Samuel Thibault <sthibault@debian.org>
+Date:   Thu May 26 17:22:22 2011 +0100
+
+    Buildd::Mail: Remove empty newline from .changes
+    
+    ftp-master started refusing .changes files which have a trailing empty
+    line (after the GPG end of signature).  It happens that mutt introduces
+    one when signing GPG in traditional mode.  Other tools probably do too.
+    buildd-mail-wrapper should probably drop it automatically.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 36614d123b4cff61896d815b882e717a76bb9f5e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 15 17:46:01 2011 +0100
+
+    debian: Document buildd init script runlevels
+
+commit 8a9bb2dfa8147a7437e67d4b0caf71bd13c71fee
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 15 17:44:57 2011 +0100
+
+    debian: buildd init scripts uses standard runlevels
+    
+    Start buildd in 2-5, not S.  Stop in 0, 1 and 6.
+
+commit 20440d40b9a40f01908798549d09bca346da14b9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 15 16:05:13 2011 +0100
+
+    debian: Document buildd profile removal
+
+commit 3d33c55f3a2787c9e515cd8d3609cf01c73addf6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 15 16:03:27 2011 +0100
+
+    sbuild: Remove buildd profile (moved to schroot)
+    
+    Because sbuild is arch-all and the profiles are arch-any, they
+    need generating in an arch-any package in order to be useful.
+    Additionally, all the other profiles are in the schroot package,
+    so it makes sense to keep them together so they can all be
+    maintained as a set.
+
+commit d73e2a25e145237c384950fd84789e2cd578510f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 19 12:02:28 2011 +0100
+
+    debian: Bump version to 0.62.3-1 and Close #622832
+
+commit 6a40432c0ccf3846018efa93ff62e8db6535c381
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 19 12:02:02 2011 +0100
+
+    NEWS: Bump version to 0.62.3 and document alternatives change
+
+commit d4ff9f89a8d86a5350aa9f1dafdc6d1add9f2234
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Apr 19 11:25:54 2011 +0100
+
+    Sbuild::ResolverBase: Allow alternative dependencies for same package
+    
+    Currently, when alternative dependencies are not allowed, only the
+    first alternative is used.  Here, this rule is relaxed when the
+    alternative dependency or dependencies are for the same package name,
+    i.e. foo (rel x) | foo (rel y) [ ... foo (rel z) ]
+    since while these are separate dependencies, they are in reality a
+    single logical dependency.
+
 commit fd9c9216f5c33d20d5b5011655be0f273ee010e7
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Tue Apr 5 10:46:54 2011 +0100

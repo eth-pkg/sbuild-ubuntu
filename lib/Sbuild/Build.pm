@@ -75,6 +75,7 @@ sub new {
     $self->set('Arch', undef);
     $self->set('Chroot Dir', '');
     $self->set('Chroot Build Dir', '');
+    $self->set('Build Dir', '');
     $self->set('Max Lock Trys', 120);
     $self->set('Lock Interval', 5);
     $self->set('Pkg Status', 'pending');
@@ -471,8 +472,12 @@ sub run_chroot_session {
 		   tempdir($self->get('Package') . '-XXXXXX',
 			   DIR =>  $session->get('Location') . "/build"));
 
+	$self->set('Build Dir', $session->strip_chroot_path($self->get('Chroot Build Dir')));
 	my $filter;
-	$filter = $session->strip_chroot_path($self->get('Chroot Build Dir'));
+	$filter = $self->get('Build Dir') . '/' . $self->get('DSC Dir');
+	$filter =~ s;^/;;;
+	$self->build_log_filter($filter, 'PKGBUILDDIR');
+	$filter = $self->get('Build Dir');
 	$filter =~ s;^/;;;
 	$self->build_log_filter($filter, 'BUILDDIR');
 	$filter = $session->get('Location');
@@ -481,8 +486,8 @@ sub run_chroot_session {
 	# Need tempdir to be writable and readable by sbuild group.
 	$self->check_abort();
 	$session->run_command(
-	    { COMMAND => ['chown', 'sbuild:sbuild',
-			  $session->strip_chroot_path($self->get('Chroot Build Dir'))],
+	    { COMMAND => ['chown', $self->get_conf('BUILD_USER') . ':sbuild',
+			  $self->get('Build Dir')],
 	      USER => 'root',
 	      DIR => '/' });
 	if ($?) {
@@ -491,8 +496,7 @@ sub run_chroot_session {
 	}
 	$self->check_abort();
 	$session->run_command(
-	    { COMMAND => ['chmod', '0770',
-			  $session->strip_chroot_path($self->get('Chroot Build Dir'))],
+	    { COMMAND => ['chmod', '0770', $self->get('Build Dir')],
 	      USER => 'root',
 	      DIR => '/' });
 	if ($?) {
@@ -507,13 +511,13 @@ sub run_chroot_session {
 
 	# Chroot execution defaults
 	my $chroot_defaults = $session->get('Defaults');
-	$chroot_defaults->{'DIR'} =
-	    $session->strip_chroot_path($self->get('Chroot Build Dir'));
+	$chroot_defaults->{'DIR'} = $self->get('Build Dir');
 	$chroot_defaults->{'STREAMIN'} = $devnull;
 	$chroot_defaults->{'STREAMOUT'} = $self->get('Log Stream');
 	$chroot_defaults->{'STREAMERR'} = $self->get('Log Stream');
 	$chroot_defaults->{'ENV'}->{'LC_ALL'} = 'POSIX';
 	$chroot_defaults->{'ENV'}->{'SHELL'} = '/bin/sh';
+	$chroot_defaults->{'ENV'}->{'HOME'} = '/nonexistent';
 
 	my $resolver = get_resolver($self->get('Config'), $session, $host);
 	$resolver->set('Log Stream', $self->get('Log Stream'));
@@ -775,10 +779,9 @@ sub run_fetch_install_packages {
 
     if ($purge_build_directory) {
 	# Purge package build directory
-	$self->log("Purging " . $self->get('Chroot Build Dir') . "\n");
-	my $bdir = $self->get('Session')->strip_chroot_path($self->get('Chroot Build Dir'));
+	$self->log("Purging " . $self->get('Build Dir') . "\n");
 	$self->get('Session')->run_command(
-	    { COMMAND => ['rm', '-rf', $bdir],
+	    { COMMAND => ['rm', '-rf', $self->get('Build Dir')],
 	      USER => 'root',
 	      PRIORITY => 0,
 	      DIR => '/' });
@@ -815,7 +818,7 @@ sub copy_to_chroot {
     }
 
     $self->get('Session')->run_command(
-	{ COMMAND => ['chown', 'sbuild:sbuild',
+	{ COMMAND => ['chown', $self->get_conf('BUILD_USER') . ':sbuild',
 		      $self->get('Session')->strip_chroot_path($dest) . '/' .
 		      basename($source)],
 	  USER => 'root',
@@ -1180,14 +1183,18 @@ sub run_lintian {
           PRIORITY => 0,
         });
     my $status = $? >> 8;
+    $self->set('Lintian Reason', 'pass');
 
     $self->log("\n");
     if ($?) {
         my $why = "unknown reason";
+	$self->set('Lintian Reason', 'error');
+	$self->set('Lintian Reason', 'fail') if ($status == 1);
         $why = "runtime error" if ($status == 2);
         $why = "policy violation" if ($status == 1);
         $why = "received signal " . $? & 127 if ($? & 127);
         $self->log_error("Lintian run failed ($why)\n");
+
         return 0;
     }
 
@@ -1218,10 +1225,12 @@ sub run_piuparts {
           PRIORITY => 0,
         });
     my $status = $? >> 8;
+    $self->set('Piuparts Reason', 'pass');
 
     $self->log("\n");
     if ($?) {
         $self->log_error("Piuparts run failed.\n");
+	$self->set('Piuparts Reason', 'fail');
         return 0;
     }
 
@@ -1415,16 +1424,14 @@ sub build {
     # Build tree not writable during build (except for the sbuild
     # user performing the build).
     $self->get('Session')->run_command(
-	{ COMMAND => ['chmod', '-R', 'go-w',
-		      $self->get('Session')->strip_chroot_path($self->get('Chroot Build Dir'))],
+	{ COMMAND => ['chmod', '-R', 'go-w', $self->get('Build Dir')],
 	  USER => 'root',
 	  PRIORITY => 0});
     if ($?) {
-	$self->log("chmod og-w " . $self->get('Chroot Build Dir') . " failed.\n");
+	$self->log("chmod og-w " . $self->get('Build Dir') . " failed.\n");
 	return 0;
     }
 
-    $self->log_subsubsection("dpkg-buildpackage");
     $self->set('Build Start Time', time);
     $self->set('Build End Time', $self->get('Build Start Time'));
 
@@ -1441,6 +1448,7 @@ sub build {
 	      PRIORITY => 0,
 	      DIR => '/' });
 
+	$self->log_subsubsection("Fix ld.so");
 	$self->log("ld.so.conf was not readable! Fixed.\n");
     }
 
@@ -1480,6 +1488,30 @@ sub build {
     $buildenv->{'PATH'} = $self->get_conf('PATH');
     $buildenv->{'LD_LIBRARY_PATH'} = $self->get_conf('LD_LIBRARY_PATH')
 	if defined($self->get_conf('LD_LIBRARY_PATH'));
+
+    # Dump build environment
+    $self->log_subsubsection("User Environment");
+    {
+	my $pipe = $self->get('Session')->pipe_command(
+	    { COMMAND => ['env'],
+	      ENV => $buildenv,
+	      USER => $self->get_conf('BUILD_USER'),
+	      SETSID => 1,
+	      PRIORITY => 0,
+	      DIR => $bdir
+	    });
+
+	my (@lines) = <$pipe>;
+	close($pipe);
+
+	@lines=sort(@lines);
+	foreach my $line (@lines) {
+	    # $line contains a trailing newline, so don't add one.
+	    $self->log($line);
+	}
+    }
+
+    $self->log_subsubsection("dpkg-buildpackage");
 
     my $command = {
 	COMMAND => $buildcmd,
@@ -1584,12 +1616,11 @@ sub build {
 
 	# Restore write access to build tree now build is complete.
 	$self->get('Session')->run_command(
-	    { COMMAND => ['chmod', '-R', 'g+w',
-			  $self->get('Session')->strip_chroot_path($self->get('Chroot Build Dir'))],
+	    { COMMAND => ['chmod', '-R', 'g+w', $self->get('Build Dir')],
 	      USER => 'root',
 	      PRIORITY => 0});
 	if ($?) {
-	    $self->log("chmod g+w " . $self->get('Chroot Build Dir') . " failed.\n");
+	    $self->log("chmod g+w " . $self->get('Build Dir') . " failed.\n");
 	    return 0;
 	}
 
@@ -1754,9 +1785,6 @@ sub read_build_essential {
             }
         }
         close( F );
-    }
-    else {
-        warn "Cannot open $self->{'Chroot Dir'}/etc/lsb-release: $!\n";
     }
 
     return join( ", ", @essential );
@@ -1927,6 +1955,10 @@ sub generate_stats {
     $self->add_stat('Status', $self->get_status());
     $self->add_stat('Fail-Stage', $self->get('Pkg Fail Stage'))
 	if ($self->get_status() ne "successful");
+    $self->add_stat('Lintian', $self->get('Lintian Reason'))
+	if $self->get('Lintian Reason');
+    $self->add_stat('Piuparts', $self->get('Piuparts Reason'))
+	if $self->get('Piuparts Reason');
 }
 
 sub log_stats {

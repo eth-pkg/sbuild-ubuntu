@@ -242,9 +242,6 @@ SETUP =
 schrootsetupdir = $(SCHROOT_SYSCONF_DIR)/setup.d
 @SBUILD_COMPAT_FALSE@schrootsetup_SCRIPTS = $(SETUP)
 @SBUILD_COMPAT_TRUE@schrootsetup_SCRIPTS = $(COMPAT_SETUP) $(SETUP)
-PROFILES = \
-	buildd
-
 CLEANFILES = \
 	sbuild.conf	\
 	buildd.conf
@@ -253,9 +250,7 @@ EXTRA_DIST = \
 	$(exampleconf_DATA)	\
 	$(COMPAT_SETUP)		\
 	$(SETUP)		\
-	apt-keys		\
-	genprofile		\
-	profile-templates
+	apt-keys
 
 all: all-am
 
@@ -423,7 +418,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(SCRIPTS) $(DATA) all-local
+all-am: Makefile $(SCRIPTS) $(DATA)
 installdirs:
 	for dir in "$(DESTDIR)$(schrootsetupdir)" "$(DESTDIR)$(builddsysconfdir)" "$(DESTDIR)$(exampleconfdir)" "$(DESTDIR)$(sbuildsysconfdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -456,7 +451,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-local mostlyclean-am
+clean-am: clean-generic mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
@@ -476,8 +471,7 @@ info-am:
 
 install-data-am: install-builddsysconfDATA install-exampleconfDATA \
 	install-sbuildsysconfDATA install-schrootsetupSCRIPTS
-	@$(NORMAL_INSTALL)
-	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
+
 install-dvi: install-dvi-am
 
 install-dvi-am:
@@ -522,15 +516,13 @@ ps-am:
 
 uninstall-am: uninstall-builddsysconfDATA uninstall-exampleconfDATA \
 	uninstall-sbuildsysconfDATA uninstall-schrootsetupSCRIPTS
-	@$(NORMAL_INSTALL)
-	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
-.MAKE: install-am install-data-am install-strip uninstall-am
 
-.PHONY: all all-am all-local check check-am clean clean-generic \
-	clean-local distclean distclean-generic distdir dvi dvi-am \
-	html html-am info info-am install install-am \
-	install-builddsysconfDATA install-data install-data-am \
-	install-data-hook install-dvi install-dvi-am \
+.MAKE: install-am install-strip
+
+.PHONY: all all-am check check-am clean clean-generic distclean \
+	distclean-generic distdir dvi dvi-am html html-am info info-am \
+	install install-am install-builddsysconfDATA install-data \
+	install-data-am install-dvi install-dvi-am \
 	install-exampleconfDATA install-exec install-exec-am \
 	install-html install-html-am install-info install-info-am \
 	install-man install-pdf install-pdf-am install-ps \
@@ -540,8 +532,7 @@ uninstall-am: uninstall-builddsysconfDATA uninstall-exampleconfDATA \
 	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
 	pdf-am ps ps-am uninstall uninstall-am \
 	uninstall-builddsysconfDATA uninstall-exampleconfDATA \
-	uninstall-hook uninstall-sbuildsysconfDATA \
-	uninstall-schrootsetupSCRIPTS
+	uninstall-sbuildsysconfDATA uninstall-schrootsetupSCRIPTS
 
 
 sbuild.conf: $(abs_top_srcdir)/tools/sbuild-dumpconfig
@@ -551,37 +542,6 @@ sbuild.conf: $(abs_top_srcdir)/tools/sbuild-dumpconfig
 buildd.conf: $(abs_top_srcdir)/tools/sbuild-dumpconfig
 	PERL5LIB=$(abs_top_srcdir)/lib:$(abs_top_builddir)/lib \
 	  $< buildd config > $@
-
-profiles: profiles-stamp
-profiles-stamp: genprofile
-	$(MKDIR_P) profiles
-	for profile in $(PROFILES); do 					\
-	  $(srcdir)/genprofile "$$profile" "$(PLATFORM)" "$(srcdir)/profile-templates" "profiles/$$profile";	\
-	done
-	touch $@
-
-all-local: profiles
-
-install-data-hook:
-	for profile in $(PROFILES); do 						\
-	  $(MKDIR_P) "$(DESTDIR)$(SCHROOT_SYSCONF_DIR)/$$profile";			\
-	  for file in "profiles/$$profile"/*; do						\
-	    $(INSTALL_DATA) "$$file" "$(DESTDIR)$(SCHROOT_SYSCONF_DIR)/$$profile";	\
-	  done;									\
-	done
-
-uninstall-hook:
-	for profile in $(PROFILES); do 						\
-	  for file in "profiles/$$profile"/*; do						\
-	    $(RM) "$(DESTDIR)$(SCHROOT_SYSCONF_DIR)/$$profile/$$(basename $$file)";	\
-	  done;									\
-	done
-
-clean-local:
-	$(RM) -rf profiles
-	$(RM) -f profiles-stamp
-
-.PHONY: profiles
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

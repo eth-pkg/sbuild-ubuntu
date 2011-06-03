@@ -22,11 +22,11 @@
 
 SET search_path = public;
 
-\i /usr/share/wanna-build/postgresql/install/language.sql
-\i /usr/share/wanna-build/postgresql/install/schema.sql
-\i /usr/share/wanna-build/postgresql/install/archive.sql
-\i /usr/share/wanna-build/postgresql/install/build.sql
-\i /usr/share/wanna-build/postgresql/install/functions.sql
+\i /usr/local/share/wanna-build/postgresql/install/language.sql
+\i /usr/local/share/wanna-build/postgresql/install/schema.sql
+\i /usr/local/share/wanna-build/postgresql/install/archive.sql
+\i /usr/local/share/wanna-build/postgresql/install/build.sql
+\i /usr/local/share/wanna-build/postgresql/install/functions.sql
 
-\i /usr/share/wanna-build/postgresql/install/archive-data.sql
-\i /usr/share/wanna-build/postgresql/install/build-data.sql
+\i /usr/local/share/wanna-build/postgresql/install/archive-data.sql
+\i /usr/local/share/wanna-build/postgresql/install/build-data.sql
