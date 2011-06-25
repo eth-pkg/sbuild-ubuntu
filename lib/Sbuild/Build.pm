@@ -35,21 +35,20 @@ use FileHandle;
 use GDBM_File;
 use File::Copy qw(); # copy is already exported from Sbuild, so don't export
 		     # anything.
-use Cwd qw(:DEFAULT abs_path);
 use Dpkg::Arch;
 use Dpkg::Control;
+use Dpkg::Version;
 use MIME::Lite;
 use Term::ANSIColor;
 
-use Sbuild qw($devnull binNMU_version version_compare split_version copy isin debug df send_mail);
+use Sbuild qw($devnull binNMU_version copy isin debug df send_mail dsc_files);
 use Sbuild::Base;
 use Sbuild::ChrootInfoSchroot;
 use Sbuild::ChrootInfoSudo;
 use Sbuild::ChrootRoot;
 use Sbuild::Sysconfig qw($version $release_date);
-use Sbuild::LogBase qw($saved_stdout);
 use Sbuild::Sysconfig;
-use Sbuild::Utility qw(check_url download parse_file dsc_files);
+use Sbuild::Utility qw(check_url download);
 use Sbuild::Resolver qw(get_resolver);
 use Sbuild::Exception;
 
@@ -61,6 +60,9 @@ BEGIN {
 
     @EXPORT = qw();
 }
+
+our $saved_stdout = undef;
+our $saved_stderr = undef;
 
 sub new {
     my $class = shift;
@@ -99,6 +101,7 @@ sub new {
     $host_defaults->{'STREAMIN'} = $devnull;
     $host_defaults->{'ENV'}->{'LC_ALL'} = 'POSIX';
     $host_defaults->{'ENV'}->{'SHELL'} = '/bin/sh';
+    $host_defaults->{'ENV_FILTER'} = $self->get_conf('ENVIRONMENT_FILTER');
     # Note, this should never fail.  But, we should handle failure anyway.
     $self->get('Host')->begin_session();
 
@@ -127,8 +130,7 @@ sub new {
 	if ((!$self->get('Download') ||
       (!($self->get('DSC Base') =~ m/\.dsc$/) &&
         $self->get('DSC') ne $self->get('Package_OVersion')) ||
-      !defined $self->get('Version')) &&
-      !defined $self->get('Debian Source Dir'));
+      !defined $self->get('Version')));
 
     debug("Download = " . $self->get('Download') . "\n");
     debug("Invalid Source = " . $self->get('Invalid Source') . "\n");
@@ -160,47 +162,6 @@ sub set_dsc {
 
     debug("Setting DSC: $dsc\n");
 
-    # Check if the DSC given is a directory on the local system. This
-    # means we'll build the source package with dpkg-source first.
-    if (-d $dsc) {
-	my $host = $self->get('Host');
-	my $pipe = $host->pipe_command(
-	    { COMMAND => ['dpkg-parsechangelog', '-l' . abs_path($dsc) . '/debian/changelog'],
-	      PRIORITY => 0,
-	    });
-
-	if (!defined($pipe)) {
-	    Sbuild::Exception::Build->throw(error => "Could not parse $dsc/debian/changelog: $!",
-					    failstage => "set-dsc");
-	}
-
-	my $stanzas = parse_file($pipe);
-
-	my $stanza = @{$stanzas}[0];
-	my $package = ${$stanza}{'Source'};
-	my $version = ${$stanza}{'Version'};
-
-	if (!defined($package) || !defined($version)) {
-	    Sbuild::Exception::Build->throw(error => "Missing Source or Version in $dsc/debian/changelog",
-					    failstage => "set-dsc");
-	}
-
-	my $dir = getcwd();
-	# Note: need to support cases when invoked from a subdirectory
-	# of the build directory, i.e. $dsc/foo -> $dsc/.. in addition
-	# to $dsc -> $dsc/.. as below.
-	if ($dir eq abs_path($dsc)) {
-	    # We won't attempt to build the source package from the source
-	    # directory so the source package files will go to the parent dir.
-	    $dir = abs_path("$dir/..");
-	    $self->set_conf('BUILD_DIR', $dir);
-	}
-	$self->set('Debian Source Dir', abs_path($dsc));
-
-	$self->set_version("${package}_${version}");
-	$dsc = "$dir/" . $self->get('Package_OSVersion') . ".dsc";
-    }
-
     $self->set('DSC', $dsc);
     $self->set('Source Dir', dirname($dsc));
     $self->set('DSC Base', basename($dsc));
@@ -217,12 +178,18 @@ sub set_version {
     debug("Setting package version: $pkgv\n");
 
     my ($pkg, $version) = split /_/, $pkgv;
-    return if (!defined($pkg) || !defined($version));
+    my $pver = Dpkg::Version->new($version, check => 1);
+    return if (!defined($pkg) || !defined($version) || !defined($pver));
+    my ($o_epoch, $o_version, $o_revision);
+    $o_epoch = $pver->epoch();
+    $o_version = $pver->version();
+    $o_revision = $pver->revision();
 
     # Original version (no binNMU or other addition)
     my $oversion = $version;
     # Original version with stripped epoch
-    (my $osversion = $version) =~ s/^\d+://;
+    my $osversion = $o_version;
+    $osversion .= '-' . $o_revision if $o_revision;
 
     # Add binNMU to version if needed.
     if ($self->get_conf('BIN_NMU') || $self->get_conf('APPEND_TO_VERSION')) {
@@ -230,10 +197,16 @@ sub set_version {
 	    $self->get_conf('APPEND_TO_VERSION'));
     }
 
-    # Version with binNMU or other additions and stripped epoch
-    (my $sversion = $version) =~ s/^\d+://;
+    my $bver = Dpkg::Version->new($version, check => 1);
+    return if (!defined($bver));
+    my ($b_epoch, $b_version, $b_revision);
+    $b_epoch = $bver->epoch();
+    $b_version = $bver->version();
+    $b_revision = $bver->revision();
 
-    my ($epoch, $uversion, $dversion) = split_version($version);
+    # Version with binNMU or other additions and stripped epoch
+    my $sversion = $b_version;
+    $sversion .= '-' . $b_revision if $b_revision;
 
     $self->set('Package', $pkg);
     $self->set('Version', $version);
@@ -244,11 +217,11 @@ sub set_version {
     $self->set('OVersion', $oversion);
     $self->set('OSVersion', $osversion);
     $self->set('SVersion', $sversion);
-    $self->set('VersionEpoch', $epoch);
-    $self->set('VersionUpstream', $uversion);
-    $self->set('VersionDebian', $dversion);
+    $self->set('VersionEpoch', $b_epoch);
+    $self->set('VersionUpstream', $b_version);
+    $self->set('VersionDebian', $b_revision);
     $self->set('DSC File', "${pkg}_${osversion}.dsc");
-    $self->set('DSC Dir', "${pkg}-${uversion}");
+    $self->set('DSC Dir', "${pkg}-${b_version}");
 
     debug("Package = " . $self->get('Package') . "\n");
     debug("Version = " . $self->get('Version') . "\n");
@@ -350,8 +323,6 @@ sub run_chroot {
 
     eval {
 	$self->check_abort();
-	$self->run_pack_source();
-	$self->check_abort();
 	$self->run_chroot_session();
     };
 
@@ -374,47 +345,6 @@ sub run_chroot {
 
     if ($e) {
 	$e->rethrow();
-    }
-}
-
-# Pack up local source tree
-sub run_pack_source {
-    my $self=shift;
-
-    $self->check_abort();
-    # Build the source package if given a Debianized source directory
-    if ($self->get('Debian Source Dir')) {
-	$self->log_subsection("Build Source Package");
-
-	$self->log_subsubsection('clean');
-	$self->get('Host')->run_command(
-	    { COMMAND => [$self->get_conf('FAKEROOT'),
-			  'debian/rules',
-			  'clean'],
-	      DIR => $self->get('Debian Source Dir'),
-	      PRIORITY => 0,
-	    });
-	if ($?) {
-	    Sbuild::Exception::Build->throw(error => "Failed to clean source directory",
-					    failstage => "pack-source");
-	}
-
-	$self->check_abort();
-
-	$self->log_subsubsection('dpkg-source');
-	my @dpkg_source_command = ($self->get_conf('DPKG_SOURCE'), '-b');
-	push @dpkg_source_command, @{$self->get_conf('DPKG_SOURCE_OPTIONS')}
-	if ($self->get_conf('DPKG_SOURCE_OPTIONS'));
-	push @dpkg_source_command, $self->get('Debian Source Dir');
-	$self->get('Host')->run_command(
-	    { COMMAND => \@dpkg_source_command,
-	      DIR => $self->get_conf('BUILD_DIR'),
-	      PRIORITY => 0,
-	    });
-	if ($?) {
-	    Sbuild::Exception::Build->throw(error => "Failed to clean source directory",
-					    failstage => "pack-source");
-	}
     }
 }
 
@@ -473,6 +403,17 @@ sub run_chroot_session {
 			   DIR =>  $session->get('Location') . "/build"));
 
 	$self->set('Build Dir', $session->strip_chroot_path($self->get('Chroot Build Dir')));
+
+	# Log colouring
+	$self->build_log_colour('red', '^E: ');
+	$self->build_log_colour('yellow', '^W: ');
+	$self->build_log_colour('green', '^I: ');
+	$self->build_log_colour('red', '^Status:');
+	$self->build_log_colour('green', '^Status: successful$');
+	$self->build_log_colour('red', '^Lintian:');
+	$self->build_log_colour('green', '^Lintian: pass$');
+
+	# Log filtering
 	my $filter;
 	$filter = $self->get('Build Dir') . '/' . $self->get('DSC Dir');
 	$filter =~ s;^/;;;
@@ -483,6 +424,7 @@ sub run_chroot_session {
 	$filter = $session->get('Location');
 	$filter =~ s;^/;;;
 	$self->build_log_filter($filter , 'CHROOT');
+
 	# Need tempdir to be writable and readable by sbuild group.
 	$self->check_abort();
 	$session->run_command(
@@ -517,7 +459,8 @@ sub run_chroot_session {
 	$chroot_defaults->{'STREAMERR'} = $self->get('Log Stream');
 	$chroot_defaults->{'ENV'}->{'LC_ALL'} = 'POSIX';
 	$chroot_defaults->{'ENV'}->{'SHELL'} = '/bin/sh';
-	$chroot_defaults->{'ENV'}->{'HOME'} = '/nonexistent';
+	$chroot_defaults->{'ENV'}->{'HOME'} = '/sbuild-nonexistent';
+	$chroot_defaults->{'ENV_FILTER'} = $self->get_conf('ENVIRONMENT_FILTER');
 
 	my $resolver = get_resolver($self->get('Config'), $session, $host);
 	$resolver->set('Log Stream', $self->get('Log Stream'));
@@ -873,10 +816,10 @@ sub fetch_source_files {
 	# $file is the name of the downloaded dsc file written in a tempfile.
 	my $file;
 	$file = download($self->get('DSC')) or
-	    $self->log_error("Could not download " . $self->get('DSC')) and
+	    $self->log_error("Could not download " . $self->get('DSC') . "\n") and
 	    return 0;
-	debug("Parsing $dsc\n");
 	my @cwd_files = dsc_files($file);
+
 	if (-f "$dir/$dsc") {
 	    # Copy the local source files into the build directory.
 	    $self->log_subsubsection("Local sources");
@@ -1335,6 +1278,28 @@ sub build {
 	}
     }
 
+    my $cpipe = $self->get('Session')->pipe_command(
+	{ COMMAND => ['dpkg-parsechangelog'],
+	  USER => $self->get_conf('BUILD_USER'),
+	  PRIORITY => 0,
+	  DIR => $self->get('Session')->strip_chroot_path($dscdir) });
+    my $clog = do { local $/; <$cpipe> };
+    close($cpipe);
+    if ($?) {
+	$self->log("FAILED [dpkg-parsechangelog died]\n");
+	return 0;
+    }
+
+    my ($name) = $clog =~ /^Source:\s*(.*)$/m;
+    my ($version) = $clog =~ /^Version:\s*(.*)$/m;
+    my ($dists) = $clog =~ /^Distribution:\s*(.*)$/m;
+    my ($urgency) = $clog =~ /^Urgency:\s*(.*)$/m;
+    my ($date) = $clog =~ /^Date:\s*(.*)$/m;
+    if ($dists ne $self->get_conf('DISTRIBUTION')) {
+	$self->build_log_colour('yellow',
+				"^Distribution: " . $self->get_conf('DISTRIBUTION') . "\$");
+    }
+
     if ($self->get_conf('BIN_NMU') || $self->get_conf('APPEND_TO_VERSION')) {
 	if (!$self->get_conf('MAINTAINER_NAME')) {
 	    Sbuild::Exception::Build->throw(error => "No maintainer specified.",
@@ -1347,23 +1312,6 @@ sub build {
 	    my $text = do { local $/; <F> };
 	    close( F );
 
-	    my $pipe = $self->get('Session')->pipe_command(
-		{ COMMAND => ['dpkg-parsechangelog'],
-		  USER => $self->get_conf('BUILD_USER'),
-		  PRIORITY => 0,
-		  DIR => $self->get('Session')->strip_chroot_path($dscdir) });
-	    my $clog = do { local $/; <$pipe> };
-	    close($pipe);
-	    if ($?) {
-		$self->log("FAILED [dpkg-parsechangelog died]\n");
-		return 0;
-	    }
-
-	    my ($name) = $clog =~ /^Source:\s*(.*)$/m;
-	    my ($version) = $clog =~ /^Version:\s*(.*)$/m;
-	    my ($dists) = $clog =~ /^Distribution:\s*(.*)$/m;
-	    my ($urgency) = $clog =~ /^Urgency:\s*(.*)$/m;
-	    my ($date) = $clog =~ /^Date:\s*(.*)$/m;
 
 	    my $NMUversion = $self->get('Version');
 	    if (!open( F, ">$dscdir/debian/changelog" )) {
@@ -1484,17 +1432,26 @@ sub build {
 	push (@{$buildcmd}, @{$self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')});
     }
 
-    my $buildenv = {};
-    $buildenv->{'PATH'} = $self->get_conf('PATH');
-    $buildenv->{'LD_LIBRARY_PATH'} = $self->get_conf('LD_LIBRARY_PATH')
+    # Set up additional build environment variables.
+    my %buildenv = %{$self->get_conf('BUILD_ENVIRONMENT')};
+    $buildenv{'PATH'} = $self->get_conf('PATH');
+    $buildenv{'LD_LIBRARY_PATH'} = $self->get_conf('LD_LIBRARY_PATH')
 	if defined($self->get_conf('LD_LIBRARY_PATH'));
+
+    # Explicitly add any needed environment to the environment filter
+    # temporarily for dpkg-buildpackage.
+    my @env_filter;
+    foreach my $envvar (keys %buildenv) {
+	push(@env_filter, "^$envvar\$");
+    }
 
     # Dump build environment
     $self->log_subsubsection("User Environment");
     {
 	my $pipe = $self->get('Session')->pipe_command(
 	    { COMMAND => ['env'],
-	      ENV => $buildenv,
+	      ENV => \%buildenv,
+	      ENV_FILTER => \@env_filter,
 	      USER => $self->get_conf('BUILD_USER'),
 	      SETSID => 1,
 	      PRIORITY => 0,
@@ -1515,7 +1472,8 @@ sub build {
 
     my $command = {
 	COMMAND => $buildcmd,
-	ENV => $buildenv,
+	ENV => \%buildenv,
+	ENV_FILTER => \@env_filter,
 	USER => $self->get_conf('BUILD_USER'),
 	SETSID => 1,
 	PRIORITY => 0,
@@ -1585,9 +1543,9 @@ sub build {
 		       $self->get('Build End Time')-$self->get('Build Start Time'));
     $self->write_stats('install-download-time',
 		       $self->get('Install End Time')-$self->get('Install Start Time'));
-    my $date = strftime("%Y%m%d-%H%M",localtime($self->get('Build End Time')));
+    my $finish_date = strftime("%Y%m%d-%H%M",localtime($self->get('Build End Time')));
     $self->log_sep();
-    $self->log("Build finished at $date\n");
+    $self->log("Build finished at $finish_date\n");
 
     my @space_files = ("$dscdir");
 
@@ -2051,6 +2009,16 @@ sub build_log_filter {
     }
 }
 
+sub build_log_colour {
+    my $self = shift;
+    my $regex = shift;
+    my $colour = shift;
+
+    if ($self->get_conf('LOG_COLOUR')) {
+	$self->log($self->get('COLOUR_PREFIX') . $colour . ':' . $regex . "\n");
+    }
+}
+
 sub open_build_log {
     my $self = shift;
 
@@ -2058,11 +2026,16 @@ sub open_build_log {
 
     my $filter_prefix = '__SBUILD_FILTER_' . $$ . ':';
     $self->set('FILTER_PREFIX', $filter_prefix);
+    my $colour_prefix = '__SBUILD_COLOUR_' . $$ . ':';
+    $self->set('COLOUR_PREFIX', $colour_prefix);
 
     my $filename = $self->get_conf('LOG_DIR') . '/' .
 	$self->get('Package_SVersion') . '-' .
 	$self->get('Arch') .
 	"-$date";
+
+    open($saved_stdout, ">&STDOUT") or warn "Can't redirect stdout\n";
+    open($saved_stderr, ">&STDERR") or warn "Can't redirect stderr\n";
 
     my $PLOG;
 
@@ -2105,8 +2078,10 @@ sub open_build_log {
 	my $verbose = $self->get_conf('VERBOSE');
 	my $log_colour = $self->get_conf('LOG_COLOUR');
 	my @filter = ();
+	my @colour = ();
 	my ($text, $replacement);
 	my $filter_regex = "^$filter_prefix(.*):(.*)\$";
+	my $colour_regex = "^$colour_prefix(.*):(.*)\$";
 	my @ignore = ();
 
 	while (<STDIN>) {
@@ -2117,6 +2092,12 @@ sub open_build_log {
 		$replacement = "«$replacement»";
 		push (@filter, [$text, $replacement]);
 		$_ = "I: NOTICE: Log filtering will replace '$text' with '$replacement'\n";
+	    } elsif (m/$colour_regex/) {
+		my ($colour, $regex);
+		($colour,$regex)=($1,$2);
+		push (@colour, [$colour, $regex]);
+#		$_ = "I: NOTICE: Log colouring will colour '$regex' in $colour\n";
+		next;
 	    } else {
 		# Filter out any matching patterns
 		foreach my $pattern (@filter) {
@@ -2136,11 +2117,11 @@ sub open_build_log {
 	    if ($nolog || $verbose) {
 		if (-t $saved_stdout && $log_colour) {
 		    my $colour = 'reset';
-		    $colour = 'red' if (m/^E: /);
-		    $colour = 'yellow' if (m/^W: /);
-		    $colour = 'green' if (m/^I: /);
-		    $colour = 'red' if (m/^Status:/);
-		    $colour = 'green' if (m/^Status: successful$/);
+		    foreach my $pattern (@colour) {
+			if (m/$$pattern[0]/) {
+			    $colour = $$pattern[1];
+			}
+		    }
 		    print $saved_stdout color $colour;
 		}
 
@@ -2162,6 +2143,8 @@ sub open_build_log {
     }
 
     $PLOG->autoflush(1);
+    open(STDOUT, '>&', $PLOG) or warn "Can't redirect stdout\n";
+    open(STDERR, '>&', $PLOG) or warn "Can't redirect stderr\n";
     $self->set('Log File', $filename);
     $self->set('Log Stream', $PLOG);
 
@@ -2240,6 +2223,14 @@ sub close_build_log {
 	    $subject .= " (dist=" . $self->get_conf('DISTRIBUTION') . ")";
     }
 
+    open(STDERR, '>&', $saved_stderr) or warn "Can't redirect stderr\n"
+	if defined($saved_stderr);
+    open(STDOUT, '>&', $saved_stdout) or warn "Can't redirect stdout\n"
+	if defined($saved_stdout);
+    $saved_stderr->close();
+    undef $saved_stderr;
+    $saved_stdout->close();
+    undef $saved_stdout;
     $self->set('Log File', undef);
     if (defined($self->get('Log Stream'))) {
 	$self->get('Log Stream')->close(); # Close child logger process

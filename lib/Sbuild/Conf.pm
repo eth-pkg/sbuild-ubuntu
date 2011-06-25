@@ -114,13 +114,6 @@ sub setup ($) {
 	my $key = $entry->{'NAME'};
 	$conf->_set_value($key, $value);
 
-	$conf->set('MAINTAINER_NAME', $conf->get('UPLOADER_NAME'))
-	    if (!$conf->get('MAINTAINER_NAME') &&
-		$conf->get('UPLOADER_NAME'));
-	$conf->set('MAINTAINER_NAME', $conf->get('KEY_ID'))
-	    if (!$conf->get('MAINTAINER_NAME') &&
-		$conf->get('KEY_ID'));
-
 	my @signing_options = ();
 	push @signing_options, "-m".$conf->get('MAINTAINER_NAME')
 	    if defined $conf->get('MAINTAINER_NAME');
@@ -368,6 +361,13 @@ sub setup ($) {
 	    GROUP => 'Logging options',
 	    DEFAULT => 1,
 	    HELP => 'Filter variable strings from log messages such as the chroot name and build directory'
+	},
+	'LOG_COLOUR'				=> {
+	    TYPE => 'BOOL',
+	    VARNAME => 'log_colour',
+	    GROUP => 'Logging options',
+	    DEFAULT => 1,
+	    HELP => 'Colour log messages such as critical failures, warnings and sucess'
 	},
 	'LOG_DIR_AVAILABLE'			=> {
 	    TYPE => 'BOOL',
@@ -663,6 +663,17 @@ sub setup ($) {
 			'^TERM$',
 			'^SHELL$'],
 	    HELP => 'Only environment variables matching one of the regular expressions in this arrayref will be passed to dpkg-buildpackage and other programs run by sbuild.'
+	},
+	'BUILD_ENVIRONMENT'			=> {
+	    TYPE => 'HASH:STRING',
+	    VARNAME => 'build_environment',
+	    GROUP => 'Core options',
+	    DEFAULT => {},
+	    HELP => 'Environment to set during the build.  Defaults to setting PATH and LD_LIBRARY_PATH only.  Note that these environment variables are not subject to filtering with ENVIRONMENT_FILTER.  Example:',
+	    EXAMPLE =>
+'$build_environment = {
+        \'CCACHE_DIR\' => \'/build/cache\'
+};'
 	},
 	'LD_LIBRARY_PATH'			=> {
 	    TYPE => 'STRING',

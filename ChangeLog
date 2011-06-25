@@ -1,3 +1,290 @@
+commit 4d80969823ed8c8736c1347cb886664be8e7e33b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 25 11:41:07 2011 +0100
+
+    debian: Document use of more Dpkg modules
+
+commit 17f1cab30105897532fc85405660781e7625b371
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 25 11:39:20 2011 +0100
+
+    debian: Document lintian log colouring and $log_colour
+
+commit 5aeb3ea8065c4f5b32fd3e3ead58afaf0a218e75
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 25 11:39:01 2011 +0100
+
+    NEWS: Document log colouring for lintian and $log_colour
+
+commit a4cbee0b3951afb03de98a33d5b60630bfa57531
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 25 11:29:44 2011 +0100
+
+    debian: Close #631595
+
+commit bb9312d265d809f75350905505111885e666ac19
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 25 11:29:35 2011 +0100
+
+    NEWS: Document $build_environment
+
+commit 41a49935d56602be093cae339147094e74de6db0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 25 11:29:20 2011 +0100
+
+    Sbuild::Conf: Note lack of filtering of build environment
+
+commit 8ed34327528953d31f3a5e621c17e28ddffba159
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 25 11:23:17 2011 +0100
+
+    Sbuild::Conf: Add BUILD_ENVIRONMENT configuration key
+    
+    This allows addition of specific environment variables to the
+    dpkg-buildpackage environment.
+
+commit f9f84cbca5716a292757e3be428240928d1269ea
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 25 11:21:18 2011 +0100
+
+    Sbuild::Chroot: Add ENV_FILTER to allow customisation of filter
+    
+    Previous was set via the ENVIRONMENT_FILTER configuration key,
+    but this is global, not per-invocation.  Set default ENV_FILTER
+    from ENVIRONMENT_FILTER.
+
+commit c83797d5380c0082cd48ef8facb332a8017ba70a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jun 24 22:52:58 2011 +0100
+
+    debian: Document /var/lib/sbuild/build
+
+commit 6deb6e8e3872df446c8e3d60b4aa992ea17e6f0d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jun 24 22:52:42 2011 +0100
+
+    NEWS: Document /var/lib/sbuild/build
+
+commit d2cb1f6913b82b7615d1fa289a596c5163d44c16
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jun 24 22:39:15 2011 +0100
+
+    man: Update description of /var/lib/sbuild
+
+commit 491807fa128f710de23eb161a67517e11d43d5a7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jun 24 22:37:37 2011 +0100
+
+    build: Install /var/lib/sbuild/build
+    
+    Add directory for holding build trees; this can be bind
+    mounted by schroot when starting a new session.  This
+    makes it easier to get at builds when using snapshot
+    chroots, and also means the space for the build doesn't
+    need to be in the chroot when using LVM snapshots, which
+    would otherwise waste disc space.
+
+commit 882527190b01c0271767c2b1ca8923dcc3596a2e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jun 24 22:33:59 2011 +0100
+
+    Sbuild: drop unused split_version
+
+commit f4dd2a1dde292f190195a96ba361da6679c86a68
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jun 24 22:33:02 2011 +0100
+
+    sbuild: Use Dpkg::Version in place of split_version
+
+commit 8ab5cae5f3d01063aab147b0d3d528233d3c5122
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jun 24 20:29:51 2011 +0100
+
+    Sbuild::Build: Use Dpkg::Version rather than regexes and split_version
+
+commit dc71b36486b98077bca35026549e8d5057f33049
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jun 24 20:27:06 2011 +0100
+
+    Sbuild::Build: Set HOME to /sbuild-nonexistent in the chroot
+    
+    /nonexistent is the home directory of the nobody user; change to
+    /sbuild-nonexistent to make it explictly clear that the directory
+    does not exist, and this was done deliberately by sbuild, to avoid
+    confusion with the nobody user.  Thanks to Marc Haber.
+
+commit 7e2fc735d9b7986bc443fcc9ece5a2c70ceb06e1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jun 24 19:43:59 2011 +0100
+
+    Sbuild: Replace built in version comparison with Dpkg::Version
+    
+    Part of patch set to remove duplicated logic and use libdpkg-perl.
+
+commit 0d8468a4b9b4dd1ce428310b3c86502c2b2a8c1b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 23 19:04:21 2011 +0100
+
+    sbuild: Remove obsolete and unused SBUILD-FINISHED logic
+
+commit 76277b346397ad03f451768efd893500c288292a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 23 18:50:58 2011 +0100
+
+    Sbuild: Implement dsc_files in terms of Dpkg::Control and Dpkg::Checksums
+    
+    Remove parse_file.  The role of this function is now completely replaced
+    in all code by Dpkg::Control and its related modules.
+
+commit a81a0e9b4e6f16bf6bd111b5faa26e477e347448
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jun 22 17:45:36 2011 +0100
+
+    sbuild: Use Dpkg::Control in place of parse_file
+
+commit 77c8cf80bcb746ff1b8232cac0cc6df85d0d2d92
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jun 22 15:19:00 2011 +0100
+
+    debian: Close #612324
+
+commit 601af3d6f3a7028b88e1b88e7e3afeeeef4877bb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jun 22 15:13:39 2011 +0100
+
+    sbuild: Generate source package prior to real build
+    
+    So that the code code only operates on .dsc files either
+    locally or via download, package directories with dpkg-source -b
+    before instantiating and using Sbuild::Build.  This additionally
+    means there's a single codepath for downloading sources rather
+    than a separate building path as well, simplifying the logic
+    overall.
+
+commit 06b2db93d292b602cf19aae62d992a7c24d93deb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 20 23:29:25 2011 +0100
+
+    Sbuild::Build: Only log to one logfile, dropping build log
+    
+    Only create the package build log, dropping the main build log
+    (which would only ever be used to log errors prior to a build
+    commencing, following which all output would be redirected to the
+    package build log).
+    
+    This removes a layer of I/O redirection, which complicated the
+    logging code, and added an extra layer of hairy complexity.
+
+commit 81a63301893120ddfe5ed98cc809d050149763e6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 20 20:56:28 2011 +0100
+
+    sbuild: Only create and run a single job
+
+commit d98f2963e35d5c9178a72d0b68a446c7c737ecc5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 20 20:35:17 2011 +0100
+
+    debian: Document sbuild building a single package only.
+
+commit 218be9a06a99d1f27cc4f601d2182dba3cc9c85d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 20 20:35:00 2011 +0100
+
+    NEWS: Document sbuild building a single package only.
+
+commit 34ebcd92526ee67531d2360eedf89f062bf1e606
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 20 20:34:43 2011 +0100
+
+    man: Document sbuild only building a single package
+
+commit 570be3c49e966d786578bf4d5980879e47a648b8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 20 20:26:51 2011 +0100
+
+    sbuild: Only permit one build at once
+
+commit 540747d0b7b14a62ff75b8371af6aedcd7a7ff56
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 20 20:26:30 2011 +0100
+
+    Sbuild::Build: Tidy log colouring and reduce verbosity
+
+commit 0ec4080e2a737238a0786e832a5b3b744a7801e2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 20 19:41:25 2011 +0100
+
+    debian: Close #630791
+
+commit 098afec7fa6d7e60989b3b99c08533ffd6000d33
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jun 20 19:35:23 2011 +0100
+
+    sbuild-adduser: Use current options
+
+commit b5fc26f99086fcbc4e291730a19bf057856507ab
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jun 19 22:34:24 2011 +0100
+
+    debian: Document log colouring
+
+commit 4f55b085b686a215578ec3d8eb8dfe0cca3ed936
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jun 19 22:34:15 2011 +0100
+
+    NEWS: Document log colouring
+
+commit 3ed62fdb8a61c6492e7dfae3288efced0446f541
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jun 19 22:31:38 2011 +0100
+
+    Sbuild::Build: Colour distribution if different from changelog
+    
+    In order to make it clear that there may be a problem e.g.
+    if building an upload for experimental in an unstable chroot,
+    colour yellow if different.
+
+commit 5762ea37d88b89891e1f67fb21548144d39541f3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jun 19 22:30:34 2011 +0100
+
+    Sbuild::Build: Make log colouring generic
+    
+    Colour lines based upon regex matches.  Make the regexes
+    configurable using the same mechanism as for log filtering.
+    Also make colouring configurable as for log filtering.
+
+commit e371d7ff4343c9a82550ef94bfaaed9238f8de61
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jun 19 20:42:45 2011 +0100
+
+    debian: Close #631060
+
+commit 7e87fe6cf3e20ce4a2397659c12d2c257cc4e6a5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jun 19 20:42:23 2011 +0100
+
+    Sbuild::Build: Highlight lintian results in red/green
+
+commit 5252ea9dce7b876c5b59c439f650ee45709560f5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jun 19 20:41:22 2011 +0100
+
+    debian: Bump version to 0.62.4-1
+
+commit dc3a4b77f23a769cbac977d650d14a926cd24b62
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jun 19 20:41:09 2011 +0100
+
+    Bump version to 0.62.4
+
+commit 868715d47b7dff0682bb602407b5d4742e34ac45
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jun 15 12:55:38 2011 +0100
+
+    Sbuild::Conf: Sync signing options from buildd-0.62.3
+
 commit 4b004185bfb2264e21d650cce3ad091f22cc324b
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sat Jun 11 15:50:55 2011 +0100

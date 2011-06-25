@@ -1,3 +1,49 @@
+sbuild (0.62.4-1) unstable; urgency=low
+
+  * New release.
+  * sbuild:
+    - Failing lintian checks are highlighted in red, and passes in
+      green (Closes: #631060).
+    - The distribution in the build summary is coloured yellow if it
+      does not match the distribution in the changelog.  This is to
+      indicate that there may be a potential problem, such as
+      potentially uploading a package intended for experimental to
+      unstable by building for unstable by accident.
+    - lintian test results are also coloured to highlight success and
+      failure.
+    - Log colouring may now be disabled using $log_colour.
+    - sbuild only permits building one source package at once.
+      Previously sbuild would allow building of more than one package
+      in a single invocation.  Making this change means that the exit
+      status will always be the status of the build rather than the
+      last build, and it also means the logging is simplified and may
+      be started earlier.
+    - Now that the main log has been removed, and packing of a source
+      tree takes place before starting the build for real, we no longer
+      create a log file in the build tree, confusing "dpkg-source -b"
+      (Closes: #612324).
+    - Added new directory /var/lib/sbuild/build to hold build trees for
+      sbuild when building.  This will be bind mounted on /build inside
+      the chroot following an update to the schroot sbuild and buildd
+      fstab configuration for schroot.  This saves significant amounts
+      of space when using LVM snapshot chroots, and it also makes it
+      easier to preserve build trees for failing builds when using
+      snapshots.
+    - Extra environment variables to be set when running
+      dpkg-buildpackage may now be set using $build_environment
+      (Closes: #631595).  These variables will supplement the existing
+      environment (e.g. PATH, LD_LIBRARY_PATH), and will not be subject
+      to filtering with $environment_filter.
+    - Existing hard-coded .dsc/.changes/dpkg-parsechangelog parsing has
+      been replaced with use of Dpkg::Control.  Existing reimplmentation
+      of the dpkg version comparison and regexes to split versions into
+      epoch/version/revision have been replaced with use of
+      Dpkg::Version.
+  * sbuild-adduser: Use current sbuild-update options in example
+    (Closes: #630791).
+
+ -- Roger Leigh <rleigh@debian.org>  Sat, 25 Jun 2011 11:39:44 +0100
+
 sbuild (0.62.3-1) unstable; urgency=low
 
   * New release.

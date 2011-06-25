@@ -28,19 +28,20 @@ package main;
 use strict;
 use warnings;
 
+use Cwd qw(:DEFAULT abs_path);
 use POSIX;
 use Data::Dumper;
+use Dpkg::Control;
 use Sbuild qw(isin check_group_membership $debug_level);
 use Sbuild::Conf qw();
-use Sbuild::Log qw(open_log close_log);
 use Sbuild::Sysconfig qw(%programs);
 use Sbuild::Options;
 use Sbuild::Build;
 use Sbuild::Exception;
 
 sub main ();
+sub create_source_package ($);
 sub write_jobs_file ();
-sub append_to_FINISHED ($);
 sub status_trigger ($$);
 sub shutdown ($);
 sub dump_main_state ();
@@ -59,27 +60,11 @@ if (!$conf->get('MAINTAINER_NAME') &&
 umask(002);
 
 # Job state
-my %jobs = ();
-my $current_job = undef;
+my $job = undef;
 
 main();
 
 sub main () {
-    my $dist = $conf->get('DISTRIBUTION');
-    if (!defined($dist) || !$dist) {
-	print STDERR "No distribution defined\n";
-	exit(1);
-    }
-
-    print "Selected distribution " . $conf->get('DISTRIBUTION') . "\n"
-	if $conf->get('DEBUG');
-    print "Selected chroot " . $conf->get('CHROOT') . "\n"
-	if $conf->get('DEBUG') and defined $conf->get('CHROOT');
-    print "Selected architecture " . $conf->get('ARCH') . "\n"
-	if $conf->get('DEBUG' && defined($conf->get('ARCH')));
-
-    open_log($conf);
-
     $SIG{'INT'} = \&main::shutdown;
     $SIG{'TERM'} = \&main::shutdown;
     $SIG{'ALRM'} = \&main::shutdown;
@@ -88,26 +73,41 @@ sub main () {
     # If no arguments are supplied, assume we want to process the current dir.
     push @ARGV, '.' unless (@ARGV);
 
-    # Create jobs
-    eval {
-	foreach my $job (@ARGV) {
-	    $jobs{$job} = Sbuild::Build->new($job, $conf);
-	    $jobs{$job}->set('Pkg Status Trigger', \&status_trigger)
+    die "Only one build is permitted\n"
+	if (@ARGV != 1);
+
+    # Create and run job
+    my $status = eval {
+	my $jobname = $ARGV[0];
+	my $source_dir = 0;
+
+	if (-d $jobname) {
+	    $jobname = create_source_package($jobname);
+	    $source_dir = 1;
 	}
+
+	# Check after source package build (which might set dist)
+	my $dist = $conf->get('DISTRIBUTION');
+	if (!defined($dist) || !$dist) {
+	    print STDERR "No distribution defined\n";
+	    exit(1);
+	}
+
+	print "Selected distribution " . $conf->get('DISTRIBUTION') . "\n"
+	    if $conf->get('DEBUG');
+	print "Selected chroot " . $conf->get('CHROOT') . "\n"
+	    if $conf->get('DEBUG') and defined $conf->get('CHROOT');
+	print "Selected architecture " . $conf->get('ARCH') . "\n"
+	    if $conf->get('DEBUG' && defined($conf->get('ARCH')));
+
+	$job = Sbuild::Build->new($jobname, $conf);
+	$job->set('Pkg Status Trigger', \&status_trigger);
 	write_jobs_file(); # Will now update on trigger.
 
-	# Run each job.  Potential for parallelising this step.
-	foreach (keys %jobs) {
-	    my $jobname = $_;
+	# Run job.
+	$job->run();
 
-	    my $job = $jobs{$jobname};
-	    $current_job = $jobname;
-
-	    # Do the build
-	    $job->run();
-
-	    dump_main_state() if $conf->get('DEBUG');
-	}
+	dump_main_state() if $conf->get('DEBUG');
     };
 
     my $e;
@@ -119,23 +119,23 @@ sub main () {
 	    dump_main_state();
 	    print STDERR $e->trace->as_string, "\n";
 	}
+    } elsif (!defined($e)) {
+	print STDERR "E: $@\n" if $@;
     }
 
-    close_log($conf);
     unlink($conf->get('JOB_FILE'))
 	if $conf->get('BATCH_MODE');
-    unlink("SBUILD-FINISHED") if $conf->get('BATCH_MODE');
 
     # Until buildd parses status info from sbuild output, skipped must
     # be treated as a failure.
-    if (defined($current_job) && defined($jobs{$current_job})) {
-	if ($jobs{$current_job}->get_status() eq "successful" ||
+    if (defined($job)) {
+	if ($job->get_status() eq "successful" ||
 	    ($conf->get('SBUILD_MODE') ne "buildd" &&
-	     $jobs{$current_job}->get_status() eq "skipped")) {
+	     $job->get_status() eq "skipped")) {
 	    exit 0;
-	} elsif ($jobs{$current_job}->get_status() eq "attempted") {
+	} elsif ($job->get_status() eq "attempted") {
 	    exit 2;
-	} elsif ($jobs{$current_job}->get_status() eq "given-back") {
+	} elsif ($job->get_status() eq "given-back") {
 	    #Probably needs a give back:
 	    exit 3;
 	}
@@ -143,6 +143,96 @@ sub main () {
 	# reported to the admin as failure:
 	exit 1;
     }
+    exit 1;
+}
+
+sub create_source_package ($) {
+    my $dsc = shift;
+    $dsc = abs_path($dsc);
+
+    open(my $pipe, '-|', 'dpkg-parsechangelog',
+	 '-l' . $dsc . '/debian/changelog')
+	or Sbuild::Exception::Build->throw(
+	    error => "Could not parse $dsc/debian/changelog: $!",
+	    failstage => "pack-source");
+
+    my $pclog = Dpkg::Control->new(type => CTRL_CHANGELOG);
+    if (!$pclog->parse($pipe, 'dpkg-parsechangelog')) {
+	Sbuild::Exception::Build->throw(
+	    error => "Could not parse $dsc/debian/changelog: $!",
+	    failstage => "pack-source");
+    }
+
+    $pipe->close or Sbuild::Exception::Build->throw(
+	error => "dpkg-parsechangelog failed (exit status $?)",
+	failstage => "pack-source");
+
+    my $package = $pclog->{'Source'};
+    my $version = $pclog->{'Version'};
+
+    if (!defined($package) || !defined($version)) {
+	Sbuild::Exception::Build->throw(
+	    error => "Missing Source or Version in $dsc/debian/changelog",
+	    failstage => "pack-source");
+    }
+
+    my $dist = $pclog->{'Distribution'};
+    my $pver = Dpkg::Version->new($version, check => 1);
+    if (!$pver) {
+	Sbuild::Exception::Build->throw(
+	    error => "Bad version $version in $dsc/debian/changelog",
+	    failstage => "pack-source");
+    }
+
+    my ($epoch, $uversion, $dversion);
+    $epoch = $pver->epoch();
+    $uversion = $pver->version();
+    $dversion = $pver->revision();
+
+    if (!defined($conf->get('DISTRIBUTION')) ||
+	!$conf->get('DISTRIBUTION')) {
+	$conf->set('DISTRIBUTION', $dist);
+    }
+
+    my $dir = getcwd();
+    my $origdir=$dir;
+    # Note: need to support cases when invoked from a subdirectory
+    # of the build directory, i.e. $dsc/foo -> $dsc/.. in addition
+    # to $dsc -> $dsc/.. as below.
+    if ($dir eq abs_path($dsc) &&
+	$dir eq $conf->get('BUILD_DIR')) {
+	# We won't attempt to build the source package from the source
+	# directory so the source package files will go to the parent dir.
+	$dir = abs_path("$dir/..");
+	$conf->set('BUILD_DIR', $dir);
+    }
+
+    $dsc = "${dir}/${package}_${uversion}-${dversion}.dsc";
+
+    system($conf->get('FAKEROOT'), 'debian/rules', 'clean');
+    if ($?) {
+	Sbuild::Exception::Build->throw(
+	    error => "Failed to clean source directory",
+	    failstage => "pack-source");
+    }
+    chdir($dir) or Sbuild::Exception::Build->throw(
+	error => "Failed to change directory",
+	failstage => "pack-source");
+    my @dpkg_source_command = ($conf->get('DPKG_SOURCE'), '-b');
+    push @dpkg_source_command, @{$conf->get('DPKG_SOURCE_OPTIONS')}
+    if ($conf->get('DPKG_SOURCE_OPTIONS'));
+    push @dpkg_source_command, "${package}-${uversion}";
+    system(@dpkg_source_command);
+    if ($?) {
+	Sbuild::Exception::Build->throw(
+	    error => "Failed to package source directory",
+	    failstage => "pack-source");
+    }
+    chdir($origdir) or Sbuild::Exception::Build->throw(
+	error => "Failed to change directory",
+	failstage => "pack-source");
+
+    return $dsc;
 }
 
 # only called from main loop, but depends on job state.
@@ -153,25 +243,11 @@ sub write_jobs_file () {
 	local( *F );
 
 	return if !open( F, ">$file" );
-	foreach (keys %jobs) {
-	    my $job = $jobs{$_};
-
+	if (defined($job)) {
 	    print F $job->get('Package_OVersion') . ": " .
 		$job->get_status() . "\n";
 	}
 	close( F );
-    }
-}
-
-sub append_to_FINISHED ($) {
-    my $job = shift;
-
-    local( *F );
-
-    if ($conf->get('BATCH_MODE')) {
-	open(F, ">>SBUILD-FINISHED");
-	print F $job->get('Package_OVersion');
-	close(F);
     }
 }
 
@@ -199,7 +275,6 @@ sub status_trigger ($$) {
 }
 
 sub shutdown ($) {
-    my $job = undef;
     my $signame = shift;
 
     $SIG{'INT'} = 'IGNORE';
@@ -207,9 +282,6 @@ sub shutdown ($) {
     $SIG{'TERM'} = 'IGNORE';
     $SIG{'ALRM'} = 'IGNORE';
     $SIG{'PIPE'} = 'IGNORE';
-
-    $job = $jobs{$current_job} if (defined($current_job) &&
-				   defined($jobs{$current_job}));
 
     if (defined($job)) {
 	$job->request_abort("Received $signame signal");
@@ -224,8 +296,6 @@ sub shutdown ($) {
 }
 
 sub dump_main_state () {
-    print STDERR Data::Dumper->Dump([$current_job,
-				     \%jobs],
-				    [qw($current_job
-					%jobs)] );
+    print STDERR Data::Dumper->Dump([$job],
+				    [qw($job)] );
 }
