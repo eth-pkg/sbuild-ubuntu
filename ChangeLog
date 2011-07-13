@@ -1,3 +1,80 @@
+commit b586962d4e3d148c51ce2b166e43259eb3486b85
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 13 19:57:32 2011 +0100
+
+    debian: Version 0.62.5-1
+
+commit c6ab7925278f889a05995a42e445c08401305f37
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 13 19:55:50 2011 +0100
+
+    NEWS: Bump version to 0.62.5
+
+commit 187b08800407178af052c37b04636259413c30a1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 13 19:54:06 2011 +0100
+
+    test: Add checks for building from a source tree
+
+commit a8a60964f28b23fbaae73a61303505f7dad61aa4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jul 11 16:06:52 2011 +0100
+
+    test: Test sbuild batch mode
+
+commit 277b539a40bb3f29e414df2edce7bc552e6e976c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jul 11 15:36:25 2011 +0100
+
+    test: Use generic paths
+
+commit 5f59d15bcc21f3b88c61017526684aaf98bf3b97
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jul 11 15:29:00 2011 +0100
+
+    sbuild: Build using any source directory name, not just package-version
+
+commit 0783ea3f44e160782e47cbd5221da04369a91e8f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Jul 11 15:06:07 2011 +0100
+
+    Ensure that Dpkg::Version epoch and revision defaults are used correctly
+    
+    Set to 0 if absent for correct version comparison, but we need to
+    check if that's the real value when using in filenames and other
+    version strings.
+
+commit 159ee505ca7bba13565466880eac95664c949583
+Author: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+Date:   Mon Jun 27 22:19:32 2011 +0200
+
+    the mail-wrapper script is longer in home/buildd/bin
+    
+    This is the actual content for the .forward file
+    
+    Signed-off-by: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 40a1e33c24d589c616c435344d6b5b80c9eb7fa3
+Author: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+Date:   Mon Jun 27 22:19:31 2011 +0200
+
+    Make NO-DAEMON-PLEASE work with home in /var/lib/buildd
+    
+    buildd's home moved "recently" from /home/ to /var/lib. The init script was
+    not updated.
+    While in here, add a space after the name so the warning message is not
+    squeezed.
+    
+    Signed-off-by: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 59e10bdd5bb649f4631943e5b1de0f0f55d7f989
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jun 25 14:06:26 2011 +0100
+
+    Sbuild: Remove unused code
+
 commit 4d80969823ed8c8736c1347cb886664be8e7e33b
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sat Jun 25 11:41:07 2011 +0100
