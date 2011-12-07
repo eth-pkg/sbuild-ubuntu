@@ -1,3 +1,24 @@
+sbuild (0.62.6-1) unstable; urgency=low
+
+  * New release.
+  * All changes backported from buildd-0.61.0 branch.
+  * sbuild.1: Add --chroot to synopsis (Closes: #635203).
+  * sbuild:
+    - --jobs is an alias for -j, to match documented behaviour
+      (Closes: #635250).
+    - The use of alternatives in Build-Depends and Build-Depends-Indep
+      may be turned on or off by the configuration variable
+      $resolve_alternatives.  It may also be enabled or disabled at
+      build time using the --resolve-alternatives and
+      --no-resolve-alternatives options, respectively.
+    - Correctly support chroot namespaces, to work with schroot 1.5.x
+      (Closes: #612630).
+    - Support Build-Depends-Arch and Build-Conflicts-Arch fields in
+      debian/control.  These may be manually set with
+      --add-depends-arch and --add-conflicts-arch, respectively.
+
+ -- Roger Leigh <rleigh@debian.org>  Wed, 07 Dec 2011 20:41:43 +0000
+
 sbuild (0.62.5-1) unstable; urgency=low
 
   * New release.

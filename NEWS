@@ -1,11 +1,27 @@
 NEWS                                                            -*- outline -*-
 ----
 
-Welcome to sbuild 0.62.5.  Please read these release notes carefully.
+Welcome to sbuild 0.62.6.  Please read these release notes carefully.
 
 Full installation instructions are provided in the INSTALL file.  The
 README file also contains more specific notes regarding building and
 configuration.
+
+* Major changes in 0.62.6:
+
+  1) The use of alternatives in Build-Depends and Build-Depends-Indep
+     may be turned on or off by the configuration variable
+     $resolve_alternatives.  It may also be enabled or disabled at
+     build time using the --resolve-alternatives and
+     --no-resolve-alternatives options, respectively.
+
+  2) The new Build-Depends-Arch and Build-Conflicts-Arch fields in
+     debian/control are now supported.  These may be manually set
+     with --add-depends-arch and --add-conflicts-arch,
+     respectively.
+
+  3) schroot namespaces are now fully supported, meaning that
+     current 1.5.x schroot versions now work with sbuild.
 
 * Major changes in 0.62.5:
 

@@ -1,3 +1,154 @@
+commit 6f95db6318458c4f7dde44d388fbba48a3ea1ed2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Dec 7 20:42:14 2011 +0000
+
+    debian: Document forward-port of buildd-0.61.0 changes
+
+commit 252eaf85f3cca1c45fa9848cb988c1c387f16c02
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Nov 6 16:09:05 2011 +0100
+
+    etc/99builddsourceslist: fix a typo
+
+commit 882d64afd5bb9b5363a8e97aab9e5a43cf778d51
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Sep 11 23:45:06 2011 +0200
+
+    create-chroot: use directory in schroot snippet, not location
+
+commit 0ba357185e76fde311e8ee1f571fca4ee42008b6
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Jun 26 22:14:08 2011 +0200
+
+    etc/99builddsourceslist: use backports.d.o for main bpo archive
+
+commit 4deabd9763c630992b00042824a838a45eeb7dc5
+Author: Philipp Kern <pkern@debian.org>
+Date:   Wed Jun 1 00:01:45 2011 +0200
+
+    create-chroot: create /var/lock/sbuild in the chroot
+
+commit 9634ef81025880f3c93201bbfd0b087a6965c9ef
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Dec 7 13:59:36 2011 +0000
+
+    NEWS: Document Build-Depends-Arch and Build-Conflicts-Arch
+
+commit 5f35abb2a5764c6592ac8bc6bbf14b98c383c689
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Dec 7 13:56:56 2011 +0000
+
+    debian: Document addition of Build-Depends-Arch and Build-Conflicts-Arch
+
+commit 89ac7f291407d198c6f229e289867f90254e1bd8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Dec 7 13:55:15 2011 +0000
+
+    Sbuild: Support Build-Depends-Arch and Build-Depends-Indep
+
+commit 5d9d8894cd34f923736e9832ec0be8dd505b1ace
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 27 21:53:17 2011 +0000
+
+    NEWS: Document schroot namespace fix
+
+commit 5d094074764799a936e0b95ef3c4ed587a33f4eb
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 27 21:47:02 2011 +0000
+
+    debian: Close #612630
+
+commit f082ad9fa12d61ec8c42ba0d979d37d60ee1c908
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Nov 27 21:44:20 2011 +0000
+
+    Sbuild::ChrootInfoSchroot: Support session namespace
+    
+    Attempt to get session information using a session: prefix.
+    If this fails, fall back to the old-style unprefixed session
+    identifier, to support older schroot versions.
+
+commit fc085b97e1ee4acfd21206625093f24c3d1e5b64
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Sep 3 13:35:13 2011 +0200
+
+    bin/create-chroot: add s390 to the linux32 architectures
+
+commit 8e56f027a0ac5f9958b258bc2a201f48f7555160
+Merge: 44bd1e7 4ce195a
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Sep 3 13:34:18 2011 +0200
+
+    Merge branch 'master' of git://anonscm.debian.org/git/buildd-tools/sbuild
+
+commit 4ce195a64edc7785ac85fa7d2474b82914b09899
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Aug 28 10:30:18 2011 +0100
+
+    Sbuild::Chroot: Remove apostrophes from perl code run via sudo
+
+commit 44bd1e7b7967928a22f06fdbbd5290de14b218dc
+Author: Philipp Kern <pkern@debian.org>
+Date:   Tue Aug 23 07:31:03 2011 +0200
+
+    [Sbuild::Build] specify UTF-8 encoding in the .changes's MIME part (Closes: #638928)
+    
+    Thanks to James Vega for the report.
+
+commit 2943ba47ef805a04029aa46036e03e1fa3bff4c3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Aug 2 21:09:04 2011 +0100
+
+    NEWS: Document alternative resolving
+
+commit 48b1e75b42c092410a09a40b2c19461d20ded747
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Aug 2 21:08:46 2011 +0100
+
+    debian: Document alternative resolving
+
+commit b015217c8d760720c582f77b5b07dba39dd08197
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Aug 2 21:08:26 2011 +0100
+
+    Sbuild: Allow configuration of alternative resolving
+
+commit 7522366f83a44065a300350ac5e219dcd3715cbc
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jul 24 12:46:22 2011 +0100
+
+    debian: Close #635250
+
+commit 05ba5bf17cda2f072f22cc44d75cb76f3efd7a80
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jul 24 12:45:27 2011 +0100
+
+    Sbuild::Options: Add --jobs as an alias for -j
+
+commit 50091683e7007ae559ba759e3ceca218457e17d4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 23 21:18:03 2011 +0100
+
+    debian: Close #635203
+
+commit c1694ba41d9e27c3fd55ad0048c8743bc034e334
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 23 21:17:10 2011 +0100
+
+    debian: Bump version to 0.62.6-1
+
+commit 74a1253f63cf881fa1c88eaad0f69f03d1a9bef4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 23 21:17:00 2011 +0100
+
+    NEWS: Bump version to 0.62.6
+
+commit a551a6f37ae7ffee3efc9c67d16ceb2531ff5614
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jul 23 21:16:06 2011 +0100
+
+    man: Add --chroot to synopsis
+
 commit b586962d4e3d148c51ce2b166e43259eb3486b85
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Wed Jul 13 19:57:32 2011 +0100

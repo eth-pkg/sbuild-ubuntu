@@ -54,6 +54,12 @@ sub set_options {
 		       "add-conflicts=s" => sub {
 			   push(@{$self->get_conf('MANUAL_CONFLICTS')}, $_[1]);
 		       },
+		       "add-depends-arch=s" => sub {
+			   push(@{$self->get_conf('MANUAL_DEPENDS_ARCH')}, $_[1]);
+		       },
+		       "add-conflicts-arch=s" => sub {
+			   push(@{$self->get_conf('MANUAL_CONFLICTS_ARCH')}, $_[1]);
+		       },
 		       "add-depends-indep=s" => sub {
 			   push(@{$self->get_conf('MANUAL_DEPENDS_INDEP')}, $_[1]);
 		       },
@@ -138,7 +144,7 @@ sub set_options {
 			   push(@{$self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')},
 				$_[1]);
 		       },
-		       "j=i" => sub {
+		       "j|jobs=i" => sub {
 			   push(@{$self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')},
 				'-j'.$_[1])
 		       },
@@ -199,6 +205,12 @@ sub set_options {
 		       },
 		       "build-dep-resolver=s" => sub {
 			   $self->set_conf('BUILD_DEP_RESOLVER', $_[1]);
+		       },
+		       "resolve-alternatives" => sub {
+			   $self->set_conf('RESOLVE_ALTERNATIVES', 1);
+		       },
+		       "no-resolve-alternatives" => sub {
+			   $self->set_conf('RESOLVE_ALTERNATIVES', 0);
 		       },
 			"run-lintian" => sub {
 			    $self->set_conf('RUN_LINTIAN', 1);
