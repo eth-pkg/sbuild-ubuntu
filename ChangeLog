@@ -1,3 +1,542 @@
+commit 779e65fac8c1f3488afb1181a07adb835353d109
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed May 30 23:10:10 2012 +0100
+
+    debian: buildd doesn't install schroot setup scripts
+    
+    Only used on the buildd branch.
+
+commit bbf2c5bb7239b16f67009b3a58d71a3cd42b195b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed May 30 23:09:33 2012 +0100
+
+    debian: Document 25nssdatabases removal
+
+commit a1fcce8d93f4e36f168314ae8f45f4d3de083843
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed May 30 23:05:05 2012 +0100
+
+    etc: Drop long obsolete 25nssdatabases setup script
+    
+    Replaced by 20nssdatabases many years ago.
+
+commit e2330e170a525d319a62a33e15a736d61af01dc1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed May 30 22:59:46 2012 +0100
+
+    debian: Drop /etc/schroot/setup.d from installation
+    
+    Only used on buildd branch.
+
+commit 69c1be7f874f4b3fface40f579f4bc6071684914
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed May 30 22:50:04 2012 +0100
+
+    debian: Update changelog date
+
+commit 08e5a6aa6ca6fb90b723b5a8101cb302201bcb53
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed May 30 22:48:50 2012 +0100
+
+    Sbuild::ResolverBase: Fix indentation
+
+commit aba0b23e35fec286a14f927d4d711eed130f1e40
+Merge: 96618cc d798c6e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed May 30 22:46:05 2012 +0100
+
+    Merge remote-tracking branch 'scratch/cross-build'
+    
+    Conflicts:
+    	debian/changelog
+    	lib/Sbuild/Conf.pm
+    	lib/Sbuild/ResolverBase.pm
+
+commit 96618cc9a2d2e2c08f29d083838bea81b0d78f4e
+Merge: 85f1ffc c479be8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed May 30 22:41:09 2012 +0100
+
+    Merge branch 'master' of ssh+git://git.debian.org/git/buildd-tools/sbuild
+
+commit d798c6eb59446e6cf897f24b89e84d925ef8ebc2
+Author: Wookey <wookey@wookware.org>
+Date:   Wed May 30 12:59:59 2012 +0100
+
+    Don't check xapt exists unless it is configured - this config is rarely, if ever, used.
+
+commit 09c65b3b46e3bc05e49ff48258d4014e4625a079
+Author: Wookey <wookey@wookware.org>
+Date:   Wed May 30 12:59:58 2012 +0100
+
+    Use crossbuild-essential-$arch to gloss over distro differences
+
+commit df870cee6ad584c2489648bdcadce82f8e9c4853
+Author: Wookey <wookey@wookware.org>
+Date:   Wed May 30 12:59:57 2012 +0100
+
+    Use new dpkg 1.16.2 --add-architecture syntax so sbuild crosses-builds on Debian chroots
+
+commit c479be82dc25fe0f2a15efc192920cdd50f48f18
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu May 10 00:05:00 2012 +0100
+
+    99builddsourceslist: Add initialisation from buildd/config
+
+commit 85f1ffc067501a03d086a2fd8c848b831d76ba89
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jan 29 22:39:01 2012 +0000
+
+    build: Don't distribute or install Sbuild/Log.pm
+
+commit 507624eb042399824f9f4d7b5e4155a87dbaa994
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Jan 28 14:14:35 2012 +0100
+
+    lib/Sbuild.pm, man/sbuild-setup.7.in: fix privilege typo
+
+commit c883f7bbc172b6aadb6db750479fed4078855d45
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jan 25 22:05:00 2012 +0000
+
+    Sbuild::Log: Remove
+    
+    Unused, and no functions referenced in any code.
+
+commit 9b941b033a9489669efa1169110669d415ea7b8e
+Author: Max Thoursie <max@spotify.com>
+Date:   Wed Jan 25 11:22:30 2012 +0100
+
+    debian: debian/rules runs ./bootstrap when needed
+    
+    To make it possible to build a debian package directly form a clean
+    checkout, debian/rules now run ./bootstrap if ./configure is missing.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 1fc35fe433366c97bc9ecd912ba0a70bd8488834
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jan 25 13:08:48 2012 +0000
+
+    Sbuild::Build: Add separators around debian/files output
+
+commit 9221db153bf8f6c938795e7a225b515edad2b422
+Author: Max Thoursie <max@spotify.com>
+Date:   Wed Jan 25 11:20:48 2012 +0100
+
+    Sbuild::Build: Output the contents of debian/files w/o a box
+    
+    I don't think drawing a box around the contents of a file is appropriate
+    since:
+    
+    • Boxes are already used for headings which could be confusing if the
+      file only has one line.
+    • It makes cut'n'pasting of the contents harder.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 7652cced61c7d5d7ed70d3cd0e9e784070512af0
+Author: Max Thoursie <max@spotify.com>
+Date:   Wed Jan 25 11:00:57 2012 +0100
+
+    Sbuild::Build: Remove double if statements
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit d6bfdf46fa3eef639381ef5aa16f2f2a06c5e48e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jan 22 18:52:17 2012 +0000
+
+    debian: Update changelog from NEWS
+
+commit a7511c5875b1a4f26c57fc3000eea6f203578a69
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jan 22 10:49:11 2012 +0000
+
+    Buildd::Conf: Correct misused HASH argument in constructor
+
+commit 232f2d0e4d4e3bb089c17801f50202c697252961
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Jan 22 10:47:42 2012 +0000
+
+    test: Add database option to wanna-build
+
+commit 2f1d5517ca65a545339d6b5e4c1a865375c39555
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jan 21 19:43:53 2012 +0000
+
+    test: Add user option to wanna-build
+
+commit f895976e6a71e3ffd7c71f0e66fdb98b30fe581a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jan 21 16:14:59 2012 +0000
+
+    test: Add wanna-build test script for buildd
+    
+    This is a fake wanna-build, whose sole purpose is to test buildd
+    without a full wanna-build setup.
+
+commit e946eaa65c37229544235655b1179eeafe63a3c3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jan 21 14:31:45 2012 +0000
+
+    test: Remove sbuild-stats
+
+commit 6a903e35b668a11f362793af2ffb706bcad47d87
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jan 21 14:30:31 2012 +0000
+
+    Sbuild::Conf: Fix typo in TOOLCHAIN_REGEX help text
+
+commit b295b904a19fc9f6a0041dbe036f32606e849fb5
+Merge: a6ef88c cca5d11
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jan 21 14:21:51 2012 +0000
+
+    Merge branch 'cross-build'
+    
+    Conflicts:
+    	lib/Sbuild/Build.pm
+
+commit cca5d11bba8e47c8e861b7d011f0098ba4ee40b9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jan 21 14:18:04 2012 +0000
+
+    Sbuild::ResolverBase: Set defaults for host and build arch
+
+commit 23fef4539dd0b12108e5ffd1fe0ae5c35ecced67
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jan 21 13:25:03 2012 +0000
+
+    Sbuild: LOG_DIR default depends upon SBUILD_MODE
+    
+    If SBUILD_MODE is user, set to "."
+    If SBUILD_MODE is buildd, set to "$HOME/logs"
+
+commit 895c02f94d957103badbf2865af631a941c86cbe
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jan 20 09:55:44 2012 +0000
+
+    Sbuild::Build: Don't use dedicated log dir for user mode
+    
+    Create log file in build dir rather than a symlink.
+    
+    Unlink old build log before opening new log.  This prevents it
+    following a symlink and overwriting an old log.
+
+commit b37df9f6ddcc61651c7031d2a9db2e146ec79df8
+Author: Wookey <wookey@wookware.org>
+Date:   Fri Jan 20 03:07:35 2012 +0000
+
+    Sbuild::Conf: Fix string quoting error in cross-build-coredeps config
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit c55152933851aa48e27048b2715c01ab25e49e2e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Jan 17 22:42:39 2012 +0000
+
+    Sbuild::Build: Include @crosscoredeps in @coredeps
+
+commit 1c6929c1b0884b5fd4f950fce48308dbaa686ce0
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:39 2012 +0000
+
+    Sbuild::ResolverBase: Set Host and Build arch in resolver object
+    
+    Make names consistent. Part two of using get instead of get_conf for arches
+
+commit 07305a6a99374c9168ada65b9713980b89a9e499
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:38 2012 +0000
+
+    Sbuild::Build: Set Host and Build Arches in object, then use throughout
+
+commit f8e41322c2838808cff1b80d7bf2e8a8792a1955
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:37 2012 +0000
+
+    Sbuild::Build: Add log subsection for installing cross-build-deps
+
+commit e36baf198d8f716eaf87dbafa1a2a6e71906dc43
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:36 2012 +0000
+
+    Sbuild: Correct typos in logging messages for setting cross-arch config
+
+commit 89aff1f819e59f608b5b8f648bdcb7fd174a3338
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:35 2012 +0000
+
+    Sbuild::ResolverBase: Explicitly use shell in setup_dpkg
+    
+    This is to ensure redirect works properly.
+
+commit c29bc4e1a837418ddefe4d5c66cbba6ac6c394df
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:34 2012 +0000
+
+    Sbuild::Build: Fix run_fetch_install_packages for native builds
+    
+    Fix run_fetch_install_packages so native builds work as well as cross.  The
+    issue was that if $crosscoredeps is not defined the code barfs on
+    @{$crosscoredeps->{$self->get_conf('HOST_ARCH')}}, rather than it just being
+    empty.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit b772b185b547d00d08c78536a2e6dca2c03324b6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jan 21 13:25:03 2012 +0000
+
+    Sbuild: LOG_DIR default depends upon SBUILD_MODE
+    
+    If SBUILD_MODE is user, set to "."
+    If SBUILD_MODE is buildd, set to "$HOME/logs"
+
+commit a6ef88c53f427c418b608df38d99effdf4af9ecd
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jan 21 13:25:41 2012 +0000
+
+    sbuild-dumpconfig: Don't wrap manpage help text
+    
+    The wrapping can break the troff markup if a leading single
+    quote is wrapped.
+
+commit 0acc6c7eb68b163e5a51fd83b01e2a9800bd14e8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Jan 21 13:25:03 2012 +0000
+
+    Sbuild: LOG_DIR default depends upon SBUILD_MODE
+    
+    If SBUILD_MODE is user, set to "."
+    If SBUILD_MODE is buildd, set to "$HOME/logs"
+
+commit 3d8a80541aabe677311944191318ca9e620be0cf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jan 20 09:55:44 2012 +0000
+
+    Sbuild::Build: Don't use dedicated log dir for user mode
+    
+    Create log file in build dir rather than a symlink.
+    
+    Unlink old build log before opening new log.  This prevents it
+    following a symlink and overwriting an old log.
+
+commit 8efcabead98eef9a7fd5254b9b198fa706ece637
+Author: Wookey <wookey@wookware.org>
+Date:   Fri Jan 20 03:07:35 2012 +0000
+
+    Fix string quoting error in cross-build-coredeps config
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit f573699f80bb7cc14eb703934827fe05316f8af5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Jan 20 09:55:44 2012 +0000
+
+    Sbuild::Build: Unlink old build log before opening new log
+    
+    This prevents it following a symlink and overwriting an old log.
+
+commit 19cab17c734794a8723df93a214ea83074be18a6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Jan 17 22:42:39 2012 +0000
+
+    Sbuild::Build: Include @crosscoredeps in @coredeps
+
+commit 58ccc02cb5f71f947014d49681c8cc291af49542
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:39 2012 +0000
+
+    Set Host and Build arch in resolver object. Make names consistent. Part two of using get instead of get_conf for arches
+
+commit 98ddf08398edce9264c5b4cdd7acf8fa0e547079
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:38 2012 +0000
+
+    Set Host and Build Arches in object, then use throught
+
+commit 4d355f73a45ce436e7f5e7cfe1ae2119178ff1f2
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:37 2012 +0000
+
+    Add log subsection for installing cross-build-deps
+
+commit ac532fb6222857453cd70efdb703280a1cd4461e
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:36 2012 +0000
+
+    Correct typos in logging messages for setting cross-arch config
+
+commit 7a81734d6d9befd934226e2c7364cb19348e561c
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:35 2012 +0000
+
+    Explicitly use shell in setup-dpkg to ensure redirect works properly.
+
+commit edf53cae8bba196745486b34faa73e4b0a38fda4
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Jan 17 03:07:34 2012 +0000
+
+    Fix run_fetch_install_packages so native builds work as well as cross Issue was that if $crosscoredeps is not defined the code barfs on @{$crosscoredeps->{$self->get_conf('HOST_ARCH'), rather than it just being empty. This code can be improved by a competent perl person.
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 9b5160be8d5d838f08232306e6db96c7c4d5d7ce
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Dec 22 00:15:54 2011 +0000
+
+    Sbuild: Fix cross-build variable mismatches
+    
+    Only use HOST_ARCH and BUILD_ARCH in the configuration object.
+    Drop all references to 'Host Arch' and 'Build Arch' in the
+    individual Build or Resolver objects.
+
+commit a69dacfd55980a81c5439b5cffdf174102367d53
+Author: Wookey <wookey@wookware.org>
+Date:   Wed Dec 21 22:41:08 2011 +0000
+
+    Sbuild::ResolverBase.pm: Broken indentation tidy
+
+commit 6083686e052ddf5a03b9e2475bd99152a9f6e697
+Author: Wookey <wookey@wookware.org>
+Date:   Wed Dec 21 22:41:07 2011 +0000
+
+    Sbuild::Build: Cross-building uses apt-get build-dep
+    
+    Use apt-get -a $arch build-dep $package when cross-building instead of
+    a dummy package.
+
+commit b15919f444e085f03652ef44d20cedc8320f58b0
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Dec 20 20:37:03 2011 +0000
+
+    Sbuild::Build: Set environment variables for cross-building
+
+commit fe563f73d9fe2798f5e556bb68ed114fbb8da995
+Author: Wookey <wookey@wookware.org>
+Date:   Mon Dec 19 19:29:52 2011 +0000
+
+    Sbuild::ResolverBase: Use build arch for dummy deps package
+    
+    Do not use the host arch.
+
+commit c9bf452a075f0d8abda6d4dce73f5bda027846a0
+Author: Wookey <wookey@wookware.org>
+Date:   Mon Dec 19 12:53:18 2011 +0000
+
+    Sbuild::Build Add CROSSBUILD_CORE_DEPENDS{arch} to core deps
+
+commit c89125965a155fe9f810aae18ee316382bd6cbcb
+Author: Wookey <wookey@wookware.org>
+Date:   Mon Dec 19 12:53:15 2011 +0000
+
+    Sbuild::ResolverBase: Configure dpkg foreign-architecture
+    
+    Add setup-dpkg function to set dpkg foreign-architecture.
+    Set dpkg multiarch cross-config; use the shell so that echo command is
+    redirected properly.
+    
+    Add apt-config option to set apt to use $HOST package files
+    
+    Add reminder to tidy up sbuild foreign-arch config so the next build
+    can be for a different architecture.
+
+commit 82c87298b15f373ea33c5ae1d09274fb6bf3fcbb
+Author: Wookey <wookey@wookware.org>
+Date:   Mon Dec 19 12:53:14 2011 +0000
+
+    Sbuild::Conf: Add dpkg-cross and pkg-config link to arm cross packages
+
+commit 9fbe4b3b9b2fa89ae82ee0cd1498448db6699888
+Author: Wookey <wookey@wookware.org>
+Date:   Wed Dec 21 22:30:39 2011 +0000
+
+    Sbuild::Build: Further clarification of build/host architecture
+    
+    Not clear if this should be $self->get('Host Arch') or
+    $self->get_conf('HOST_ARCH') throughout.
+
+commit aca7ffb653e507d27dc68291f8804ca04617463b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Dec 17 00:36:31 2011 +0000
+
+    NEWS: Document sbuild-stats removal
+
+commit 5fee46565c4229c71528f26853142cda7d4da1a6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Dec 17 00:36:16 2011 +0000
+
+    sbuild-stats: Remove
+
+commit c19435e3de029bdf0f5accb19846b589dd525400
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Dec 17 00:19:45 2011 +0000
+
+    NEWS: Document watches removal
+
+commit 71edcfde524cc4e05c26a54b74ea427489ceec9b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Dec 17 00:16:55 2011 +0000
+
+    Sbuild: Remove watches
+    
+    Unused for several years, and no longer useful now we have
+    package build dependencies and cloned minimal chroot environments.
+
+commit fa4b379987e4ae1dcc938006bc0d0504f77101d5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Dec 16 11:52:51 2011 +0000
+
+    NEWS: Document cross-build addition and internal removal
+
+commit 68c7a10cad9d319f6fa45ff19803df2eb7e174a3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri Dec 16 11:52:35 2011 +0000
+
+    Sbuild: Remove internal resolver
+
+commit 42795b34d5cf5b54fd96dba6e8751a6ae7bc737f
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Dec 13 02:37:40 2011 +0000
+
+    debian: Add changelog entry for cross-build changes
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 85274fe89e62a711b83b7275b10cdfc6f9d1b2b8
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Dec 13 02:37:42 2011 +0000
+
+    Sbuild::Conf: Add MULTIARCH_CORE_DEPENDENCIES table
+    
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit ffea1bc4be4e4ead2399ad220feeff614c2eafd0
+Author: Hector Oron <hector.oron@toby-churchill.com>
+Date:   Tue Dec 13 02:37:33 2011 +0000
+
+    Sbuild: Add Xapt as a dependency resolver
+    
+    Signed-off-by: Hector Oron <hector.oron@toby-churchill.com>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
+commit 50821b892c348a4ba1ff273c82ba84ad0bcbb4de
+Author: Hector Oron <hector.oron@toby-churchill.com>
+Date:   Tue Dec 13 02:37:26 2011 +0000
+
+    Sbuild: Initial support for cross-building
+    
+    Use BUILD_ARCH and HOST_ARCH throughout to permit cross-building.
+    Sbuild::Build: Add dpkg-buildpackage -a option when cross building.
+    
+    This patch was originally written by Hector Oron with bugfixes
+    and changes from Wookey and Roger Leigh.
+    
+    Signed-off-by: Hector Oron <hector.oron@toby-churchill.com>
+    Signed-off-by: Roger Leigh <rleigh@debian.org>
+
 commit 6f95db6318458c4f7dde44d388fbba48a3ea1ed2
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Wed Dec 7 20:42:14 2011 +0000

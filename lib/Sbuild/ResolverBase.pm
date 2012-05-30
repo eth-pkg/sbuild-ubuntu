@@ -55,6 +55,9 @@ sub new {
     $self->set('Changes', {});
     $self->set('AptDependencies', {});
     $self->set('Split', $self->get_conf('CHROOT_SPLIT'));
+    # Typically set by Sbuild::Build, but not outside a build context.
+    $self->set('Host Arch', $self->get_conf('HOST_ARCH'));
+    $self->set('Build Arch', $self->get_conf('BUILD_ARCH'));
 
     my $dummy_archive_list_file = $session->get('Location') .
         '/etc/apt/sources.list.d/sbuild-build-depends-archive.list';
@@ -69,6 +72,9 @@ sub setup {
 
     my $session = $self->get('Session');
     my $chroot_dir = $session->get('Location');
+
+    #Set up dpkg config
+    $self->setup_dpkg();
 
     my $aptconf = "/var/lib/sbuild/apt.conf";
     $self->set('APT Conf', $aptconf);
@@ -85,6 +91,10 @@ sub setup {
 	}
 	print $F "APT::Install-Recommends false;\n";
 
+	if ($self->get('Host Arch') ne $self->get('Build Arch')) {
+	    print $F "APT::Architecture=".$self->get('Host Arch');
+	    $self->log("Adding APT::Architecture ".$self->get('Host Arch')." to the apt config");
+	}
 	if ($self->get('Split')) {
 	    print $F "Dir \"$chroot_dir\";\n";
 	}
@@ -124,9 +134,34 @@ sub setup {
     $self->cleanup_apt_archive();
 }
 
+sub setup_dpkg {
+    my $self = shift;
+
+    my $session = $self->get('Session');
+
+    # If cross-building, set the correct foreign-arch
+    if ($self->get('Host Arch') ne $self->get('Build Arch')) {
+	$session->run_command(
+	    # this is the ubuntu dpkg 1.16.2 interface - we need to check (or configure) which to use with check_dpkg_version
+#	    { COMMAND => ['sh', '-c', 'echo "foreign-architecture ' . $self->get('Host Arch') . '" > /etc/dpkg/dpkg.cfg.d/sbuild'],
+#	      USER => 'root' });
+	    # This is the Debian dpkg >= 1.16.3 interface
+	    { COMMAND => ['dpkg', '--add-architecture', $self->get('Host Arch')],
+	      USER => 'root' });
+	if ($?) {
+	    $self->log_error("E: Failed to set dpkg foreign-architecture config\n");
+	    return 0;
+	}
+	$self->log("Adding dpkg foreign-architecture ".$self->get('Host Arch')."\n");
+    }
+}
+
 sub cleanup {
     my $self = shift;
 
+    #cleanup dpkg cross-config
+    # rm /etc/dpkg/dpkg.cfg.d/sbuild
+    # later: dpkg --delete-foreign-architecture $self->get('Host Arch')
     $self->cleanup_apt_archive();
 }
 
@@ -187,11 +222,11 @@ sub update_archive {
 			      '/var/lib/apt/lists/' . $uri . $file],
 		  USER => 'root',
 		  PRIORITY => 0 });
-	    if ($?) {
-		$self->log("Failed to copy file from dummy archive to apt lists.\n");
-		return 1;
-	    }
-        }
+		if ($?) {
+			$self->log("Failed to copy file from dummy archive to apt lists.\n");
+			return 1;
+		}
+	}
 
 	$self->run_apt_command(
 	    { COMMAND => [$self->get_conf('APT_CACHE'), 'gencaches'],
@@ -439,6 +474,57 @@ sub run_apt {
     return $mode eq "-s" || $status == 0;
 }
 
+sub run_xapt {
+    my $self = shift;
+    my $mode = shift;
+    my $inst_ret = shift;
+    my $rem_ret = shift;
+    my $action = shift;
+    my @packages = @_;
+    my( $msgs, $status, $pkgs, $rpkgs );
+
+    $msgs = "";
+    # redirection of stdin from /dev/null so that conffile question
+    # are treated as if RETURN was pressed.
+    # dpkg since 1.4.1.18 issues an error on the conffile question if
+    # it reads EOF -- hardwire the new --force-confold option to avoid
+    # the questions.
+    my @xapt_command = ($self->get_conf('XAPT'));
+    my $pipe =
+	$self->pipe_xapt_command(
+	    { COMMAND => \@xapt_command,
+	      ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
+	      USER => 'root',
+	      PRIORITY => 0,
+	      DIR => '/' });
+    if (!$pipe) {
+	$self->log("Can't open pipe to xapt: $!\n");
+	return 0;
+    }
+
+    while(<$pipe>) {
+	$msgs .= $_;
+	$self->log($_) if $mode ne "-s" || debug($_);
+    }
+    close($pipe);
+    $status = $?;
+
+    $pkgs = $rpkgs = "";
+    if ($msgs =~ /NEW packages will be installed:\n((^[ 	].*\n)*)/mi) {
+	($pkgs = $1) =~ s/^[ 	]*((.|\n)*)\s*$/$1/m;
+	$pkgs =~ s/\*//g;
+    }
+    if ($msgs =~ /packages will be REMOVED:\n((^[ 	].*\n)*)/mi) {
+	($rpkgs = $1) =~ s/^[ 	]*((.|\n)*)\s*$/$1/m;
+	$rpkgs =~ s/\*//g;
+    }
+    @$inst_ret = split( /\s+/, $pkgs );
+    @$rem_ret = split( /\s+/, $rpkgs );
+
+    $self->log("xapt failed.\n") if $status && $mode ne "-s";
+    return $mode eq "-s" || $status == 0;
+}
+
 sub format_deps {
     my $self = shift;
 
@@ -591,7 +677,7 @@ sub setup_apt_archive {
 	return 0;
     }
 
-    my $arch = $self->get('Arch');
+    my $arch = $self->get('Build Arch');
     print DUMMY_CONTROL <<"EOF";
 Package: $dummy_pkg_name
 Version: 0.invalid.0
@@ -635,11 +721,11 @@ EOF
     my $positive = deps_parse(join(", ", @positive,
 				   @positive_arch, @positive_indep),
 			      reduce_arch => 1,
-			      host_arch => $self->get('Arch'));
+			      host_arch => $self->get('Host Arch'));
     my $negative = deps_parse(join(", ", @negative,
 				   @negative_arch, @negative_indep),
 			      reduce_arch => 1,
-			      host_arch => $self->get('Arch'));
+			      host_arch => $self->get('Host Arch'));
 
     $self->log("Merged Build-Depends: $positive\n") if $positive;
     $self->log("Merged Build-Conflicts: $negative\n") if $negative;
@@ -1002,6 +1088,23 @@ sub run_apt_command {
 }
 
 sub pipe_apt_command {
+    my $self = shift;
+    my $options = shift;
+
+    my $session = $self->get('Session');
+    my $host = $self->get('Host');
+
+    # Set modfied command
+    $self->get_apt_command_internal($options);
+
+    if ($self->get('Split')) {
+	return $host->pipe_command_internal($options);
+    } else {
+	return $session->pipe_command_internal($options);
+    }
+}
+
+sub pipe_xapt_command {
     my $self = shift;
     my $options = shift;
 
