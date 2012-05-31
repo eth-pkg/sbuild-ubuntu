@@ -1,3 +1,33 @@
+commit 0566448375bc8032716f2d8c933d9d6fcea1a4e4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu May 31 22:52:12 2012 +0100
+
+    debian: Set distribution to unstable
+
+commit a23d645e17600378a3747d12f172828a75ccf23b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu May 31 22:11:29 2012 +0100
+
+    debian: Close #675349
+
+commit c85ad5f49c398a56a6b8416ee3a4ce2a41e6f2e3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu May 31 22:08:32 2012 +0100
+
+    debian: Bump version to 0.61.1-1 and close #675332 and #675354
+
+commit 6ca7311194f162639be7447e5ab96e92229c5858
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu May 31 22:07:57 2012 +0100
+
+    NEWS: Bump version to 0.63.1
+
+commit ce35f824eaa35d7925520afa605b14723e1f6a8f
+Author: Jakub Wilk <jwilk@debian.org>
+Date:   Thu May 31 22:07:32 2012 +0100
+
+    Sbuild::Conf: Correct validation of xapt program
+
 commit 779e65fac8c1f3488afb1181a07adb835353d109
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Wed May 30 23:10:10 2012 +0100
