@@ -1,11 +1,26 @@
 NEWS                                                            -*- outline -*-
 ----
 
-Welcome to sbuild 0.63.1.  Please read these release notes carefully.
+Welcome to sbuild 0.63.2.  Please read these release notes carefully.
 
 Full installation instructions are provided in the INSTALL file.  The
 README file also contains more specific notes regarding building and
 configuration.
+
+* Major changes in 0.63.2:
+
+  1) New options --no-run-lintian and --no-run-piuparts.  If lintian
+     or piuparts are configured to run automatically following a
+     successful build, there options disable this behaviour for the
+     build.
+
+  2) New option --purge-build.  This behaves identically to the old
+     --purge option.  --purge now purges everything (build directory,
+     build dependencies and schroot session) and is equivalent to
+     using --purge-build, --purge-deps and --purge-session together.
+
+  3) If building from unpacked sources in the current working
+     directory, logs will be created in '..' rather than '.'.
 
 * Major changes in 0.63.1:
 

@@ -1,3 +1,243 @@
+commit d299f7eee5f7ea908e0b37ac44886be0aa33ca36
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Aug 18 13:49:18 2012 +0100
+
+    debian: Fix changelog for release
+
+commit cd0dcdacd2a1a15c8debbe4449aff72965ec9686
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Aug 18 13:42:41 2012 +0100
+
+    NEWS: Document logging bugfix
+
+commit b98743d6487d8c667f3ab19c2e974077f1d7c340
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Aug 18 13:42:14 2012 +0100
+
+    debian: Close #676834
+
+commit 89dab349762a9f0839136ab80c9d3b4794aee372
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Aug 18 13:37:26 2012 +0100
+
+    test: Add logging testing scenarios
+
+commit b196a2e2075147e4cbe4e48c15b9fd0b5d210572
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Aug 18 13:14:05 2012 +0100
+
+    sbuild: Don't open logs in the build directory when packing sources
+    
+    If building directing in the CWD, log in ..
+    Implement this behaviour by setting BUILD_DIR to ..
+    Also set LOG_DIR to BUILD_DIR in user mode so LOG_DIR is
+    also not defaulting to CWD.
+
+commit 350efb25e0ac914e932858c3c4809b2922c79fd8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sat Aug 18 13:13:28 2012 +0100
+
+    Sbuild::ConfBase: Remove unused CWD variable
+
+commit 82aeef2adbaef49b56677d9860b32b4b36ea4968
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jul 5 00:13:40 2012 +0100
+
+    Sbuild::Conf: Remove additional bracket
+
+commit 94ee5c5df3fbffdcd09781903e13fa4388bad16f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 4 23:57:05 2012 +0100
+
+    debian: Close #673009
+
+commit dd273ea0ebe95467f5a9cb2623a9ea33fe563f14
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 4 23:55:21 2012 +0100
+
+    Sbuild::Conf: Only create log directory in buildd mode
+
+commit a2e05139759e72027a063e25f1512c628e05cf0e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 4 23:50:37 2012 +0100
+
+    Sbuild::Conf: Don't make log dir if NOLOG is set
+
+commit 03d0040f6feeef2808169a63a851470c3fdc7836
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 4 23:14:37 2012 +0100
+
+    debian: Close #662785
+
+commit 942a97018e1024f9caee462f8a345cdf12ed0fa1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 4 23:13:10 2012 +0100
+
+    debian: Close #676834
+
+commit 9c8d93868c1379c8137ba76119703c95f8a16332
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 4 23:10:33 2012 +0100
+
+    sbuild: Build source directories correctly
+    
+    - If inside the directory, log outside
+    - Clean and package correctly with dpkg-source whether sbuild was
+      run from from inside or outside the source tree
+
+commit ea79546910ec9f14b114b4500aa252484c93ba46
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 4 21:10:20 2012 +0100
+
+    debian: Close #637931
+
+commit bf557dc70a2feb9b87cc31d659bf8c15c0d9c1e7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 4 21:08:47 2012 +0100
+
+    Sbuild::Utility: Fix logging in download function
+
+commit e34275c39235eb573d2a096be3a8499f33878a0a
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 4 20:35:02 2012 +0100
+
+    debian: Close #674669
+
+commit 1e88a1b18bc0358a03fe5f85cb83c204b00047a5
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 4 20:32:50 2012 +0100
+
+    Sbuild::Build: Factor out finding changes into get_changes()
+
+commit ec022e746e2d23556d6f58dfef1434fb560a3c05
+Author: Daniel Dehennin <daniel.dehennin@baby-gnu.org>
+Date:   Wed Jul 4 20:03:40 2012 +0100
+
+    Sbuild::Build: Find _all.changes as well as _arch.changes
+
+commit f29ce90bce6e74dedd85a26a883c5138e28afac8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Wed Jul 4 20:03:24 2012 +0100
+
+    debian: Close #675861
+
+commit 7afefbf558f783735624577a246b7912912f6da3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 23:01:30 2012 +0100
+
+    debian: Close #673676
+
+commit 4bc2072701dddf7aa5e3680ded77de0bf6f75f02
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 23:00:30 2012 +0100
+
+    sbuild-createchroot: Don't use --keyring unless set by user
+
+commit cb47de2a0e1cc6e501e0044b04b17dc2357a5b58
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 22:53:15 2012 +0100
+
+    debian: Close #665215
+
+commit 0df61e1b81d24c9a4a035a028ce4be8c4e79744e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 22:25:14 2012 +0100
+
+    debian: Close #676475
+
+commit fe7f0e7c5ac20f7153b136489c40a06579cf44a6
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 22:23:18 2012 +0100
+
+    Sbuild::Build: Don't run debsign with shell interpretation of $key_id
+    
+    This is badly broken.  Use separate arguments with correct quoting,
+    to prevent shell metacharacters such as < and > not being interpreted
+    by the shell.
+
+commit 41a825a25eea52097c01a149250b44623c263e40
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 22:15:40 2012 +0100
+
+    debian: Close #629109
+
+commit 898eb8be3008616e93b9d4f92869d02177a52cae
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 22:15:34 2012 +0100
+
+    NEWS: Document new --purge-build option
+
+commit e32faf26f8a013f5d96a24934e9819878a1dace7
+Author: Jan-Marek Glogowski <glogow@fbihome.de>
+Date:   Thu Jun 28 22:10:44 2012 +0100
+
+    Sbuild::Options: Add --purge-build option
+    
+    This replaces the existing --purge option, which now purges
+    everything (build directory, build dependencies and session).
+
+commit 97cd31badb3f28e900ff0ca922366004287ad43b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 21:52:56 2012 +0100
+
+    debian: Copy options description from NEWS
+
+commit c7c485ee40753dafd4d025c92020eed0a48cffb7
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 21:52:40 2012 +0100
+
+    NEWS: Document --no-run-lintian and --no-run-piuparts
+
+commit 89e6d06a9c36e8384ba0db42ce3f093628a1f402
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 21:50:51 2012 +0100
+
+    debian: Close #665372
+
+commit e069ee987fe96ebf36687980e47c310339b50ea9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 21:49:58 2012 +0100
+
+    Sbuild::Options: Add --no-run-piuparts option
+
+commit 7d4ca24cd826468908a4a7d830503a22d08f4edf
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 21:48:01 2012 +0100
+
+    Sbuild::Options: Add --no-run-lintian option
+
+commit be9e29229f9f78b8f06a97e4d12942b18ec3cdd3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 21:37:07 2012 +0100
+
+    debian: Close #663089
+
+commit 4c8de771ad27c61fa0ad57af22ef80f45dede9a1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 21:36:01 2012 +0100
+
+    debian: Bump version to 0.63.2-1
+
+commit 70e28a15c7d24747ceb6c151340da382aea4e575
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 21:35:16 2012 +0100
+
+    NEWS: Bump version to 0.63.2
+
+commit df035c6df4419c0155d58a90cfb5e187b6a16ae3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jun 28 21:33:59 2012 +0100
+
+    Sbuild::Conf: Fix typo sucess
+
+commit 5f2eabf8b43fe96f141b15848210ba44d1bd50c3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Jun 5 20:18:06 2012 +0100
+
+    sbuild-createchroot: use profile= in config
+    
+    This replaces script-config=.
+
 commit 0566448375bc8032716f2d8c933d9d6fcea1a4e4
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Thu May 31 22:52:12 2012 +0100

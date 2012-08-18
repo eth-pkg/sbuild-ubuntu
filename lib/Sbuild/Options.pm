@@ -168,6 +168,11 @@ sub set_options {
 			   $self->set_conf('NOLOG', 1);
 		       },
 		       "p|purge=s" => sub {
+			   $self->set_conf('PURGE_BUILD_DEPS', $_[1]);
+			   $self->set_conf('PURGE_BUILD_DIRECTORY', $_[1]);
+			   $self->set_conf('PURGE_SESSION', $_[1]);
+		       },
+		       "purge-build=s" => sub {
 			   $self->set_conf('PURGE_BUILD_DIRECTORY', $_[1]);
 		       },
 		       "purge-deps=s" => sub {
@@ -219,6 +224,9 @@ sub set_options {
 			"run-lintian" => sub {
 			    $self->set_conf('RUN_LINTIAN', 1);
 		       },
+		       "no-run-lintian" => sub {
+			    $self->set_conf('RUN_LINTIAN', 0);
+		       },
 		       "lintian-opts=s" => sub {
 			   push(@{$self->get_conf('LINTIAN_OPTIONS')},
 				split(/\s+/, $_[1]));
@@ -229,6 +237,9 @@ sub set_options {
 		       },
 		       "run-piuparts" => sub {
 			    $self->set_conf('RUN_PIUPARTS', 1);
+		       },
+		       "no-run-piuparts" => sub {
+			    $self->set_conf('RUN_PIUPARTS', 0);
 		       },
 		       "piuparts-opts=s" => sub {
 			   push(@{$self->get_conf('PIUPARTS_OPTIONS')},

@@ -51,14 +51,17 @@ sbuild \- build debian packages from source
 .RB [ \-\-dpkg-source-opt=\fIoptions\fP ]
 .RB [ \-\-dpkg-source-opts=\fIoptions\fP ]
 .RB [ \-p \[or] \-\-purge=\fPpurge-mode\fP ]
+.RB [ \-\-purge\-build=\fPpurge-mode\fP ]
 .RB [ \-\-purge\-deps=\fPpurge-mode\fP ]
 .RB [ \-\-purge\-session=\fPpurge-mode\fP ]
 .RB [ \-b \[or] \-\-batch]
 .RB [ \-n \[or] \-\-nolog ]
 .RB [ \-\-run\-lintian ]
+.RB [ \-\-no\-run\-lintian ]
 .RB [ \-\-lintian\-opt=\fIoptions\fP ]
 .RB [ \-\-lintian\-opts=\fIoptions\fP ]
 .RB [ \-\-run\-piuparts ]
+.RB [ \-\-no-run\-piuparts ]
 .RB [ \-\-piuparts\-opt=\fIoptions\fP ]
 .RB [ \-\-piuparts\-opts=\fIoptions\fP ]
 .RB [ \-\-piuparts\-root\-arg=\fIoptions\fP ]
@@ -252,6 +255,10 @@ Do not create a package log file in the \fI$log_dir\fP directory and no build
 log file, but print everything to stdout. Also do not send any log mails.
 .TP
 .BR \-p ", " "\-\-purge=\fIpurge-mode\fP"
+Convenience option to set \fIpurge-mode\fR for build directory, build
+dependencies and session.
+.TP
+.BR "\-\-purge\-build=\fIpurge-mode\fP"
 \fIpurge-mode\fR determines if the build directory will be deleted after a
 build. Possible values are \fBalways\fR (default), \fBnever\fR, and
 \fBsuccessful\fR.
@@ -263,9 +270,9 @@ build. Possible values are \fBalways\fR (default), \fBnever\fR, and
 .TP
 .BR "\-\-purge\-session=\fIpurge-mode\fP"
 Purge the schroot session following a build.  This is useful in conjunction
-with the \fI\-\-purge\fP and \fI\-\-purge\-deps\fP options when using snapshot
-chroots, since by default the snapshot will be deleted.  Possible values are
-\fBalways\fR (default), \fBnever\fR, and \fBsuccessful\fR.
+with the \fI\-\-purge\-build\fP and \fI\-\-purge\-deps\fP options when using
+snapshot chroots, since by default the snapshot will be deleted.  Possible
+values are \fBalways\fR (default), \fBnever\fR, and \fBsuccessful\fR.
 .TP
 .BR \-s ", " "\-\-source"
 Also build source package, i.e. use dpkg\-buildpackage without \-B.
@@ -313,6 +320,10 @@ before the '+' in the Debian revision if --make-binNMU is also provided).
 .BR \-\-run\-lintian
 Run lintian after a successful build.
 .TP
+.BR \-\-no\-run\-lintian
+Don't run lintian after a successful build.  If sbuild is configured to run
+lintian by default, this option will prevent lintian being run.
+.TP
 .BR \-\-lintian\-opt=\fIoptions\fP
 Run lintian with the specified options.
 .TP
@@ -321,6 +332,10 @@ Append extra options to existing options passed to lintian.
 .TP
 .BR \-\-run\-piuparts
 Run piuparts after a successful build.
+.TP
+.BR \-\-run\-piuparts
+Don't run piuparts after a successful build.  If sbuild is configured to run
+piuparts by default, this option will prevent piuparts being run.
 .TP
 .BR \-\-piuparts\-opt=\fIoptions\fP
 Run piuparts with the specified options.
