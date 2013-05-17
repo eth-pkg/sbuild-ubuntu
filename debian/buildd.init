@@ -3,7 +3,7 @@
 ### BEGIN INIT INFO
 # Provides:          buildd
 # Required-Start:    $local_fs $network $remote_fs
-# Required-Stop:
+# Required-Stop:     $local_fs $network $remote_fs
 # Should-Start:      schroot
 # Should-Stop:
 # Default-Start:     2 3 4 5
@@ -57,14 +57,6 @@ start () {
 
         log_end_msg $?
     fi
-}
-
-stop () {
-    log_begin_msg "Stopping $DESC: $NAME"
-
-    start-stop-daemon --stop --quiet --retry 5 --oknodo --pidfile $PIDFILE --name $NAME
-
-    log_end_msg $?
 }
 
 stop () {

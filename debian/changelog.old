@@ -1,475 +1,140 @@
-sbuild (0.64.0-1) unstable; urgency=low
+sbuild (0.61.0-1+buildd20120121.3) squeeze-buildd; urgency=low
 
-  [ Thorsten Glaser ]
-  * Apply patch from Arnaud Patard to fix the uploader (Closes: #636477).
-  * Make sample configuration entries actually work (Closes: #696840).
-  * Avoid using undef as HASH reference (Closes: #696841).
+  * [Sbuild::Chroot] unlock_chroot: also fix lockfile location here
 
-  [ Philipp Kern ]
-  * Forward port patches from the buildd-0.61.0 branch:
-    - Buildd::Client: Don't change the cwd.
-    - Buildd: Fix SSH control master restart.
+ -- Philipp Kern <pkern@debian.org>  Sat, 21 Jan 2012 21:11:47 +0100
 
-  [ Roger Leigh ]
-  * New release.
-  * Upgrade to Standards-Version 3.9.4 (no changes).
-  * buildd:
-    - Remove duplicate stop action from init script (Closes: #695513).
-    - Failure count before sleeping is configurable with
-      MAX_SBUILD_FAILS (Closes: #693790).
-    - buildd.init specifies correct Required-Stop dependencies.
-    - Remove empty preinst script.
-  * sbuild:
-    - Cross build-dependency installation failure throws an
-      exception (Closes: #693788).
-    - In Sbuild::ResolverBase, pass the correct options to deps_parse
-      for cross-building and foo:native build dependencies
-      (Closes: #697298).  Thanks to Colin Watson for this patch.
-    - In Sbuild::Build::copy_to_chroot, remove stray exit() which could
-      cause sbuild to hang with a "Failed to copy" error
-      (Closes: #699903).  Thanks to Stephan Sürken for this patch.
-    - Compute changes path correctly, to allow “--debbuildopt=-A” to
-      work correctly with _all.changes (Closes: #686509).  Thanks to
-      Daniel Dehennin for the original version of this patch.
-    - Run lintian from inside the chroot (Closes: #626361).  Thanks to
-      Reinhard Tartler for this patch.
+sbuild (0.61.0-1+buildd20120121.2) squeeze-buildd; urgency=low
 
-  [ Colin Watson ]
-  * sbuild:
-    - Resolve cross-build-dependencies from package being built rather than
-      from current apt sources (Closes: #695203).
-  * buildd:
-    - Reset sbuild failure count after sleeping.
+  * [Sbuild::Chroot] lock_chroot: fix lockfile location
 
-  [ Adam Conrad ]
-  * sbuild:
-    - Improve cross chroot detection to look for $dist-$build-$host as a
-      valid chroot for cross-build to avoid namespace clashes with native
-      chroots, and document this better in the manpage (Closes: #695273)
+ -- Philipp Kern <pkern@debian.org>  Sat, 21 Jan 2012 21:05:31 +0100
 
-  [ Geoffrey Thomas ]
-  * sbuild:
-    - When creating a changelog entry for binNMUs or
-      --append-to-version, tag it with "binary-only=yes" so that
-      dpkg-gencontrol uses the previous changelog entry for the source
-      version (Closes: #672711, #681292).
+sbuild (0.61.0-1+buildd20120121.1) squeeze-buildd; urgency=low
 
- -- Roger Leigh <rleigh@debian.org>  Fri, 17 May 2013 23:06:13 +0100
+  * Fix SSH control master restart.
 
-sbuild (0.63.2-1.1) unstable; urgency=low
+ -- Philipp Kern <pkern@debian.org>  Sat, 21 Jan 2012 13:39:54 +0100
 
-  * Non-maintainer upload.
-  * Fix building packages with revision "0" (Closes: #687396)
+sbuild (0.61.0-1+buildd20120121.0) squeeze-buildd; urgency=low
 
- -- Roland Stigge <stigge@antcom.de>  Wed, 05 Dec 2012 14:44:45 +0100
+  * bin/create-chroot: add s390 as linux32 architecture
+  * [Sbuild::Build] specify UTF-8 encoding in the .changes's MIME part
+  * create-chroot: use directory in schroot snippet, not location
+  * etc/99builddsourceslist: fix a typo
+  * Sbuild::Chroot: Create chroot lock inside chroot
+  * [Sbuild::DB::Client] do not change the cwd
 
-sbuild (0.63.2-1) unstable; urgency=low
+ -- Philipp Kern <pkern@debian.org>  Sat, 21 Jan 2012 13:12:02 +0200
 
-  [ Roger Leigh ]
-  * New release.
-  * Sbuild::Conf: Fix typo sucess (Closes: #663089).
-  * Sbuild::Options:
-    - Add --no-run-lintian and --no-run-piuparts options
-      (Closes: #665372).  If lintian or piuparts are configured to run
-      automatically following a successful build, there options disable
-      this behaviour for the build.
-    - Add --purge-build option (Closes: #629109).  This behaves
-      identically to the old --purge option.  --purge now purges
-      everything (build directory, build dependencies and schroot
-      session) and is equivalent to using --purge-build, --purge-deps
-      and --purge-session together.  Thanks to Jan-Marek Glogowski for
-      this patch.
-  * Sbuild::Conf:
-    - Don't create the log directory unless logging is enabled or
-      using buildd mode (Closes: #673009).
-  * Sbuild::Build:
-    - Don't pass $key_id to the shell unescaped (Closes: #676475).
-    - Use _all.changes rather than _arch.changes if -A is passed to
-      dpkg-buildpackage (Closes: #674669).  Thanks to Daniel Dehennin
-      for this patch.
-  * Sbuild::Utility: Fix logging in download function (Closes: #637931).
-  * sbuild:
-    - If running sbuild from inside a build tree (like
-      dpkg-buildpackage), place the build logs outside the tree
-      (Closes: #676834).  Logs will be created in '..' rather than '.'.
-    - When packing source trees with "dpkg-source -b", always pass
-      "." as the directory to pack, so the orig.tar can be found
-      (Closes: #662785).
-  * sbuild-createchroot:
-    - Use profile=sbuild in place of script-config= in generated
-      schroot.conf configuration (Closes: #665215, #675861).
-    - Don't pass --keyring to dpkg-buildpackage unless explicitly set
-      by the user (Closes: #673676).
+sbuild (0.61.0-1+buildd20110803.0) squeeze-buildd; urgency=low
 
- -- Roger Leigh <rleigh@debian.org>  Sat, 18 Aug 2012 13:46:45 +0100
+  * Revert "Sbuild::ResolverBase: Implement alternative stripping"
 
-sbuild (0.63.1-1) unstable; urgency=low
+ -- Philipp Kern <pkern@debian.org>  Wed, 03 Aug 2011 13:40:30 +0200
 
-  [ Roger Leigh ]
-  * New release.
-  * Don't require xapt.  Remove duplicate and incorrect check.  Thanks
-    to Andres Mejia and Jakub Wilk (Closes: #675332, #675354).
-  * Remove /etc/schroot/setup.d/99builddsourceslist which was
-    provided with earlier versions of sbuild, but no longer works with
-    current schroot versions (Closes: #675349).
+sbuild (0.61.0-1+buildd20110721.0) squeeze-buildd; urgency=low
 
- -- Roger Leigh <rleigh@debian.org>  Thu, 31 May 2012 21:59:16 +0100
+  * Sbuild: use our for version comparision variable
 
-sbuild (0.63.0-1) unstable; urgency=low
+ -- Philipp Kern <pkern@debian.org>  Thu, 21 Jul 2011 10:34:08 +0200
 
-  [ Wookey ]
-  * Support for cross-compiling has been added.  This includes the
-    addition of $host and $build configuration variables, with
-    corresponding --host and --build command-line options.  This
-    includes the addition of a new 'xapt' dependency resolver.
-    - Merge cross-build support (thanks to Hector Oron,
-      Closes: #610689).
-    - Add multiarch cross-build support.
+sbuild (0.61.0-1+buildd20110626.0) squeeze-buildd; urgency=low
 
-  [ Roger Leigh ]
-  * The deprecated 'internal' dependency resolver has been removed,
-    along with the configuration variables $apt_policy,
-    $check_depends_algorithm and $resolve_virtual, and the
-    command-line option --check-depends-algorithm.  The 'apt'
-    resolver is the default replacement for 'internal'.
-    (Closes: #622788)
-  * Support for watches has been removed.  The configuration
-    variables $check_watches, $ignore_watches_no_build_deps and
-    $watches (and obsolete variables @ignore_watches_no_build_deps
-    and %watches) have also been removed.
-  * sbuild-stats and support for build time and space statistics
-    recording has been removed.  These statistics are recorded in
-    both the build log and are available as build metadata
-    internally.  The statistics recorded in the database were not
-    particularly informative; storing the statistics in a proper
-    relational database is recommended.  The configuration variables
-    $avg_time_db and $avg_space_db have been removed.
-  * Drop 25nssdatabases schroot setup script used on compatibility
-    mode (on buildds).  This has been replaced by the schroot
-    20nssdatabases for many years.
+  * etc/99builddsourceslist: use backports.d.o for main bpo archive
 
- -- Roger Leigh <rleigh@debian.org>  Wed, 30 May 2012 22:49:18 +0100
+ -- Philipp Kern <pkern@debian.org>  Sun, 26 Jun 2011 22:14:21 +0200
 
-sbuild (0.62.6-1) unstable; urgency=low
+sbuild (0.61.0-1+buildd20110611.0) squeeze; urgency=low
 
-  * New release.
-  * All changes backported from buildd-0.61.0 branch.
-  * sbuild.1: Add --chroot to synopsis (Closes: #635203).
-  * sbuild:
-    - --jobs is an alias for -j, to match documented behaviour
-      (Closes: #635250).
-    - The use of alternatives in Build-Depends and Build-Depends-Indep
-      may be turned on or off by the configuration variable
-      $resolve_alternatives.  It may also be enabled or disabled at
-      build time using the --resolve-alternatives and
-      --no-resolve-alternatives options, respectively.
-    - Correctly support chroot namespaces, to work with schroot 1.5.x
-      (Closes: #612630).
-    - Support Build-Depends-Arch and Build-Conflicts-Arch fields in
-      debian/control.  These may be manually set with
-      --add-depends-arch and --add-conflicts-arch, respectively.
+  * Set HOME explicitly to cope with schroot 1.2 in Lenny.
+  * create-chroot: set check intervals to 0 for the new filesystem
 
- -- Roger Leigh <rleigh@debian.org>  Wed, 07 Dec 2011 20:41:43 +0000
+ -- Philipp Kern <pkern@debian.org>  Sat, 11 Jun 2011 16:44:10 +0200
 
-sbuild (0.62.5-1) unstable; urgency=low
+sbuild (0.61.0-1+buildd20110527.0) squeeze; urgency=low
 
-  * New release.
-  * sbuild:
-    - Correct use of Dpkg::Version for version parsing, to ensure
-      correct behaviour when using native package versions and epochs.
-    - Don't require an exact version when building a package directly
-      from a source tree.
+  * Buildd::Mail: Remove empty newline from .changes
+  * sbuild-apt: Run apt via the resolver
+  * Sbuild::ResolverBase: sources.list fragments must have 0644 permissions
 
- -- Roger Leigh <rleigh@debian.org>  Wed, 13 Jul 2011 19:56:05 +0100
+ -- Philipp Kern <pkern@debian.org>  Fri, 27 May 2011 22:12:49 +0200
 
-sbuild (0.62.4-1) unstable; urgency=low
+sbuild (0.61.0-1+buildd20110402.0) squeeze; urgency=low
 
-  * New release.
-  * sbuild:
-    - Failing lintian checks are highlighted in red, and passes in
-      green (Closes: #631060).
-    - The distribution in the build summary is coloured yellow if it
-      does not match the distribution in the changelog.  This is to
-      indicate that there may be a potential problem, such as
-      potentially uploading a package intended for experimental to
-      unstable by building for unstable by accident.
-    - lintian test results are also coloured to highlight success and
-      failure.
-    - Log colouring may now be disabled using $log_colour.
-    - sbuild only permits building one source package at once.
-      Previously sbuild would allow building of more than one package
-      in a single invocation.  Making this change means that the exit
-      status will always be the status of the build rather than the
-      last build, and it also means the logging is simplified and may
-      be started earlier.
-    - Now that the main log has been removed, and packing of a source
-      tree takes place before starting the build for real, we no longer
-      create a log file in the build tree, confusing "dpkg-source -b"
-      (Closes: #612324).
-    - Added new directory /var/lib/sbuild/build to hold build trees for
-      sbuild when building.  This will be bind mounted on /build inside
-      the chroot following an update to the schroot sbuild and buildd
-      fstab configuration for schroot.  This saves significant amounts
-      of space when using LVM snapshot chroots, and it also makes it
-      easier to preserve build trees for failing builds when using
-      snapshots.
-    - Extra environment variables to be set when running
-      dpkg-buildpackage may now be set using $build_environment
-      (Closes: #631595).  These variables will supplement the existing
-      environment (e.g. PATH, LD_LIBRARY_PATH), and will not be subject
-      to filtering with $environment_filter.
-    - Existing hard-coded .dsc/.changes/dpkg-parsechangelog parsing has
-      been replaced with use of Dpkg::Control.  Existing reimplmentation
-      of the dpkg version comparison and regexes to split versions into
-      epoch/version/revision have been replaced with use of
-      Dpkg::Version.
-  * sbuild-adduser: Use current sbuild-update options in example
-    (Closes: #630791).
+  * [Buildd::Daemon] move_to_upload: fix binNMU uploading
 
- -- Roger Leigh <rleigh@debian.org>  Sat, 25 Jun 2011 11:39:44 +0100
+ -- Philipp Kern <pkern@debian.org>  Sat, 02 Apr 2011 13:45:11 +0200
 
-sbuild (0.62.3-1) unstable; urgency=low
+sbuild (0.61.0-1+buildd20110330.0) squeeze; urgency=low
 
-  * New release.
-  * sbuild:
-    - The apt and internal resolvers will resolve some alternatives
-      even when resolving alternative dependencies is disabled
-      (Closes: #622832).  For relations involving the same package,
-      the alternative will be permitted when the package names are
-      the same for each alternative.  For example,
-        foo (<< x) | foo (>= y) | bar
-      will be reduced to
-        foo (<< x) | foo (>= y)
-      while
-        foo | bar
-      will be reduced to
-        foo
-    - The sbuild-schroot wrapper program has been removed; sbuild is
-      now an arch-all package again.
-    - Move lock directory to /var/lib/sbuild/chroot-lock, rather than
-      using /var/lock/sbuild which could be a symlink to /run/lock on
-      the host (Closes: #626826).  This means parallel builds won't
-      block due to sharing the same lockfile.
-    - Remove schroot buildd profile.  This will now be provided by
-      the schroot package itself directly.  This requires schroot
-      1.4.22 or greater.
-    - Add lintian and piuparts results to build summary
-      (Closes: #617450).
-    - Remove directory correctly in postrm (Closes: #627641).  Thanks
-      to Daniel Baumann.
-    - Lock sbuild account on purge, and unlock on install
-      (Closes: #619892).
-    - Add -j option to run parallel builds (Closes: #626357).
-    - Log build environment prior to starting a build.  This will be
-      useful in diagnosing problems with a misconfigured chroot, such
-      as missing HOME which can lead to misbuilds.
-  * sbuild-createchroot:
-    - Don't call ChrootSetup::basesetup after initial bootstrap; wait
-      until actually running sbuild.  The users and groups used for
-      chown don't exist at this point, leading to (harmless) failure.
-      Closes: #622735.
-    - Don't overwrite existing symlinks under /etc/sbuild/chroot
-      (Closes: #608416).
-  * sbuild-update:
-    - Don't try to end the current chroot session if a signal is
-      received and no session is in progress (Closes: #629005).
-  * buildd:
-    - init script starts buildd in runlevels 2-5 rather than S, and
-      stops in 0, 1 and 6.
-    - Lock buildd account on purge, and unlock on install.
-  * buildd-mail:
-    - Remove empty newline from .changes (Closes: #627854).
-      ftp-master started refusing .changes files which have a trailing
-      empty line (after the GPG end of signature).  It happens that
-      mutt introduces one when signing GPG in traditional mode.  Other
-      tools probably do too.  buildd-mail-wrapper should probably drop
-      it automatically.  Thanks to Samuel Thibault.
+  * [Buildd::Daemon] support autosigning of binNMUs
 
- -- Roger Leigh <rleigh@debian.org>  Sat, 04 Jun 2011 00:01:13 +0100
+ -- Philipp Kern <pkern@debian.org>  Wed, 30 Mar 2011 11:56:44 +0200
 
-sbuild (0.62.2-1) unstable; urgency=low
+sbuild (0.61.0-1+buildd20110328.0) squeeze; urgency=low
 
-  * New release.
-  * sbuild:
-    - New options --no-apt-clean, --no-apt-update, --no-apt-upgrade and
-      --no-apt-distupgrade have been added to allow these actions to be
-      disabled even when set as the default in the configuration.
-    - root is not required to be a member of the sbuild group in order
-      to run schroot via the sbuild-schroot wrapper
-      (Closes: #619128, #619002).
-    - Don't require HOME to be set in the environment (Closes: #619288).
-    - Work around broken build-essential on Ubuntu Lucid
-      (Closes: #619526).  Thanks to Marc Deslauriers.
-    - --keep-session is replaced by
-      --purge-session=(always|successful|never).  This will allow the
-      session to be purged for all, successful and no builds,
-      respectively (Closes: #619332).
-    - sources.list fragments stored in /etc/apt/sources.list.d have
-      0644 permissions, so that normal users can run apt-cache in the
-      chroot during a build (Closes: #620797).  Thanks to Julian Andres
-      Klode for identifying this problem.
-    - Log filtering may be disabled using $log_filter = 0 in the
-      configuration (Closes: #620589).  The replacement text is now
-      also surrounded with "«" and "»" so that strings such as CHROOT
-      and BUILDDIR can't be confused with any actual appearance of the
-      same string in the build log.
-    - Log colouring may be disabled using $log_colour = 0 in the
-      configuration.
-    - Improve binNMU handling to permit binNMUs for multiarch packages
-      (Closes: #620112).  Currently, binary NMUs use the current date
-      in the new changelog entry, but co-installable packages require
-      an identical changelog.  To avoid this, take the date from the
-      previous changelog entry to ensure the same date for all binNMUs.
-      Thanks to Anders Kaseorg for this patch.
-    - Abort early if maintainer is not defined when performing a binNMU
-      or appending a version suffix (Closes: #620758).
-  * sbuild.conf:
-    - Don't set a default value for $build_dir (Closes: #619416).
-      This value is set each run, and so varies between builds when
-      generating the configuration file.  Exclude from the generated
-      output to prevent unnecessary differences between builds.
-    - $purge_session uses the same purge modes as $purge_build_deps and
-      $purge_build_directory, rather than a boolean value.
-  * buildd:
-    - Merge latest changes from buildd-0.61.0.
+  * [Sbuild::Conf] adjust ENVIRONMENT_FILTER to be sane
+  * [Buildd::Daemon] add arch_all building support
+  * [Sbuild::Build] only try to invoke debsign on successful builds
 
- -- Roger Leigh <rleigh@debian.org>  Tue, 05 Apr 2011 10:46:49 +0100
+ -- Philipp Kern <pkern@debian.org>  Mon, 28 Mar 2011 21:50:45 +0200
 
-sbuild (0.62.1-1) unstable; urgency=high
+sbuild (0.61.0-1+buildd20110324.1) squeeze; urgency=low
 
-  * New release.
-  * Fixed security issue in the sbuild-schroot wrapper program which
-    did not enforce sbuild group membership in order to allow users
-    to access the chroots as user sbuild.
+  * [Sbuild::Build] invoke debsign post-build
+  * [Sbuild::Conf] handle command-line signing options correctly
+  * [Sbuild::Conf] put SIGNING_OPTIONS into an array instead of overwriting values
+  * [Sbuild::Build] check correctly for SIGNING_OPTIONS being an ARRAY
+  * [Buildd::Uploader] make .changes -> .upload substitution clearer
+  * [Sbuild::Build] attach a .summary file to MIME build logs
 
- -- Roger Leigh <rleigh@debian.org>  Sun, 20 Mar 2011 23:06:52 +0000
+ -- Philipp Kern <pkern@debian.org>  Thu, 24 Mar 2011 21:22:33 +0100
 
-sbuild (0.62.0-1) unstable; urgency=low
+sbuild (0.61.0-1+buildd20110324.0) squeeze; urgency=low
 
-  * New release.
-  * debian/control:
-    - Build-Depend upon libexception-class-perl.
-  * sbuild:
-    - Resolvers:
-      + 'apt' is now the default build dependency resolver.  Users should
-        not see any significant changes compared with the old 'internal'
-        resolver.  Please note that you may need to generate a GPG key
-        for the local archive created for dependency package
-        installation, if one does not already exist; see sbuild-update
-        (--keygen) for further details.
-      + The 'internal' build dependency resolver is deprecated.  It is
-        not recommended for future use, and will be removed once it is no
-        longer used by the buildd infrastructure.  Please use the 'apt'
-        resolver as a drop-in replacement.
-      + The 'aptitude' build dependency resolver will, unlike 'apt' and
-        'internal', consider alternative dependencies by default, rather
-        than only using the first alternative.  This is intended to both
-        preserve backward compatibility, and make the 'aptitude'
-        resolver the preferred choice for more complex situations, such
-        as building for experimental.
-      + The aptitude resolver can resolve complex dependencies, e.g.
-        A | B, where A is uninstallable now correctly falls back to B.
-        This is not the case for the internal or apt resolvers, which by
-        intent do not make use of alternatives (they use the first
-        alternative only.  sbuild now has full support for resolving
-        alternatives, but this is not the default behaviour
-        (Closes: #403246).  Please see #614807 for a proposed description
-        of autobuilder-imposed build dependency restrictions in Policy.
-      + All build dependency resolvers run dpkg with --force-confold.
-        This means packages with modified conffiles in the chroot to not
-        cause build failure.  This includes /etc/services and
-        /etc/protocols from netbase (Closes: #576508).
-    - Logging:
-      + Long paths such as the chroot location and the build directory
-        inside the chroot are now filtered in the build log and replaced
-        with small, constant, abbreviations (Closes: #605763).  This makes
-        the build logs comparable between builds with tools such as
-        diff(1).
-      + Logging messages have been improved, and important messages are
-        now coloured when running interactively (does not affect log
-        files).  Errors, warnings and informational messages are coloured
-        red, yellow and green, respectively.  Build status is coloured
-        green for success and red for all failure conditions.
-      + Build log mails are now compressed and mailed in MIME format by
-        default, together with a copy of the .changes file.  The old
-        behaviour (plain mailing of uncompressed logs) may be restored by
-        setting $mime_build_log_mails=0 in the configuration, and
-        compression may also be disabled in the MIME mails by setting
-        $compress_build_log_mails=0.  Note that it is no longer possible
-        to send compressed log mails unless MIME mailing is enabled.
-        Thanks to Philipp Kern for implementing this.
-    - Error handling:
-      + In order to handle errors more robustly, the build code now has
-        initial support for exception handling.  Normal operation will
-        not be affected, but fatal errors may be logged in a different
-        order than seen previously.  Fatal errors will now be seen at the
-        end of the build log, which should make it easier to spot
-        problems.
-      + sbuild now always cleans up fully when receiving a termination
-        signal such as SIGINT or SIGTERM.  Note that you may need to wait
-        while the cleanup actions are performed, or the current task is
-        completed prior to initiating cleanup.  When running
-        interactively, hitting Ctrl-C will sent SIGINT to the entire
-        process group; doing this while apt-get or aptitude are running
-        will potentially leave dpkg in an inconsistent state, so aborting
-        at this point is not recommended.  Sending a SIGTERM to the
-        sbuild process will always work cleanly.
-    - General:
-      + sbuild now performs an apt dist-upgrade at the start of each
-        build by default, rather than an upgrade.  This is to reduce the
-        amount of manual administration required to keep chroots up to
-        date, and is not much more risky than upgrade in this context.
-      + A new option, --keep-session, has been added (Closes: #609658).
-        This prevents the automatic removal of session-managed snapshot
-        chroots.  Previously, snapshots would not be deleted if purging
-        of the build directory or build dependencies was disabled, but
-        this was not always desirable, hence it is now configurable
-        separately.
-      + Internally, building and other actions in the chroot are
-        performed by the 'sbuild' system user, where previously the user
-        invoking sbuild would be used instead.  The aim of this change is
-        to separate privileges to increase security and reduce the chance
-        of accidental or deliberate tampering of the build environment.
-        While the latter is not addressed by these changes, this will be
-        taken care of during future architectural changes.
-      + The sbuild package build directory created inside the chroot now
-        has a reduced name length.  It's now /build/packagename-XXXXXX
-        where XXXXXX are random characters.  This helps reduce the chance
-        of hitting path length restrictions on some architectures,
-        particularly when using sockets.
-  * wanna-build:
-    - The wanna-build database has been removed entirely.  This part of
-      the sbuild package was not used, and was not maintained for some
-      time.  Users wishing to use wanna-build should investigate the
-      version in the wanna-build.git repository used by the Debian
-      autobuilding infrastructure.  This version is actively maintained
-      and in continual use.
-  * sbuild.conf:
-    - sbuild.conf is now automatically generated from the help text and
-      defaults in the source code.  This means that the examples will
-      always be syntactically correct, the help text will always be
-      current, and the defaults will always match the defaults in the
-      source code (Closes: #609932, #610995).
-    - Non-scalar (or reference) types are deprecated in sbuild.conf.
-      This is because it is not possible to tell the difference between
-      an empty and an undefined value.  Values using array or hash
-      types should use the equivalent array reference or hash
-      reference, which have been supported for some time.  The old
-      style array and hash values will remain supported for now, but
-      will be removed in a future release.
-  * buildd.conf:
-    - Automatically generated like sbuild.conf.  As for sbuild.conf,
-      non-scalar types are deprecated.
-  * sbuild.conf.5:
-    - All of the allowed values in sbuild.conf are now documented in a
-      new sbuild.conf(5) manual page.  Like sbuild.conf, this is
-      entirely generated from the source code, so will always match the
-      defaults for the same sbuild version.
-  * buildd.conf.5:
-    - New manual page.  Like sbuild.conf(5), this documents all allowed
-      values.
+  * [Sbuild::Build] put KEY_ID into the log mail header if set
+  * [Buildd::Daemon] put signed builds into the upload queue
+  * [Buildd::Daemon] pass SIGN_WITH as keyid to sbuild
+  * [Buildd::DistConf] SIGN_WITH added as a new variable
+  * [Buildd::Daemon] remove unused read_config function
 
- -- Roger Leigh <rleigh@debian.org>  Wed, 16 Mar 2011 16:10:31 +0000
+ -- Philipp Kern <pkern@debian.org>  Thu, 24 Mar 2011 15:35:55 +0100
+
+sbuild (0.61.0-1+buildd20110321.1) squeeze; urgency=low
+
+  * sbuild: Add --no-apt-* options to disable default actions
+  * Buildd::Daemon: Don't upgrade or distupgrade running sbuild
+  * Revert "[Sbuild::Conf] set APT_UPGRADE's default to 0"
+
+ -- Philipp Kern <pkern@debian.org>  Mon, 21 Mar 2011 17:17:59 +0100
+
+sbuild (0.61.0-1+buildd20110321.0) squeeze; urgency=low
+
+  * Sbuild::ResolverBase: Remove File::Path dependency
+  * buildd profile: all/copyfiles: remove comments on top
+  * [Sbuild::Conf] set APT_UPGRADE's default to 0
+
+ -- Philipp Kern <pkern@debian.org>  Mon, 21 Mar 2011 09:46:17 +0100
+
+sbuild (0.61.0-1+buildd20110320.0) squeeze; urgency=low
+
+  * Built from git revision f97a8a7b668c16a2b8281110a91730c7ca349930.
+
+ -- Philipp Kern <pkern@debian.org>  Sun, 20 Mar 2011 14:15:17 +0100
+
+sbuild (0.61.0-1+buildd20110319.1) squeeze; urgency=low
+
+  * Built from git revision d6c599e73426d1039c3396cd87b8ba667b7a515a.
+
+ -- Philipp Kern <pkern@debian.org>  Sat, 19 Mar 2011 14:28:20 +0100
+
+sbuild (0.61.0-1buildd0) unstable; urgency=low
+
+  * Buildd-specific modifications:
+    - debian/rules: Enable compatibility with stable releases.
+
+ -- Roger Leigh <rleigh@debian.org>  Wed, 23 Feb 2011 13:43:01 +0000
 
 sbuild (0.61.0-1) unstable; urgency=low
 

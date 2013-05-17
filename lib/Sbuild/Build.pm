@@ -40,14 +40,14 @@ use Dpkg::Version;
 use MIME::Lite;
 use Term::ANSIColor;
 
-use Sbuild qw($devnull binNMU_version copy isin debug df send_mail dsc_files);
+use Sbuild qw($devnull binNMU_version copy isin debug df send_mail
+              dsc_files dsc_pkgver);
 use Sbuild::Base;
 use Sbuild::ChrootInfoSchroot;
 use Sbuild::ChrootInfoSudo;
 use Sbuild::ChrootRoot;
 use Sbuild::Sysconfig qw($version $release_date);
 use Sbuild::Sysconfig;
-use Sbuild::Utility qw(check_url download);
 use Sbuild::Resolver qw(get_resolver);
 use Sbuild::Exception;
 
@@ -110,26 +110,14 @@ sub new {
 
     # DSC, package and version information:
     $self->set_dsc($dsc);
-    my $ver = $self->get('DSC Base');
-    $ver =~ s/\.dsc$//;
     # Note, will be overwritten by Version: in DSC.
-    $self->set_version($ver);
-
-    # Do we need to download?
-    $self->set('Download', 0);
-    $self->set('Download', 1)
-	if (!($self->get('DSC Base') =~ m/\.dsc$/) || # Use apt to download
-	    check_url($self->get('DSC'))); # Valid URL
+    $self->set_version($dsc);
 
     # Can sources be obtained?
     $self->set('Invalid Source', 0);
     $self->set('Invalid Source', 1)
-	if ((!$self->get('Download') ||
-      (!($self->get('DSC Base') =~ m/\.dsc$/) &&
-        $self->get('DSC') ne $self->get('Package_OVersion')) ||
-      !defined $self->get('Version')));
+	if (!defined $self->get('Version'));
 
-    debug("Download = " . $self->get('Download') . "\n");
     debug("Invalid Source = " . $self->get('Invalid Source') . "\n");
 
     return $self;
@@ -174,7 +162,12 @@ sub set_version {
 
     debug("Setting package version: $pkgv\n");
 
-    my ($pkg, $version) = split /_/, $pkgv;
+    my ($pkg, $version);
+    if (-f $pkgv && -r $pkgv) {
+	($pkg, $version) = dsc_pkgver($pkgv);
+    } else {
+	($pkg, $version) = split /_/, $pkgv;
+    }
     my $pver = Dpkg::Version->new($version, check => 1);
     return if (!defined($pkg) || !defined($version) || !defined($pver));
     my ($o_version);
@@ -366,7 +359,7 @@ sub run_chroot_session {
 	my $session = $chroot_info->create('chroot',
 					   $self->get_conf('DISTRIBUTION'),
 					   $self->get_conf('CHROOT'),
-					   $self->get_conf('BUILD_ARCH'));
+					   $self->get_conf('HOST_ARCH'));
 
 	# Run pre build external commands
 	$self->check_abort();
@@ -636,7 +629,7 @@ sub run_fetch_install_packages {
 	}
 	$resolver->add_dependencies('CORE', join(", ", @coredeps) , "", "", "", "", "");
 
-	if (!$resolver->install_deps('core', 'CORE')) {
+	if (!$resolver->install_core_deps('core', 'CORE')) {
 	    Sbuild::Exception::Build->throw(error => "Core build dependencies not satisfied; skipping",
 					    failstage => "install-deps");
 	}
@@ -658,36 +651,33 @@ sub run_fetch_install_packages {
 				    join(", ", @{$self->get_conf('MANUAL_CONFLICTS_ARCH')}),
 				    join(", ", @{$self->get_conf('MANUAL_CONFLICTS_INDEP')}));
 
-	if ($self->get('Host Arch') eq $self->get('Build Arch')) {
-	# for native building make and install dummy-deps package
-		$resolver->add_dependencies($self->get('Package'),
-						$self->get('Build Depends'),
-						$self->get('Build Depends Arch'),
-						$self->get('Build Depends Indep'),
-						$self->get('Build Conflicts'),
-						$self->get('Build Conflicts Arch'),
-						$self->get('Build Conflicts Indep'));
+	$resolver->add_dependencies($self->get('Package'),
+				    $self->get('Build Depends'),
+				    $self->get('Build Depends Arch'),
+				    $self->get('Build Depends Indep'),
+				    $self->get('Build Conflicts'),
+				    $self->get('Build Conflicts Arch'),
+				    $self->get('Build Conflicts Indep'));
 
-		$self->check_abort();
-		if (!$resolver->install_deps($self->get('Package'),
-						'ESSENTIAL', 'GCC_SNAPSHOT', 'MANUAL',
-						$self->get('Package'))) {
-			Sbuild::Exception::Build->throw(error => "Package build dependencies not satisfied; skipping",
-							failstage => "install-deps");
-						}
-	} else { # cross-building
-		# install cross-deps. Hacked for now - need to generate dummy package
-		$self->log_subsection('Install cross build-dependencies (apt-get -a)');
-		$self->log('Cross-deps: Running apt-get -a' . $self->get('Host Arch') . ' build-dep ' . $self->get('Package') . "\n");
-		$resolver->run_apt_command(
-			{ COMMAND => [$self->get_conf('APT_GET'),  '-a' . $self->get('Host Arch'), 'build-dep', '-yf', $self->get('Package')],
-			ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
-			USER => 'root',
-			DIR => '/' });
-		if ($?) {
-			$self->log("Failed to get cross build-deps\n");
-			return 1;
-		}
+	my @build_deps;
+	if ($self->get('Host Arch') eq $self->get('Build Arch')) {
+	    @build_deps = ('ESSENTIAL', 'GCC_SNAPSHOT', 'MANUAL',
+			   $self->get('Package'));
+	} else {
+	    $self->check_abort();
+	    if (!$resolver->install_core_deps('essential',
+					      'ESSENTIAL', 'GCC_SNAPSHOT')) {
+		Sbuild::Exception::Build->throw(error => "Essential dependencies not satisfied; skipping",
+						failstage => "install-essential");
+	    }
+	    @build_deps = ('MANUAL', $self->get('Package'));
+	}
+
+	$self->check_abort();
+	if (!$resolver->install_main_deps($self->get('Package'),
+					  @build_deps)) {
+	    Sbuild::Exception::Build->throw(error => "Package build dependencies not satisfied; skipping",
+					    failstage => "install-deps");
 	}
 	$self->set('Install End Time', time);
 
@@ -710,10 +700,6 @@ sub run_fetch_install_packages {
 
 	if ($self->get('Pkg Status') eq "successful") {
 	    $self->log_subsection("Post Build");
-
-	    # Run lintian.
-	    $self->check_abort();
-	    $self->run_lintian();
 
 	    # Run piuparts.
 	    $self->check_abort();
@@ -779,14 +765,12 @@ sub copy_to_chroot {
     $self->check_abort();
     if (! File::Copy::copy($source, $dest)) {
 	$self->log_error("E: Failed to copy '$source' to '$dest': $!\n");
-	exit (1);
 	return 0;
     }
 
     $self->get('Session')->run_command(
 	{ COMMAND => ['chown', $self->get_conf('BUILD_USER') . ':sbuild',
-		      $self->get('Session')->strip_chroot_path($dest) . '/' .
-		      basename($source)],
+		      $self->get('Session')->strip_chroot_path($dest)],
 	  USER => 'root',
 	  DIR => '/' });
     if ($?) {
@@ -795,8 +779,7 @@ sub copy_to_chroot {
     }
     $self->get('Session')->run_command(
 	{ COMMAND => ['chmod', '0664',
-		      $self->get('Session')->strip_chroot_path($dest) . '/' .
-		      basename($source)],
+		      $self->get('Session')->strip_chroot_path($dest)],
 	  USER => 'root',
 	  DIR => '/' });
     if ($?) {
@@ -838,42 +821,25 @@ sub fetch_source_files {
     $self->check_abort();
     if ($self->get('DSC Base') =~ m/\.dsc$/) {
 	# Work with a .dsc file.
-	# $file is the name of the downloaded dsc file written in a tempfile.
-	my $file;
-	$file = download($self->get('DSC')) or
-	    $self->log_error("Could not download " . $self->get('DSC') . "\n") and
+	my $file = $self->get('DSC');
+	if (! -f $file || ! -r $file) {
+	    $self->log_error("Could not find $file\n");
 	    return 0;
+	}
 	my @cwd_files = dsc_files($file);
 
-	if (-f "$dir/$dsc") {
-	    # Copy the local source files into the build directory.
-	    $self->log_subsubsection("Local sources");
-	    $self->log("$dsc exists in $dir; copying to chroot\n");
-	    if (! $self->copy_to_chroot("$dir/$dsc", "$build_dir")) {
+	# Copy the local source files into the build directory.
+	$self->log_subsubsection("Local sources");
+	$self->log("$file exists in $dir; copying to chroot\n");
+	if (! $self->copy_to_chroot("$file", "$build_dir/$dsc")) {
+	    return 0;
+	}
+	push(@fetched, "$build_dir/$dsc");
+	foreach (@cwd_files) {
+	    if (! $self->copy_to_chroot("$dir/$_", "$build_dir/$_")) {
 		return 0;
 	    }
-	    push(@fetched, "$build_dir/$dsc");
-	    foreach (@cwd_files) {
-		if (! $self->copy_to_chroot("$dir/$_", "$build_dir")) {
-		    return 0;
-		}
-		push(@fetched, "$build_dir/$_");
-	    }
-	} else {
-	    # Copy the remote source files into the build directory.
-	    $self->log_subsubsection("Remote sources");
-	    $self->log("Downloading source files from $dir.\n");
-	    if (! File::Copy::copy("$file", "$build_dir/" . $self->get('DSC File'))) {
-		$self->log_error("Could not copy downloaded file $file to $build_dir\n");
-		return 0;
-	    }
-	    push(@fetched, "$build_dir/" . $self->get('DSC File'));
-	    foreach (@cwd_files) {
-		download("$dir/$_", "$build_dir/$_") or
-		    $self->log_error("Could not download $dir/$_") and
-		    return 0;
-		push(@fetched, "$build_dir/$_");
-	    }
+	    push(@fetched, "$build_dir/$_");
 	}
     } else {
 	# Use apt to download the source files
@@ -1147,14 +1113,21 @@ sub run_lintian {
 
     $self->log_subsubsection("lintian");
 
+    my $build_dir = $self->get('Chroot Build Dir');
+    my $resolver = $self->get('Dependency Resolver');
     my $lintian = $self->get_conf('LINTIAN');
     my @lintian_command = ($lintian);
     push @lintian_command, @{$self->get_conf('LINTIAN_OPTIONS')} if
         ($self->get_conf('LINTIAN_OPTIONS'));
-    push @lintian_command, $self->get('Changes File');
-    $self->get('Host')->run_command(
+    push @lintian_command, $self->get_changes($build_dir);
+
+    $resolver->add_dependencies('LINTIAN', 'lintian', "", "", "", "", "");
+    return 1 unless $resolver->install_core_deps('lintian', 'LINTIAN');
+
+    $self->get('Session')->run_command(
         { COMMAND => \@lintian_command,
           PRIORITY => 0,
+          DIR => $self->get('Build Dir')
         });
     my $status = $? >> 8;
     $self->set('Lintian Reason', 'pass');
@@ -1353,7 +1326,7 @@ sub build {
 	    }
 	    $dists = $self->get_conf('DISTRIBUTION');
 
-	    print F "$name ($NMUversion) $dists; urgency=low\n\n";
+	    print F "$name ($NMUversion) $dists; urgency=low, binary-only=yes\n\n";
 	    if ($self->get_conf('APPEND_TO_VERSION')) {
 		print F "  * Append ", $self->get_conf('APPEND_TO_VERSION'),
 		    " to version number; no source changes\n";
@@ -1625,8 +1598,16 @@ sub build {
 	    return 0;
 	}
 
+	if (!$rv) {
+	    $self->log_subsection("Post Build Chroot");
+
+	    # Run lintian.
+	    $self->check_abort();
+	    $self->run_lintian();
+	}
+
 	$self->log_subsection("Changes");
-	$changes = $self->get_changes();
+	$changes = $self->get_changes($build_dir);
 	my @cfiles;
 	if (-r "$build_dir/$changes") {
 	    my(@do_dists, @saved_dists);
@@ -1739,10 +1720,11 @@ sub get_env ($$) {
 
 sub get_changes {
     my $self=shift;
+    my $path=shift;
     my $changes;
 
     if ( (grep {$_ eq "-A"} @{$self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')})
-	 && -r $self->get('Chroot Build Dir') . '/' . $self->get('Package_SVersion') . $self->get('Package_SVersion') . "_all.changes") {
+	 && -r $path . '/' . $self->get('Package_SVersion') . "_all.changes") {
 	$changes = $self->get('Package_SVersion') . "_all.changes";
     }
     else {
@@ -2213,10 +2195,11 @@ sub close_build_log {
     if ($self->get_status() eq "successful") {
 	if (defined($self->get_conf('KEY_ID')) && $self->get_conf('KEY_ID')) {
 	    my $key_id = $self->get_conf('KEY_ID');
+	    my $build_dir = $self->get_conf('BUILD_DIR');
 	    my $changes;
 	    $self->log(sprintf("Signature with key '%s' requested:\n", $key_id));
-	    $changes = $self->get_changes();
-	    system "debsign", "-k$key_id", $changes;
+	    $changes = $self->get_changes($build_dir);
+	    system "debsign", "-k$key_id", "$build_dir/$changes";
 	}
     }
 
@@ -2321,11 +2304,12 @@ sub send_mime_build_log {
 		Filename => basename($filename) . '.gz'
 		);
     }
-    my $changes = $self->get_changes();
-    if ($self->get_status() eq 'successful' && -r $changes) {
+    my $build_dir = $self->get_conf('BUILD_DIR');
+    my $changes = $self->get_changes($build_dir);
+    if ($self->get_status() eq 'successful' && -r "$build_dir/$changes") {
 	my $log_part = MIME::Lite->new(
 		Type     => 'text/plain',
-		Path     => $changes,
+		Path     => "$build_dir/$changes",
 		Filename => basename($changes)
 		);
 	$log_part->attr('content-type.charset' => 'UTF-8');

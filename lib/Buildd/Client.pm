@@ -26,6 +26,7 @@ use warnings;
 
 use Sbuild qw($devnull);
 use Sbuild::ChrootRoot;
+use Cwd;
 
 BEGIN {
     use Exporter ();
@@ -101,6 +102,8 @@ sub pipe_query {
 	{ COMMAND => [@command],
 	  USER => $self->get_conf('USERNAME'),
 	  PRIORITY => 0,
+          DIR => getcwd(),
+          STREAMERR => \*STDOUT,
 	});
 
     return $pipe;

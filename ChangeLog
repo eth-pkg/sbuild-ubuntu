@@ -1,3 +1,309 @@
+commit d7f31eddcec5db5f5d0419daf520f9f19b857b5e
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 17 23:31:10 2013 +0100
+
+    debian: Remove buildd preinst and correct init script dependencies
+
+commit 05251cb18583d605d573b34bd782c1c28e1fd494
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 17 23:28:32 2013 +0100
+
+    debian: Upgrade to Standards-Version 3.9.4
+
+commit c439aad0bdfcd03d925b656593539574a9527996
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 17 23:10:12 2013 +0100
+
+    NEWS: Bump version to 0.64.0 and document main changes
+
+commit 1f9aecf124173808ed4e9bf67fe99c91de3010b8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 17 23:09:43 2013 +0100
+
+    debian: Bump changelog version to 0.64.0
+
+commit a25baa48fe5813bffe6c51aa86eb90c190f8a682
+Author: Geoffrey Thomas <geofft@mit.edu>
+Date:   Tue Feb 12 17:36:36 2013 -0800
+
+    debian: Close #672711
+
+commit a319744b9fa1d2e6d98ef89e1a9ce7adbbb2a33f
+Author: Geoffrey Thomas <geofft@mit.edu>
+Date:   Tue Feb 12 17:34:04 2013 -0800
+
+    Sbuild::Build: Add "binary-only=yes" to binNMU changelog entries
+    
+    When we add a changelog entry for a binNMU or for an appended version
+    number, mark that entry with "binary-only=yes", so that new versions of
+    dpkg-gencontrol know to use the previous changelog entry as the source
+    version.
+
+commit b6afed5937e32a0bc86d22c01ef5caa0e558ea6b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 17 22:56:44 2013 +0100
+
+    Sbuild::Build: Run lintian before moving the build files
+
+commit 1b040f9f3e92b15bfc6bf3d36646e95430b5c21c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 17 22:30:02 2013 +0100
+
+    debian: Close #626361
+
+commit 61656cfd7e24316b2d00ad14a0bafc6539be9b7e
+Author: Reinhard Tartler <siretart@tauware.de>
+Date:   Fri May 17 22:28:10 2013 +0100
+
+    Sbuild::Build: Run lintian from inside the chroot
+    
+    Running lintian from inside the chroot supports use-cases with several
+    chroots (oldstable, unstable, testing, lucid, natty, etc), where using
+    the system lintian might not give the best results.  By using the
+    lintian version from the chroot, sbuild uses always the version that
+    matches the distro version that the package is being built for.
+
+commit 0a7c7f5218479aebfd08ee239f1c6256e94593c9
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 17 22:26:13 2013 +0100
+
+    debian: Close #686509
+
+commit 4f9a42f94f029ef4b3812f780184c476a447342b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 17 22:23:30 2013 +0100
+
+    Sbuild::Build: Compute changes filename correctly
+    
+    Based upon initial work by Daniel Dehennin with additional
+    changes for robustness when building inside a source tree.
+
+commit fe47c7d7a2dd4abda9526789f36aecca188cc58b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 17 21:20:33 2013 +0100
+
+    debian: Close #699903
+
+commit d2a8373eef3ad8112fbb680db488f87426e7c27e
+Author: Stephan Sürken <absurd@debian.org>
+Date:   Fri May 17 21:17:50 2013 +0100
+
+    Sbuild::Build: Remove stray exit from copy_to_chroot
+    
+    This prevents sbuild waiting forever on 'Failed to copy'.
+
+commit e7a822a1597610501562cae0e69329c828d28302
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Fri May 17 20:48:09 2013 +0100
+
+    debian: Document forward-ported buildd patches
+
+commit d5b99c2752566c3b25ddc57cb48222cda246c8b5
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu May 16 22:13:10 2013 +0100
+
+    Fix SSH control master restart
+
+commit 3283e5c5147cec8eededee2407e451bee916862c
+Author: Philipp Kern <pkern@debian.org>
+Date:   Thu May 16 22:10:14 2013 +0100
+
+    [Sbuild::DB::Client] do not change the cwd
+
+commit 4b05f6f1344b8ca03473fe41d7368795e7b94ebb
+Merge: 11fe624 7aed101
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu May 16 20:28:38 2013 +0100
+
+    Merge remote-tracking branch 'origin/master'
+    
+    Conflicts:
+    	debian/changelog
+
+commit 7aed1015ae16873618024f7bb89a04c7e59dc107
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Wed Feb 6 02:30:50 2013 +0000
+
+    Buildd::Conf: Fix typo
+
+commit 11fe624f2a0bdc2360e969eae3e5e024a2660d39
+Author: Roland Stigge <stigge@antcom.de>
+Date:   Tue Feb 5 21:00:32 2013 +0000
+
+    Apply patch for 0.63.2-1.1 NMU
+
+commit 86d9f34554c1b90163cff5ff184a07c265ce9d31
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Wed Jan 9 10:53:44 2013 +0000
+
+    debian: Document sbuild failure count fix
+
+commit e41cccc2d4e7122bda4c73772f58a4b12789ea9b
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Wed Jan 9 10:53:18 2013 +0000
+
+    Buildd::Daemon: Reset sbuild failure count after sleeping
+
+commit 746c269b1d1c413b685ff4bc7d218f4149abe7cd
+Author: Adam Conrad <adconrad@0c3.net>
+Date:   Mon Jan 7 11:18:50 2013 -0700
+
+    debian: Close #695273
+
+commit 5ad92654ae45bf3196b9d22f47838993d6991534
+Author: Adam Conrad <adconrad@0c3.net>
+Date:   Mon Jan 7 11:15:34 2013 -0700
+
+    Fix and improve cross-build chroot detection
+    
+    Update ChrootInfo.pm to allow for chroots named $dist-$build-$host
+    to avoid namespace clashes with native chroots, and fix Build.pm
+    to default to looking for the chroot at HOST_ARCH.
+    
+    Improve documentation for the above in the sbuild.1 manpage.
+
+commit 8b510e5f4417eadc92c4d13f8e996fad8cfde764
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Mon Jan 7 12:52:05 2013 +0000
+
+    debian: Close #695203
+
+commit 9aaa06de161ecb0a5422dc48805215211590c2f9
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Mon Jan 7 12:51:44 2013 +0000
+
+    sbuild: Resolve cross-build-dependencies from package being built
+
+commit 8851c91d4351db3f2e5ea727420c68c3ce421ae8
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jan 3 23:24:59 2013 +0000
+
+    debian: Close #697298
+
+commit dc49ae794f5f6c9b5b4903b4fae5feb4ed7e6276
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Thu Jan 3 23:23:18 2013 +0000
+
+    ResolverBase: Pass correct options to deps_parse for :native deps
+
+commit b0b469da801b54c4441fd16a9c85faa6a6b2362d
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu Jan 3 21:36:50 2013 +0000
+
+    Buildd::Conf: Enable $distributions and $upload_queues
+    
+    These were in the example syntax, but didn't work.  Allow in
+    addition to @distributions and @upload_queues, and warn if
+    the @ form is used since this doesn't match use for all other
+    configuration values.
+
+commit a3b867ff94720cccd707f0aa88b0148cf0bfa3ce
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 30 16:58:22 2012 +0000
+
+    Build::Conf: Revert incorrect documentation change
+
+commit 134223e35d4bea3c58a4764d5ee4944598f67e25
+Author: Thorsten Glaser <tg@mirbsd.org>
+Date:   Sun Dec 30 00:07:29 2012 +0000
+
+    avoid dereferencing MAILTO_HASH if it is undefined
+
+commit a346f00792def8e5b4181e14fe958efd4448f43b
+Author: Thorsten Glaser <tg@mirbsd.org>
+Date:   Sun Dec 30 00:05:14 2012 +0000
+
+    change sample configuration entries from $foo=[]; to @foo=();
+    
+    for now, this is required so they actually work; later, both
+    methods may be allowed, but right now, only the latter works
+    
+    also, fix a missing parenthesis that gets jupp's find matching
+    brace functionality confused
+
+commit c8ccc72f0894cc8a4fec5ac8ca65bf4c08e34cdc
+Author: Thorsten Glaser <tg@mirbsd.org>
+Date:   Sun Dec 30 00:00:21 2012 +0000
+
+    debian: Close #636477 by adding changelog entry for the previous commit
+
+commit fbd76de128aefe983eb8d981e061fc4051432c7f
+Author: Arnaud Patard <arnaud.patard@rtp-net.org>
+Date:   Tue Jul 19 09:44:41 2011 +0200
+
+    Fix get_db_handle
+    
+    Commit 72f987c0a03e58358ea616628514efa0113f0332 moved Client class from
+    Sbuild::DB to Buildd:: and now, when uploading, there are errors in the
+    log:
+    Can't locate object method "new" via package "Buildd::Client" (perhaps you
+    forgot to load "Buildd::Client"?) at /usr/share/perl5/Buildd/Base.pm line 120 (#1)
+    
+    Adding a "use Buildd:Client;" cures the problem for me.
+    
+    Signed-off-by: Arnaud Patard <arnaud.patard@rtp-net.org>
+
+commit c73c97774dd63bc0db999b324b521fef54d07fb0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Dec 10 00:04:10 2012 +0000
+
+    debian: Close #693790
+
+commit 444dfa6f947c89d6587f6877fcbe32cb7fe3f8ac
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Mon Dec 10 00:03:03 2012 +0000
+
+    buildd: Make sbuild failure count configurable with MAX_SBUILD_FAILS
+
+commit d3b674303c8b8f99ccf6197fbfed3cf299968a11
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 9 23:55:36 2012 +0000
+
+    debian: Close #693788
+
+commit 0a0d30972d357959e863f58ffca4fdce714b9eba
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Sun Dec 9 23:53:54 2012 +0000
+
+    Sbuild::Build: cross build-dep installation failure throws exception
+
+commit 6e87a316d85417d38e3fbe0d8fe8700020ad71f1
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 9 23:50:49 2012 +0000
+
+    debian: Close #695513 and bump version
+
+commit 521290bf1e2b5b1c2013a187a4369a8ccfcde6fa
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Dec 9 23:49:43 2012 +0000
+
+    debian: Remove duplicate stop function from buildd init script
+
+commit 752ee22db84da27f10c25520dbfba66d866fa1a7
+Author: Roland Stigge <stigge@antcom.de>
+Date:   Sat Dec 8 23:03:00 2012 +0000
+
+    Fix building packages with revision "0"
+
+commit c360e45618b901662cfea5044df4b55ad0e236c3
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Sep 4 17:39:12 2012 +0100
+
+    man: Add --no to piuparts option
+
+commit af05d7dffb90abf4ed0fe1676b902f452bc11d44
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Tue Aug 28 23:55:53 2012 +0100
+
+    sbuild: Move http downloads to executable wrapper
+    
+    This permits the .dsc to not match the standard naming
+    conventions providing that the contents are correct.  The
+    main goal is to only have the core code accept .dsc or
+    package_version for download using apt-get.  This is a
+    prerequisite for proper privilege separation and
+    simplification of the core code.
+
 commit d299f7eee5f7ea908e0b37ac44886be0aa33ca36
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sat Aug 18 13:49:18 2012 +0100
