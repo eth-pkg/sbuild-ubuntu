@@ -1,3 +1,75 @@
+commit 295f8a47b99cf01f4db5548f888e92d7e25f3868
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 13 20:47:17 2013 +0100
+
+    debian: Set distribution to unstable
+
+commit 01fcea5556e18b211b7a5d653e94aa837c66c191
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 13 20:46:57 2013 +0100
+
+    NEWS: Finalise for 0.64.1
+
+commit edec86529f6100386d435d4a4694d70806d033a0
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 13 20:19:33 2013 +0100
+
+    debian: Document autoflush workaround removal
+
+commit c906219b9060cae5e6413dfcfd16965c3180a2e4
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 13 20:18:33 2013 +0100
+
+    Sbuild::Build: Remove perl 5.10 autoflush workaround
+
+commit 733220ece292b785491f45484563dded812b228c
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 13 19:55:56 2013 +0100
+
+    debian: Also thank Václav Ovsík for #724858 patch
+
+commit 73ef01ce6551b4545373c3d7b13325da4e285897
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 13 19:54:25 2013 +0100
+
+    sbuild-createchroot: Remove package from tempfile usage
+
+commit bb4814ba5dfc0ef851d35232f0b6a95e51e85311
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 13 19:47:28 2013 +0100
+
+    debian: Close #722012
+
+commit 40bb2ad7942a7f8ad78c8fa7f907bfb47d49aa1a
+Author: Vaclav Ovsik <vaclav.ovsik@gmail.com>
+Date:   Sun Oct 13 19:46:22 2013 +0100
+
+    Sbuild::Conf: Add missing File::Spec
+
+commit 497713d146b711b789e3a8b5e74fbfe56b60deec
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 13 19:44:24 2013 +0100
+
+    debian: Also thank Paul Elliott for #724858 patch
+
+commit 28922812df0114e59f8cb2cfe19fb56daf33459b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 13 19:38:15 2013 +0100
+
+    debian: Bump version to 0.64.1-1 and Close #724858
+
+commit f31d0dfbb6cd1aa06892c520e2e473d1f099d06b
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun Oct 13 19:37:34 2013 +0100
+
+    NEWS: Bump version to 0.64.1
+
+commit 4cba82f909b46b69cf271b656e13e3c03898ec64
+Author: Alexander Chernyakhovsky <achernya@mit.edu>
+Date:   Sat Sep 28 16:07:44 2013 -0400
+
+    Fix sbuild-createschroot on jessie/sid
+
 commit d7f31eddcec5db5f5d0419daf520f9f19b857b5e
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Fri May 17 23:31:10 2013 +0100
