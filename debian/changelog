@@ -1,3 +1,24 @@
+sbuild (0.64.2-1) unstable; urgency=low
+
+  * Team upload.
+
+  [ Colin Watson ]
+  * buildd:
+    - Unset some more locale environment variables, and sort these in the
+      same order as the output of locale(1), to make it easier to compare
+      visually.
+
+  [ Luca Falavigna ]
+  * sbuild-createchroot:
+    - Allow to define custom suffixes in chroot names (Closes: #741727).
+    - Allow to Define custom debootstrap variant (Closes: #715020).
+
+  [ Christoph Biedl ]
+  * lib/Sbuild/Build.pm:
+    - Sort output of package content listing (Closes: #743773).
+
+ -- Luca Falavigna <dktrkranz@debian.org>  Fri, 12 Sep 2014 20:02:46 +0200
+
 sbuild (0.64.1-1) unstable; urgency=low
 
   [ Roger Leigh ]
