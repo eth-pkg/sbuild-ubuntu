@@ -1,3 +1,117 @@
+commit d0dd2f6df2078c160875d2a330a3507a04e126e5
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Sep 30 13:45:39 2014 +0100
+
+    Fix sbuild test to respect apt policy, otherwise the test can fail
+    because 'apt source foo' downloaded an unexpected version.
+
+commit 8e2e1a421bfaf30968033ee2a205c2384df4941d
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Sep 30 13:36:09 2014 +0100
+
+    Update HACKING with test info
+
+commit f4c586aaa3f7f45f8549dd893d06f254e31d2c3d
+Author: Wookey <wookey@wookware.org>
+Date:   Mon Sep 29 22:20:46 2014 +0100
+
+    Update HACKING file with current release procedure
+
+commit 4fdf1e712277a1862e2285cff7de805dc6197855
+Author: Wookey <wookey@wookware.org>
+Date:   Mon Sep 29 14:59:28 2014 +0100
+
+    Add wookey to uploaders/team
+    Release 0.64.3
+
+commit 7b6b2b5983d54ff0ab54da5aa7ef2d499b87ad85
+Author: Wookey <wookey@wookware.org>
+Date:   Thu Sep 25 21:04:03 2014 +0100
+
+    Merge #760991 and #608840 hook command changes.
+    So chroot setup/cleanup commands are run as root and starting/finished commands are run as user
+    The existing name for chroot-setup-commands is thus retained for backwards comptibility
+    
+         Here is a summary of the resulting command options, in order, showing
+         option, user, internal/external, and point of running:
+         --pre-build-commands       root  ext  after chroot session setup
+         --chroot-setup-commands    root  int  after chroot initialisation, before 'update'
+         --starting-build-commands  user  int  after update and dependency-install, before build
+         --finished-build-commands  user  int  after end of timed build
+         --chroot-cleanup-commands  root  int  after build, before session is closed
+         --post-build-commands      root  ext  after session is shut down
+
+commit ccfc7e7a6fda4aea36350b7588b8849901a19789
+Author: Wookey <wookey@wookware.org>
+Date:   Thu Sep 25 17:26:27 2014 +0100
+
+    Add changelog entry for multiarch-build feature
+
+commit 9fdca933d6264a4a21d63d4fd4b76dafb1ee15a9
+Author: Dima Kogan <dima@secretsauce.net>
+Date:   Thu Aug 28 23:55:13 2014 -0700
+
+    I'm now removing any foreign architectures that I added
+
+commit c599aa5e508d596b79f4130e63f5d197704504f3
+Author: Dima Kogan <dima@secretsauce.net>
+Date:   Thu Aug 28 23:16:41 2014 -0700
+
+    I now add a foreign arch to support foreign Build-Depends
+    
+    As an example, if a Build-Depends contains
+    
+     libwhatever:armel
+    
+    then I run
+    
+     dpkg --add-architecture armel
+
+commit 00bacfb97003422bebf5d6517f62660b574ccbfb
+Author: Luca Falavigna <dktrkranz@debian.org>
+Date:   Fri Sep 12 20:03:02 2014 +0200
+
+    debian: Set distribution to unstable
+
+commit 061bc7b44d801d2bc942d938b52e67bb75b0ae7d
+Author: Luca Falavigna <dktrkranz@debian.org>
+Date:   Fri Sep 12 20:02:36 2014 +0200
+
+    NEWS: Finalise for 0.64.2
+
+commit 031dd51d6b42cec3103314cc5caa87ef07acb2ec
+Author: Luca Falavigna <dktrkranz@debian.org>
+Date:   Sat Aug 9 10:46:14 2014 +0200
+
+    Sort output of package content listing
+
+commit 54d2d3128229c48b28d65300e1aa6e74c7a00e3b
+Author: Luca Falavigna <dktrkranz@debian.org>
+Date:   Sat Aug 9 10:44:46 2014 +0200
+
+    Allow to Define custom debootstrap variant
+
+commit 59f138dcf6568db56abc1edd1443968da970f71d
+Author: Luca Falavigna <dktrkranz@debian.org>
+Date:   Thu Jun 19 08:29:35 2014 +0200
+
+    Allow to define custom suffixes in chroot names
+
+commit 73a4ef2423980e6981356956b41a8b205118970d
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Fri Oct 18 12:47:35 2013 +0100
+
+    debian: Document locale environment variable changes
+
+commit 28a24d0d6eaf4ecf3c1d33d6c407bb2783ff8fe5
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Fri Oct 18 12:42:40 2013 +0100
+
+    Buildd: Unset some more locale environment variables
+    
+    Also sort these in the same order as the output of locale(1), to make it
+    easier to compare visually.
+
 commit 295f8a47b99cf01f4db5548f888e92d7e25f3868
 Author: Roger Leigh <rleigh@debian.org>
 Date:   Sun Oct 13 20:47:17 2013 +0100
