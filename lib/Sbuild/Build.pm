@@ -199,7 +199,7 @@ sub set_version {
 
     # Version with binNMU or other additions and stripped epoch
     my $sversion = $b_version;
-    $sversion .= '-' . $b_revision if $b_revision;
+    $sversion .= '-' . $b_revision if $b_revision ne '';
 
     $self->set('Package', $pkg);
     $self->set('Version', $version);
@@ -267,6 +267,7 @@ sub run {
 	# Acquire the architectures we're building for and on.
 	$self->set('Host Arch', $self->get_conf('HOST_ARCH'));
 	$self->set('Build Arch', $self->get_conf('BUILD_ARCH'));
+	$self->set('Build Profiles', $self->get_conf('BUILD_PROFILES'));
 
 	my $dist = $self->get_conf('DISTRIBUTION');
 	if (!defined($dist) || !$dist) {
@@ -464,6 +465,7 @@ sub run_chroot_session {
 	$resolver->set('Arch', $self->get_conf('ARCH'));
 	$resolver->set('Host Arch', $self->get_conf('HOST_ARCH'));
 	$resolver->set('Build Arch', $self->get_conf('BUILD_ARCH'));
+	$resolver->set('Build Profiles', $self->get_conf('BUILD_PROFILES'));
 	$resolver->set('Chroot Build Dir', $self->get('Chroot Build Dir'));
 	$self->set('Dependency Resolver', $resolver);
 
@@ -804,6 +806,7 @@ sub fetch_source_files {
     my $pkg = $self->get('Package');
     my $ver = $self->get('OVersion');
     my $host_arch = $self->get('Host Arch');
+    my $resolver = $self->get('Dependency Resolver');
 
     my ($dscarchs, $dscpkg, $dscver, @fetched);
 
@@ -964,8 +967,9 @@ sub fetch_source_files {
     $build_conflicts_indep =~ s/\n\s+/ /g if defined $build_conflicts_indep;
 
 
+    $self->log_subsubsection("Check architectures");
     # Check for cross-arch dependencies
-    # parse $build_depends* for explicit :arch and add the foreign arch, as needed
+    # parse $build_depends* for explicit :arch and add the foreign arches, as needed
     sub get_explicit_arches
     {
         my $visited_deps = pop;
@@ -974,7 +978,7 @@ sub fetch_source_files {
         my %set;
         for my $dep (@deps)
         {
-            # I make sure to break any recursion in the deps data structure
+            # Break any recursion in the deps data structure (is this overkill?)
             next if !defined $dep;
             my $id = ref($dep) ? refaddr($dep) : "str:$dep";
             next if $visited_deps->{$id};
@@ -1008,17 +1012,20 @@ sub fetch_source_files {
     my $added_any_new;
     for my $foreign_arch(@foreign_arches)
     {
-        my $resolver = $self->get('Dependency Resolver');
         $resolver->add_foreign_architecture($foreign_arch);
         $added_any_new = 1;
     }
+
+    my @keylist=keys %{$resolver->get('Initial Foreign Arches')};
+    $self->log('Initial Foreign Architectures: ' . join ' ', @keylist, "\n")
+      if @keylist;
+    $self->log('Foreign Architectures in build-deps: '. join ' ', @foreign_arches, "\n\n")
+      if @foreign_arches;
+
     $self->run_chroot_update() if $added_any_new;
 
 
-
-
-
-    $self->log_subsubsection("Check arch");
+    # Check package arch makes sense to build
     if (!$dscarchs) {
 	$self->log("$dsc has no Architecture: field -- skipping arch check!\n");
     } else {
@@ -1041,6 +1048,8 @@ sub fetch_source_files {
     }
 
     debug("Arch check ok ($host_arch included in $dscarchs)\n");
+
+    $self->log_subsubsection("Check dependencies");
 
     $self->set('Build Depends', $build_depends);
     $self->set('Build Depends Arch', $build_depends_arch);
@@ -1117,7 +1126,7 @@ sub run_external_commands {
     # Create appropriate log message and determine if the commands are to be
     # run inside the chroot or not, and as root or not.
     my $chroot = 0;
-    my $rootuser = 1;  
+    my $rootuser = 1;
     if ($stage eq "pre-build-commands") {
 	$self->log_subsection("Pre Build Commands");
     } elsif ($stage eq "chroot-setup-commands") {
@@ -1141,28 +1150,38 @@ sub run_external_commands {
     # Run each command, substituting the various percent escapes (like
     # %SBUILD_DSC) from the commands to run with the appropriate subsitutions.
     my $dsc = $self->get('DSC');
-    my $changes;
-    $changes = $self->get('Changes File') if ($self->get('Changes File'));
+    my $changes = $self->get('Changes File') if ($self->get('Changes File'));
+    my $hostarch = $self->get('Host Arch') if ($self->get('Host Arch'));
+    my $build_dir = $self->get('Build Dir');
+    my $pkgbuild_dir = $build_dir . '/' . $self->get('DSC Dir');
     my %percent = (
 	"%" => "%",
 	"d" => $dsc, "SBUILD_DSC" => $dsc,
 	"c" => $changes, "SBUILD_CHANGES" => $changes,
+	"a" => $hostarch, "SBUILD_HOST_ARCH" => $hostarch,
+	"b" => $build_dir, "SBUILD_BUILD_DIR" => $build_dir,
+	"p" => $pkgbuild_dir, "SBUILD_PKGBUILD_DIR" => $pkgbuild_dir,
     );
+    if ($chroot == 0) {
+	my $chroot_dir = $self->get('Chroot Dir');
+	$percent{r} = $chroot_dir;
+	$percent{SBUILD_CHROOT_DIR} = $chroot_dir;
+    }
     # Our escapes pattern, with longer escapes first, then sorted lexically.
     my $keyword_pat = join("|",
 	sort {length $b <=> length $a || $a cmp $b} keys %percent);
     my $returnval = 1;
     foreach my $command (@commands) {
 	foreach my $arg (@{$command}) {
-	  $arg =~ s{
-	      # Match a percent followed by a valid keyword
-	     \%($keyword_pat)
-	  }{
-	      # Substitute with the appropriate value only if it's defined
-	      $percent{$1} || $&
-	  }msxge;
+	    $arg =~ s{
+	        # Match a percent followed by a valid keyword
+	       \%($keyword_pat)
+	    }{
+	        # Substitute with the appropriate value only if it's defined
+	        $percent{$1} || $&
+	    }msxge;
 	}
-  my $command_str = join(" ", @{$command});
+	my $command_str = join(" ", @{$command});
 	$self->log_subsubsection("$command_str");
 	$returnval = $self->run_command($command, $log_output, $log_error, $chroot, $rootuser);
 	$self->log("\n");
@@ -1488,6 +1507,13 @@ sub build {
 	push (@{$buildcmd}, '-a' . $host_arch);
     }
 
+    if (defined($self->get_conf('BUILD_PROFILES')) &&
+	$self->get_conf('BUILD_PROFILES')) {
+	my $profiles = $self->get_conf('BUILD_PROFILES');
+	$profiles =~ tr/ /,/;
+	push (@{$buildcmd}, '-P' . $profiles);
+    }
+
     if (defined($self->get_conf('PGP_OPTIONS')) &&
 	$self->get_conf('PGP_OPTIONS')) {
 	if (ref($self->get_conf('PGP_OPTIONS')) eq 'ARRAY') {
@@ -1749,7 +1775,7 @@ sub build {
 	    }
 	    else {
 		$self->log($_) while( <PIPE> );
-		close( PIPE );
+		close( PIPE ) or ($rv = 1);
 	    }
 	    $self->log("\n");
 	    if (!open( PIPE, "dpkg --contents $deb 2>&1 | sort -k6 |" )) {
@@ -1757,7 +1783,7 @@ sub build {
 	    }
 	    else {
 		$self->log($_) while( <PIPE> );
-		close( PIPE );
+		close( PIPE ) or ($rv = 1);
 	    }
 	    $self->log("\n");
 	}
@@ -1961,6 +1987,7 @@ sub add_stat {
 
 sub generate_stats {
     my $self = shift;
+    my $resolver = $self->get('Dependency Resolver');
 
     $self->add_stat('Job', $self->get('Job'));
     $self->add_stat('Package', $self->get('Package'));
@@ -1969,6 +1996,13 @@ sub generate_stats {
     $self->add_stat('Machine Architecture', $self->get_conf('ARCH'));
     $self->add_stat('Host Architecture', $self->get('Host Arch'));
     $self->add_stat('Build Architecture', $self->get('Build Arch'));
+    $self->add_stat('Build Profiles', $self->get('Build Profiles'))
+        if $self->get('Build Profiles');
+    my @keylist=keys %{$resolver->get('Initial Foreign Arches')};
+    push @keylist, keys %{$resolver->get('Added Foreign Arches')};
+    my $foreign_arches = join ' ', @keylist;
+    $self->add_stat('Foreign Architectures', $foreign_arches )
+        if $foreign_arches;
     $self->add_stat('Distribution', $self->get_conf('DISTRIBUTION'));
     $self->add_stat('Space', $self->get('This Space'));
     $self->add_stat('Build-Time',
@@ -2236,6 +2270,7 @@ sub open_build_log {
     $self->log("Machine Architecture: " . $self->get_conf('ARCH') . "\n");
     $self->log("Host Architecture: " . $self->get('Host Arch') . "\n");
     $self->log("Build Architecture: " . $self->get('Build Arch') . "\n");
+    $self->log("Build Profiles: " . $self->get('Build Profiles') . "\n") if $self->get('Build Profiles');
     $self->log("\n");
 }
 

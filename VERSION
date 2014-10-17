@@ -1,5 +1,5 @@
 Package: sbuild
-Version: 0.64.3
-Release-Date: 30 Sep 2014
+Version: 0.65.0
+Release-Date: 16 Oct 2014
 Released-By: Wookey <wookey@wookware.org>
-Git-Tag: release/sbuild-0.64.3
+Git-Tag: release/sbuild-0.65.0

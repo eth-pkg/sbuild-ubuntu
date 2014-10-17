@@ -55,6 +55,10 @@ sub set_options {
 		       "no-arch-all" => sub {
 			   $self->set_conf('BUILD_ARCH_ALL', 0);
 		       },
+		       "profiles=s" => sub {
+			   $_[1] =~ tr/,/ /;
+			   $self->set_conf('BUILD_PROFILES', $_[1]);
+		       },
 		       "add-depends=s" => sub {
 			   push(@{$self->get_conf('MANUAL_DEPENDS')}, $_[1]);
 		       },
@@ -292,7 +296,13 @@ sub set_options {
 		       },
 			"log-external-command-error" => sub {
 			    $self->set_conf('LOG_EXTERNAL_COMMAND_ERROR', 1);
-		       }
+		       },
+			"extra-package=s" => sub {
+			   push(@{$self->get_conf('EXTRA_PACKAGES')}, $_[1]);
+		       },
+			"extra-repository=s" => sub {
+			   push(@{$self->get_conf('EXTRA_REPOSITORIES')}, $_[1]);
+		       },
 	);
 }
 

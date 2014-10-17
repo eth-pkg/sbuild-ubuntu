@@ -58,7 +58,9 @@ sub new {
     # Typically set by Sbuild::Build, but not outside a build context.
     $self->set('Host Arch', $self->get_conf('HOST_ARCH'));
     $self->set('Build Arch', $self->get_conf('BUILD_ARCH'));
-    $self->set('Initial Foreign Arches', $self->get_foreign_architectures());
+    $self->set('Build Profiles', $self->get_conf('BUILD_PROFILES'));
+    $self->set('Multiarch Support', 1);
+    $self->set('Initial Foreign Arches', {});
     $self->set('Added Foreign Arches', {});
 
     my $dummy_archive_list_file = $session->get('Location') .
@@ -94,8 +96,8 @@ sub setup {
 	print $F "APT::Install-Recommends false;\n";
 
 	if ($self->get('Host Arch') ne $self->get('Build Arch')) {
-	    print $F "APT::Architecture=".$self->get('Host Arch');
-	    $self->log("Adding APT::Architecture ".$self->get('Host Arch')." to the apt config");
+	    print $F 'APT::Architecture=' . $self->get('Host Arch');
+	    $self->log('Adding APT::Architecture ' . $self->get('Host Arch') . ' to the apt config');
 	}
 	if ($self->get('Split')) {
 	    print $F "Dir \"$chroot_dir\";\n";
@@ -142,9 +144,33 @@ sub get_foreign_architectures {
     my $session = $self->get('Session');
 
     my ($tmpfh, $tmpfilename) = tempfile(DIR => $session->get('Location') . "/tmp");
+    my ($tmpfh2, $tmpfilename2) = tempfile(DIR => $session->get('Location') . "/tmp");
+
     $session->run_command({ COMMAND => ['dpkg', '--print-foreign-architectures'],
                             USER => 'root',
-                            STREAMOUT => $tmpfh});
+                            STREAMOUT => $tmpfh,
+                            STREAMERR => $tmpfh2});
+    if ($?)
+    {
+        seek $tmpfh2, 0, SEEK_SET;
+        while(<$tmpfh2>)
+        {
+            chomp;
+            next unless $_;
+            # if 'unknown option' in stderr then dpkg predates multiarch
+            if (m/unknown option/s)
+            {
+                $self->set('Multiarch Support', 0);
+            }
+        }
+        close $tmpfh2;
+        # quietly return nothing if dpkg is too old (for use on older chroots)
+        if ($self->get('Multiarch Support'))
+        {
+            $self->log_error("Failed to get dpkg foreign-architecture config\n");
+        }
+        return {};
+    } # else dpkg has multiarch support
     seek $tmpfh, 0, SEEK_SET;
     my @existing_foreign_arches;
     while(<$tmpfh>)
@@ -154,15 +180,6 @@ sub get_foreign_architectures {
         push @existing_foreign_arches, $_;
     }
     close $tmpfh;
-
-    if ($?)
-    {
-        $self->log_error("Failed to get dpkg foreign-architecture config\n");
-        return {};
-    }
-
-    $self->log("Initial foreign arches: '@existing_foreign_arches'\n");
-
     my %set;
     foreach (@existing_foreign_arches) { $set{$_} = 1; }
     return \%set;
@@ -172,6 +189,9 @@ sub add_foreign_architecture {
 
     my $self = shift;
     my $arch = shift;
+
+    # just skip if dpkg is to old for multiarch
+    if (! $self->get('Multiarch Support')) { return 1 };
 
     # if we already have this architecture, we're done
     my $initial_foreign_arches = $self->get('Initial Foreign Arches');
@@ -193,13 +213,17 @@ sub add_foreign_architecture {
         $self->log_error("Failed to set dpkg foreign-architecture config\n");
         return 0;
     }
+    debug("Added foreign arch: $arch\n") if $arch;
+
     $added_foreign_arches->{$arch} = 1;
-    $self->log("Adding dpkg foreign-architecture $arch\n");
     return 1;
 }
 
 sub cleanup_foreign_architectures {
     my $self = shift;
+
+    # just skip if dpkg is to old for multiarch
+    if (! $self->get('Multiarch Support')) { return 1 };
 
     my $added_foreign_arches = $self->get('Added Foreign Arches');
 
@@ -222,6 +246,9 @@ sub setup_dpkg {
     my $self = shift;
 
     my $session = $self->get('Session');
+
+    # Record initial foreign arch state so it can be restored
+    $self->set('Initial Foreign Arches', $self->get_foreign_architectures());
 
     if ($self->get('Host Arch') ne $self->get('Build Arch')) {
 	add_foreign_architecture($session, $self->get('Host Arch'))
@@ -260,45 +287,37 @@ sub update_archive {
 	      DIR => '/' });
 	return $?;
     } else {
-	# Example archive list names:
-	#_tmp_resolver-XXXXXX_apt%5farchive_._Packages
-	#_tmp_resolver-XXXXXX_apt%5farchive_._Release
-	#_tmp_resolver-XXXXXX_apt%5farchive_._Release.gpg
-	#_tmp_resolver-XXXXXX_apt%5farchive_._Sources
-
-	# Update lists directly; only updates local archive
-
-	# Filename quoting for safety taken from apt URItoFileName and
-	# QuoteString.
 	my $session = $self->get('Session');
-	my $dummy_dir = $self->get('Dummy package path');
-	my $dummy_archive_dir = $session->strip_chroot_path($dummy_dir.'/apt_archive/./');
-	my @chars = split('', $dummy_archive_dir);
-
-	foreach(@chars) {
-	    if (index('\\|{}[]<>"^~_=!@#$%^&*', $_) != -1 || # "Bad" characters
-		!m/[[:print:]]/ || # Not printable
-		ord($_) == 0x25 || # Percent '%' char
-		ord($_) <= 0x20 || # Control chars
-		ord($_) >= 0x7f) { # Control chars
-		$_ = sprintf("%%%02x", ord($_));
-	    }
+	my $dummy_archive_list_file = $self->get('Dummy archive list file');
+	# Create an empty sources.list.d directory that we can set as
+	# Dir::Etc::sourceparts to suppress the real one. /dev/null
+	# works in recent versions of apt, but not older ones (we want
+	# 448eaf8 in apt 0.8.0 and af13d14 in apt 0.9.3). Since this
+	# runs against the target chroot's apt, be conservative.
+	my $dummy_sources_list_d = $self->get('Dummy package path') . '/sources.list.d';
+	if (!(-d $dummy_sources_list_d || mkdir $dummy_sources_list_d, 0700)) {
+	    $self->log_warning('Could not create build-depends dummy sources.list directory ' . $dummy_sources_list_d . ': ' . $!);
+	    $self->cleanup_apt_archive();
+	    return 0;
 	}
 
-	my $uri = join('', @chars);
-	$uri =~ s;/;_;g; # Escape slashes
-
-	foreach my $file ("Packages", "Release", "Release.gpg", "Sources") {
-	    $session->run_command(
-		{ COMMAND => ['cp', $dummy_archive_dir . '/' . $file,
-			      '/var/lib/apt/lists/' . $uri . $file],
-		  USER => 'root',
-		  PRIORITY => 0 });
-		if ($?) {
-			$self->log("Failed to copy file from dummy archive to apt lists.\n");
-			return 1;
-		}
-	}
+	# Run apt-get update pointed at our dummy archive list file, and
+	# the empty sources.list.d directory, so that we only update
+	# this one source. Since apt doesn't have all the sources
+	# available to it in this run, any caches it generates are
+	# invalid, so we then need to run gencaches with all sources
+	# available to it. (Note that the tempting optimization to run
+	# apt-get update -o pkgCacheFile::Generate=0 is broken before
+	# 872ed75 in apt 0.9.1.)
+	$self->run_apt_command(
+	    { COMMAND => [$self->get_conf('APT_GET'), 'update',
+	                  '-o', 'Dir::Etc::sourcelist=' . $session->strip_chroot_path($dummy_archive_list_file),
+	                  '-o', 'Dir::Etc::sourceparts=' . $session->strip_chroot_path($dummy_sources_list_d),
+	                  '--no-list-cleanup'],
+	      ENV => {'DEBIAN_FRONTEND' => 'noninteractive'},
+	      USER => 'root',
+	      DIR => '/' });
+	return $? if $?;
 
 	$self->run_apt_command(
 	    { COMMAND => [$self->get_conf('APT_CACHE'), 'gencaches'],
@@ -738,8 +757,8 @@ sub setup_apt_archive {
 	  USER => 'root',
 	  DIR => '/' });
     if ($?) {
-	$self->log_error("E: Failed to set " . $self->get_conf('BUILD_USER') .
-			 ":sbuild ownership on $dummy_gpghome\n");
+	$self->log_error('E: Failed to set ' . $self->get_conf('BUILD_USER') .
+			 ':sbuild ownership on $dummy_gpghome\n');
 	return 0;
     }
     if (!(-d $dummy_archive_dir || mkdir $dummy_archive_dir, 0775)) {
@@ -810,14 +829,18 @@ EOF
 			      reduce_arch => 1,
 			      host_arch => $self->get('Host Arch'),
 			      build_arch => $self->get('Build Arch'),
-			      build_dep => 1);
+			      build_dep => 1,
+			      reduce_profiles => 1,
+			      build_profiles => [ split / /, $self->get('Build Profiles') ]);
     my $negative = deps_parse(join(", ", @negative,
 				   @negative_arch, @negative_indep),
 			      reduce_arch => 1,
 			      host_arch => $self->get('Host Arch'),
 			      build_arch => $self->get('Build Arch'),
 			      build_dep => 1,
-			      union => 1);
+			      union => 1,
+			      reduce_profiles => 1,
+			      build_profiles => [ split / /, $self->get('Build Profiles') ]);
 
     $self->log("Merged Build-Depends: $positive\n") if $positive;
     $self->log("Merged Build-Conflicts: $negative\n") if $negative;
@@ -971,6 +994,11 @@ EOF
         my ($tmpfh, $tmpfilename) = tempfile(DIR => $session->get('Location') . "/tmp");
         print $tmpfh 'deb file://' . $session->strip_chroot_path($dummy_archive_dir) . " ./\n";
         print $tmpfh 'deb-src file://' . $session->strip_chroot_path($dummy_archive_dir) . " ./\n";
+
+        for my $repospec (@{$self->get_conf('EXTRA_REPOSITORIES')}) {
+            print $tmpfh "$repospec\n";
+        }
+
         close($tmpfh);
         # List file needs to be moved with root.
         $session->run_command(
@@ -1060,6 +1088,10 @@ sub run_apt_ftparchive {
 
     my ($tmpfh, $tmpfilename) = tempfile();
     my $dummy_archive_dir = $self->get('Dummy archive directory');
+
+    for my $deb (@{$self->get_conf('EXTRA_PACKAGES')}) {
+        copy($deb, $dummy_archive_dir);
+    }
 
     # Write the conf file.
     print $tmpfh <<"EOF";

@@ -31,6 +31,7 @@ sbuild \- build debian packages from source
 .RB [ \-\-arch=\fIarchitecture\fP ]
 .RB [ \-\-build=\fIarchitecture\fP ]
 .RB [ \-\-host=\fIarchitecture\fP ]
+.RB [ \-\-profiles=\fIprofile[,...]\fP ]
 .RB [ \-s \[or] \-\-source ]
 .RB [ \-\-force\-orig\-source ]
 .RB [ \-\-make\-binNMU=\fIchangelog-entry\fP ]
@@ -61,7 +62,7 @@ sbuild \- build debian packages from source
 .RB [ \-\-lintian\-opt=\fIoptions\fP ]
 .RB [ \-\-lintian\-opts=\fIoptions\fP ]
 .RB [ \-\-run\-piuparts ]
-.RB [ \-\-no-run\-piuparts ]
+.RB [ \-\-no\-run\-piuparts ]
 .RB [ \-\-piuparts\-opt=\fIoptions\fP ]
 .RB [ \-\-piuparts\-opts=\fIoptions\fP ]
 .RB [ \-\-piuparts\-root\-arg=\fIoptions\fP ]
@@ -77,6 +78,8 @@ sbuild \- build debian packages from source
 .RB [ \-\-setup\-hook=\fIhook-script\fP ]
 .RB [ \-\-build\-dep\-resolver=\fIresolver\fP ]
 .RB [ \-\-resolve\-alternatives \[or] \-\-no\-resolve\-alternatives ]
+.RB [ \-\-extra\-package=\fIpackage.deb\fP ]
+.RB [ \-\-extra\-repository=\fIspec\fP ]
 .RB [ PACKAGE [ .dsc ]]
 .SH DESCRIPTION
 \fBsbuild\fR rebuilds Debian binary packages from the corresponding Debian
@@ -172,7 +175,7 @@ Also build Architecture: all packages, i.e. use dpkg\-buildpackage \-b
 instead of \-B.
 .TP
 .BR "\-\-no\-arch\-all"
-Do not build Architecture: all packages, i.e. use dpkg\-buildpackage -B
+Do not build Architecture: all packages, i.e. use dpkg\-buildpackage \-B
 instead of \-b. This option is the opposite of \-\-arch\-all.
 .TP
 .BR \-b ", " "\-\-batch"
@@ -262,6 +265,11 @@ log file, but print everything to stdout. Also do not send any log mails.
 Convenience option to set \fIpurge-mode\fR for build directory, build
 dependencies and session.
 .TP
+.BR \-\-profiles=\fIprofile[,...]\fP"
+Specify the profile(s) we build, as a comma-separated list. Defaults to the
+space separated list of profiles in the \fBDEB_BUILD_PROFILES\fP environment
+variable.
+.TP
 .BR "\-\-purge\-build=\fIpurge-mode\fP"
 \fIpurge-mode\fR determines if the build directory will be deleted after a
 build. Possible values are \fBalways\fR (default), \fBnever\fR, and
@@ -317,9 +325,9 @@ The version number of the binary NMU.  This should be used in conjunction with
 used for binary NMUs.
 .TP
 .BR "\-\-append\-to\-version=\fIstring\fP"
-This option is similar to --make-binNMU except that it allows the user to
+This option is similar to \-\-make\-binNMU except that it allows the user to
 specify an arbitrary string to be appended to the version number (immediately
-before the '+' in the Debian revision if --make-binNMU is also provided).
+before the '+' in the Debian revision if \-\-make\-binNMU is also provided).
 .TP
 .BR \-\-run\-lintian
 Run lintian after a successful build.
@@ -364,11 +372,11 @@ Run these commands when a chroot is setup, before dependencies are installed. Th
 option can be used multiple times to add multiple commands.
 .TP
 .BR \-\-starting\-build\-commands=\fIstring\fP
-Run these commands after dependencies are installed, just before the package 
+Run these commands after dependencies are installed, just before the package
 build starts. This option can be used multiple times to add multiple commands.
 .TP
 .BR \-\-finished\-build\-commands=\fIstring\fP
-Run these commands immediately after the timed package build finishes. 
+Run these commands immediately after the timed package build finishes.
 This option can be used multiple times to add multiple commands.
 .TP
 .BR \-\-chroot\-cleanup\-commands=\fIstring\fP
@@ -414,6 +422,28 @@ Do not allow the use of alternatives in Build-Depends, Build-Depends-Arch and
 Build-Depends-Indep.  Note that alternatives for the same package
 (e.g. different versions) are still allowed.  This is the default for the
 apt and xapt dependency resolvers.
+.TP
+.BR \-\-extra\-package=\fIpackage.deb\fP
+Make \fIpackage.deb\fP available for build-dependency resolution, by
+adding it to a temporary archive created by sbuild.  This makes it
+easier to build packages against locally-built build depenencies,
+without waiting for those packages to enter the main archive, or going
+through the hassle of maintaining a local archive and making it
+accessible inside the chroot.  \fIpackage.deb\fP is copied into the
+chroot, so it can refer to any path on the host system.
+.TP
+.BR \-\-extra\-repository=\fIspec\fP
+Add a repository to the list of apt sources during the package build.
+The repository specification is a line suitable for an apt
+.BR sources.list (5)
+file. For instance, you might use
+.nh
+.B \-\-extra\-repository="deb http://ftp.debian.org/debian experimental main"
+.hy
+to allow packages in the experimental distribution to fulfill
+build-dependencies. Note that the build chroot must already trust the
+key of this repository (see
+.BR apt-secure (8)).
 .SH EXTERNAL COMMANDS
 Support to run external commands during an sbuild run is provided. A set of
 external commands can be run at various stages of a build. Providing commands to
@@ -422,10 +452,10 @@ through the use of the configuration files. In the configuration file, the list
 of commands to run are placed in a hash of arrays of arrays of strings
 corresponding to the commands to run.
 .PP
-There are three sets of commands. The \fIpre/post\-build\-\fP commands are run 
+There are three sets of commands. The \fIpre/post\-build\-\fP commands are run
 external to the chroot. The \fIchroot\-setup/cleanup\-\fP commands and
 \fIStarting/Finished\-Build\-\fP commands are run inside the chroot. They are all
-run as root except the \fIStarting/Finishing\-build-\fP commands, which are run 
+run as root except the \fIStarting/Finishing\-build-\fP commands, which are run
 as the current sbuild user.
 .PP
 Here is a summary of the ordering, user, internal/external to chroot for each command hook
@@ -506,6 +536,23 @@ These escapes are converted to the absolute path to a package's .dsc file.
 \fB%c\fR, \fB%SBUILD_CHANGES\fR
 These escapes are converted to the absolute path to a package's source .changes
 file.
+.TP
+\fB%a\fR, \fB%SBUILD_HOST_ARCH\fR
+These escapes are converted to the debian name of the architecture the build 
+is being built for (e.g amd64, armhf).
+.TP
+\fB%r\fR, \fB%SBUILD_CHROOT_DIR\fR
+These escapes are converted to the absolute path on the host to the root
+directory of the chroot. This variable is not set if the external command is
+run inside the chroot.
+.TP
+\fB%b\fR, \fB%SBUILD_BUILD_DIR\fR
+These escapes are converted to the absolute path to the build directory inside
+the chroot.
+.TP
+\fB%p\fR, \fB%SBUILD_PKGBUILD_DIR\fR
+These escapes are converted to the absolute path to the package build directory
+inside the chroot.
 .PP
 Percent escapes are only substituted when an appropriate value is defined for
 them. At other times, it is left unchanged. For example, a .changes file is only
@@ -525,7 +572,7 @@ commands given through the command line options.
 .SH LOCAL ARCHIVE
 The apt and aptitude resolvers create a local archive for installing build
 dependencies.  This is an internal implementation detail of the build
-dependency resolver, which is not user configurable, and is indended to be
+dependency resolver, which is not user configurable, and is intended to be
 entirely transparent to the user.  The local archive exists only transiently
 during the package build.  It does not persist across builds, and it is only
 used to store the dummy dependency packages created for a single build.

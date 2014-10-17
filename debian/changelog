@@ -1,3 +1,42 @@
+sbuild (0.65.0-1) unstable; urgency=medium
+
+  [ Benjamin Drung ]
+  * Team upload.
+  * Fix various issues found by Lintian:
+    - Fix spelling mistake: indended -> intended
+    - Fix hyphen-used-as-minus-sign
+    - Fix debian-news-entry-uses-asterisk
+    - Fix copyright-refers-to-symlink-license
+    - Use canonical VCS fields
+  * Export additional variables to external commands: %SBUILD_CHROOT_DIR,
+    %SBUILD_BUILD_DIR, %SBUILD_PKGBUILD_DIR, and %SBUILD_HOST_ARCH
+    (Closes: #756265)
+  * Bump Standard-Version to 3.9.6
+  * Unset typical desktop variables XDG_RUNTIME_DIR, XDG_SEAT,
+    XDG_SESSION_COOKIE, XDG_SESSION_ID, and XDG_VTNR (Closes: #729012)
+  * Fail if dpkg subcommands fail instead of silently ignoring failures.
+    Thanks to Christoph Biedl for the patch (Closes: #745221)
+  * Fix build failure if the package version ends with Debian revision 0.
+    Thanks to Adam Borowski <kilobyte@angband.pl> (Closes: #679574)
+  * Fix broken man page symlinks in buildd package
+
+  [ Geoffrey Thomas ]
+  * Refactor temporary build-dep repository code to use apt-get update,
+    instead of hacking /var/lib/apt/lists.
+  * Add --extra-package (Closes: #700522) and --extra-repository (Closes:
+    #714883).
+  * Accept 0 as a source version number (Closes: #712627)
+  * Add DEP-8 autopkgtest to build procenv. (Closes: #705926)
+
+  [ Johannes Schauer ]
+  * sbuild:
+    - Add build-profiles support (Closes: 731798)
+
+  [ Geoffrey Thomas ]
+  * Sbuild::ChrootSetup: Pass --no-options to gpg (Closes: #722103)
+
+ -- Wookey <wookey@debian.org>  Fri, 17 Oct 2014 17:20:45 +0100
+
 sbuild (0.64.3-2) unstable; urgency=medium
 
   * Ensure foreign-arch logging is correct (Closes: #763635)
@@ -10,7 +49,7 @@ sbuild (0.64.3-1) unstable; urgency=medium
 
   [ Wookey ]
   * sbuild:
-    - Add support for multiarch builds (enable foreign arch 'arch' 
+    - Add support for multiarch builds (enable foreign arch 'arch'
        if Build-Depends includes specific foo:arch dependency)
     - Enable chroot setup commands to be run as root
     (Closes: #608840,#607228)
@@ -894,14 +933,14 @@ sbuild (0.60.0-1) unstable; urgency=low
 sbuild (0.59.0-1) unstable; urgency=low
 
   [ Roger Leigh ]
-  * New release. 
+  * New release.
   * Use version comparison functions in WannaBuild::Database
-    (Closes: #521486).  Thanks to Florian Weimer. 
+    (Closes: #521486).  Thanks to Florian Weimer.
   * WannaBuild::Database: Allow whitespace in Architecture field
-    (Closes: #535415).  Thanks to John Wright for this patch. 
+    (Closes: #535415).  Thanks to John Wright for this patch.
   * Sbuild::Build, WannaBuild::Database: Add support for architecture
     aliases/wildcards (Closes: #501230).  Thanks to Andres Mejia for
-    these patches. 
+    these patches.
   * Sbuild::Conf doesn't require STATS_DIR to exist, and
     Sbuild::Build::write_stats only uses STATS_DIR in batch mode
     (Closes: #539570).
@@ -938,7 +977,7 @@ sbuild (0.58.5-1) unstable; urgency=low
 sbuild (0.58.4-1) unstable; urgency=low
 
   [ Roger Leigh ]
-  * New release. 
+  * New release.
   * sbuild:
     - A $purge_build_deps configuration option, and --purge-deps
       command-line option have been added to control build-dependency
@@ -1001,10 +1040,10 @@ sbuild (0.58.2-1) unstable; urgency=low
     (Closes: #520755).  This was preventing the detection of chroots
     in some locales.
   * debian/buildd.cron.d: Move example crontab here, with entries
-    commented out for now. 
+    commented out for now.
   * debian/rules: Use dh_installcrontab to install crontabs.
   * Remove buildd package for this release, because it's not yet
-    ready for use. 
+    ready for use.
 
  -- Roger Leigh <rleigh@debian.org>  Sat, 11 Apr 2009 10:20:25 +0100
 
@@ -2191,9 +2230,9 @@ sbuild (0.32) unstable; urgency=low
 sbuild (0.31) unstable; urgency=low
 
   * Patch for #239339 revised:
-  	Escaping to manage correctly possible nested RE. 
+        Escaping to manage correctly possible nested RE.
         (closes: #268712)
-  	Doing removes only in chroot environment.
+        Doing removes only in chroot environment.
         (closes: #264834).
   * Changed a bit man page to clarify better synopsis.
     (closes: #265998)

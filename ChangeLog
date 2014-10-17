@@ -1,3 +1,295 @@
+commit ebd769ff20658519e55d886b1d50089de2e50d0d
+Author: Wookey <wookey@wookware.org>
+Date:   Fri Oct 17 17:21:15 2014 +0100
+
+    Make release 0.65.0
+
+commit 98fee63d5ccb54774ae066946f906be344429f54
+Author: Wookey <wookey@wookware.org>
+Date:   Fri Oct 17 12:45:37 2014 +0100
+
+    Typo fix for release
+
+commit 8ec1e6bf1cb8b0f567c99a7bed4e8fe4bc1bb7bf
+Author: Benjamin Drung <bdrung@debian.org>
+Date:   Thu Oct 16 06:56:29 2014 +0200
+
+    Rename build_procenv to build-procenv to fix illegal-runtime-test-name
+
+commit e454d9dbd418e9382b009a521a7e4c0c5e2669b1
+Author: Benjamin Drung <bdrung@debian.org>
+Date:   Thu Oct 16 06:48:57 2014 +0200
+
+    Make indentation consistant and remove trailing spaces
+
+commit 2507e9afa97601bf8eadafc91c6a339e7d793551
+Author: Wookey <wookey@wookware.org>
+Date:   Thu Oct 16 03:55:34 2014 +0100
+
+    Only print foreign arch info when there is some
+    Neaten Arches/arch/dependencies subsection output
+
+commit 22d5969e81b9873197d10ed6d43c4fcd2f64ed86
+Author: Wookey <wookey@wookware.org>
+Date:   Thu Oct 16 03:36:43 2014 +0100
+
+    Ensure 'Build Profiles' is empty not undef to avoid warnings
+
+commit c5d52d03f86f3d13c6135323556b1ae684bf1813
+Author: Wookey <wookey@wookware.org>
+Date:   Thu Oct 16 00:30:31 2014 +0100
+
+    Make the multiarch-related functionality squeeze-chroot compatible.
+    Only issue multiarch-related dpkg commands if the dpkg in the chroot understands them.
+
+commit 28195062efb2e2e792cfa6db694e3835859d2a70
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Wed Oct 15 13:55:02 2014 +0200
+
+    Update debian/changelog
+
+commit af3563cfeaa45972ba8da93b2a2e2ce66f46c00e
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Wed Oct 15 13:41:08 2014 +0200
+
+    Fix broken man page symlinks in buildd package
+
+commit abee3b2b90a3f947c416ccc26760b34cb380f3a1
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Wed Oct 15 10:08:41 2014 +0200
+
+    Fix too long changelog line
+
+commit 8ad52a27505d224071a80217b64e48690c1ceaaf
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Wed Oct 15 10:07:48 2014 +0200
+
+    Also raise the version of the libdpkg-perl dependency
+
+commit 550c214cae48baa25daea585b51797fe6f4f5a0f
+Author: Wookey <wookey@wookware.org>
+Date:   Wed Oct 15 02:49:05 2014 +0100
+
+    Add %a substition variable for host architecture, for use in external (hook) commands.
+    Fix NEWS file entry for substitution variables
+
+commit ab487c50c813083fa22526550d03ad2ef2e813dc
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Tue Oct 14 13:40:59 2014 +0200
+
+    Update debian/changelog and re-add removed stanza for 0.64.3-2
+
+commit 0e4d0c57969e8e92931b80a9376d24fd15f81548
+Author: Geoffrey Thomas <geofft@ldpreload.com>
+Date:   Wed Aug 21 22:11:49 2013 -0700
+
+    Sbuild::ChrootSetup: Pass --no-options to gpg
+
+commit a285fecd1445cf782f6370208c8b99f8ae829e64
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Tue Oct 14 13:32:52 2014 +0200
+
+    Fix build failure if the package version ends with Debian revision 0.
+    
+    Thanks: Adam Borowski <kilobyte@angband.pl>
+    Closes: #679574
+
+commit 684c57b77c5acd22aed833e3bb937cdb8bc6bef6
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Tue Oct 14 13:30:19 2014 +0200
+
+    Fail if dpkg subcommands fail instead of silently ignoring failures
+    
+    Failures of "dpkg --info" and "dpkg --contents" will cause sbuild to fail.
+    
+    Thanks: Christoph Biedl <debian.axhn@manchmal.in-ulm.de>
+    Closes: #745221
+
+commit 1ba39e71bb25b44c188d6972937377d2cb0588ec
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Tue Oct 14 11:14:13 2014 +0200
+
+    Remove trailing spaces
+
+commit 0cb5afe81c06822a64189e0f3f56a84aa9f5a006
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Tue Oct 14 11:04:14 2014 +0200
+
+    Run wrap-and-sort
+
+commit 6220ada95f8047b37797bc9d8cede10669b32ee8
+Author: Wookey <wookey@wookware.org>
+Date:   Mon Oct 13 18:39:32 2014 +0100
+
+    Update the NEWS file with new 0.65 user-visible changes
+
+commit 8153cbb5ae34b40997bf23e661c89b2f97ad561d
+Author: Wookey <wookey@wookware.org>
+Date:   Sat Sep 20 01:15:43 2014 +0100
+
+    Add build profiles support
+
+commit aec2c0d91e8d4258dd4c24db20825672a877043b
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 18:33:41 2014 +0200
+
+    Update debian/changelog
+
+commit d0c784515d110da3cd0c06231c626a1a7270e460
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 18:28:49 2014 +0200
+
+    Add DEP-8 autopkgtest to build procenv.
+    
+    Closes: #705926
+
+commit 586323766f9a673d95953b2f5d848f4566d31cf9
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 18:16:48 2014 +0200
+
+    Also unset XDG_SESSION_COOKIE
+
+commit bb2731b88f8f3507e7b696df78bb1f1eac188d90
+Author: Dmitrijs Ledkovs <xnox@ubuntu.com>
+Date:   Thu Nov 7 22:00:08 2013 +0000
+
+    Unset more unneeded typical desktop variables.
+    
+    They are mostly harmless, sometimes unit-tests of package under build
+    interracts badly with current session via those variables
+    (e.g. RUNTIME_DIR).
+
+commit cc53d8888125fc0cb1408ae56ce3cd83f46538ed
+Author: Geoffrey Thomas <gthomas@mokafive.com>
+Date:   Mon Jun 17 18:44:15 2013 -0700
+
+    sbuild: 0 is a valid version number
+
+commit 91fbad5ea4bde3dea70c4bf32aa84ca5c46fa6d9
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 16:58:28 2014 +0200
+
+    Update debian/changelog
+
+commit d4985a1f1ce057bafe2745e9157dc06a44ed8745
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 16:25:23 2014 +0200
+
+    Bump Standard-Version to 3.9.6
+
+commit ee46993252d5bececccf6d55aef1dfb2de252232
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 16:21:24 2014 +0200
+
+    Fix indentation and remove trailing spaces
+
+commit 0d592eb9732b046e31a1d7b4fc9af2f3d0ae1989
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 16:12:50 2014 +0200
+
+    Export additional variables to external commands.
+    
+    SBUILD_CHROOT_DIR, SBUILD_BUILD_DIR, and SBUILD_PKGBUILD_DIR are exported
+    to the external commands.
+
+commit 996508e5731edf5ae52e060f13691214e3afe902
+Author: Geoffrey Thomas <gthomas@mokafive.com>
+Date:   Wed Aug 14 15:39:41 2013 -0700
+
+    Implement --extra-repository="deb scheme://..."
+    
+    This simply adds another line to the sources.list.d file that lists our
+    dummy archive for build-dependency resolution, making that repository
+    available for providing build-dependencies. The purpose of this option
+    is to make it easier to build packages against a local archive without
+    modifying the source chroot to list that archive.
+    
+    Signed-off-by: Benjamin Drung <benjamin.drung@profitbricks.com>
+
+commit 931340caf9791a0044f80516e10ffec67aafe716
+Author: Geoffrey Thomas <gthomas@mokafive.com>
+Date:   Wed Feb 13 00:57:56 2013 -0800
+
+    Implement --extra-package=package.deb
+    
+    This simply adds a deb on the host system to the existing dummy archive
+    created for the build-dependency resolution metapackage, which makes it
+    available for resolving build dependencies. The purpose of this option
+    is to make it easier to build packages against locally-built build
+    depenencies, without waiting for those packages to enter the main
+    archive, or going through the hassle of maintaining a local archive and
+    making it accessible inside the chroot.
+    
+    This option is named similarly to the EXTRAPACKAGES option in
+    pbuilderrc(5), but note that it takes a .deb, not a package name.
+    
+    Thanks to Emanuele Aina for review!
+    
+    Signed-off-by: Benjamin Drung <benjamin.drung@profitbricks.com>
+
+commit a12d2ab3f1a7a01dcdf3c11d816f7cffcc5f8814
+Author: Geoffrey Thomas <gthomas@mokafive.com>
+Date:   Wed Jul 3 22:37:27 2013 -0700
+
+    Sbuild::ResolverBase: Implement update_archive using apt-get update
+    
+    David Kalnischkies pointed out in bug #714877 a clever way to make
+    apt-get update only affect a single sources.list-format file, using various
+    apt options to override the sources.list and sources.list.d locations,
+    and keep the lists for existing sources. This works "in any apt
+    version", and is cleaner than faking the list operations ourselves.
+    
+    Signed-off-by: Benjamin Drung <benjamin.drung@profitbricks.com>
+
+commit 421e5fb83f01d9add0e505a8cb09f4de0fe72382
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 15:31:54 2014 +0200
+
+    Fix vcs-field-not-canonical
+
+commit 03589f371ed205ba349391382525d406622e4cf4
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 15:01:00 2014 +0200
+
+    Fix copyright-refers-to-symlink-license
+
+commit 30401718527c6986100a40e089006720fa684b68
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 14:58:08 2014 +0200
+
+    Fix debian-news-entry-uses-asterisk
+
+commit f3b66d03f28154fcb3ab1fad1fe9d030d8f5cefa
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 14:40:53 2014 +0200
+
+    Fix hyphen-used-as-minus-sign
+
+commit acfae99937eb14062594324faebc3b719e1df3fa
+Author: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date:   Thu Oct 9 13:02:58 2014 +0200
+
+    Fix typo: indended -> intended
+
+commit 559097777d78e2851ce5286b86f16efdbd4f318f
+Author: Wookey <wookey@wookware.org>
+Date:   Wed Oct 8 04:43:55 2014 +0100
+
+    Add a source format file (quilt 3.0) for debian releases
+
+commit 3ad0be72d287b8e8fbfe8bb9037e83d5e74e8717
+Author: Wookey <wookey@wookware.org>
+Date:   Wed Oct 1 18:15:53 2014 +0100
+
+    Ensure foreign-arch info reported correctly in logs (Closes: #763635)
+    Add some more message-quoting rigour
+
+commit 6015516643620776d6374c8ee2d5a8e84ae30c99
+Author: Wookey <wookey@wookware.org>
+Date:   Tue Sep 30 18:07:17 2014 +0100
+
+    Better document debian release process in HACKING
+
 commit d0dd2f6df2078c160875d2a330a3507a04e126e5
 Author: Wookey <wookey@wookware.org>
 Date:   Tue Sep 30 13:45:39 2014 +0100
