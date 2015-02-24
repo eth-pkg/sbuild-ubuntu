@@ -1,5 +1,5 @@
 Package: sbuild
-Version: 0.65.0
-Release-Date: 16 Oct 2014
-Released-By: Wookey <wookey@wookware.org>
-Git-Tag: release/sbuild-0.65.0
+Version: 0.65.1
+Release-Date: 24 Feb 2015
+Released-By: Ansgar Burchardt <ansgar@debian.org>
+Git-Tag: release/sbuild-0.65.1

@@ -1,3 +1,366 @@
+commit aac4bb664cc83f462fba7852ce5c2419ddaaa4f2
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Tue Feb 24 23:14:20 2015 +0100
+
+    db/Makefile.am: Add missing backslash.
+
+commit b3401647eea5ba00f951d39a3a89cfb36c5aedaf
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Tue Feb 24 23:01:06 2015 +0100
+
+    changelog for 0.65.1-1
+
+commit 5802ca035a774f7d9fc870a45a47fd0d2525f702
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Tue Feb 24 18:22:36 2015 +0100
+
+    sbuild.1: document --mailfrom and --sbuild-mode options
+    
+    The new options were introduced in ce90f5414edf267dc14282cd04caeda2c2ede8e9
+
+commit edb450c668e85ef06f899f624b4c4663f14ba325
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Thu Feb 19 23:19:34 2015 +0100
+
+    Include all files in the distribution tarball.
+
+commit d4c137190b44e510f8c1f27ea3a6f6a08b5268b7
+Author: Johannes Schauer <j.schauer@email.de>
+Date:   Fri Feb 6 14:37:11 2015 +0100
+
+    handle native arch qualifiers in build-deps
+    
+    sbuild turns build dependencies into the dependencies of a dummy binary
+    package. Since binary package dependencies do not support the :native
+    architecture qualifier, these have to either be removed during native
+    compilation or replaced by the build (native) architecture during cross
+    building.
+    
+    Reference: https://bugs.debian.org/777216
+
+commit b109a9de75c5db13d8ba989df042a65c0e825ff0
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Thu Feb 12 22:34:53 2015 +0100
+
+    debian/control: Do not (Build-)Depend on perl-modules
+    
+    The perl-modules package is an implementation detail of the perl
+    packaging. Packages should not depend on it, but only on perl itself.
+
+commit 63749d9d9cd27f6721fb15e45505d11fbf9322fc
+Merge: 8b8b078 7a5163e
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Thu Feb 12 22:11:44 2015 +0100
+
+    Merge branch 'features'
+
+commit 8b8b0787d7f35baf0ec4fbe598e406263782406e
+Merge: 448e45c 9cc9ccc
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Thu Feb 12 22:11:19 2015 +0100
+
+    Merge branch 'updates-to-maintainer-scripts'
+
+commit 448e45c571a8f75caa87b1c6bb6c2480b7521f4e
+Merge: e0d10b3 ea8ad2e
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Thu Feb 12 00:28:56 2015 +0100
+
+    Merge branch 'updates-to-create-chroot'
+
+commit e0d10b3e3e2ed302048dcb686f7555d8add36537
+Merge: a67baea d60caa9
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Thu Feb 12 00:28:43 2015 +0100
+
+    Merge branch 'updates-to-99builddsourceslist'
+
+commit d60caa9cf4ff6d1c97a7c12606154a0b751773c9
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Wed Feb 11 23:43:04 2015 +0100
+
+    Do not install 99builddsourceslist
+    
+    This file is very specific to Debian and not helpful in general.
+
+commit 7a5163e28d396413a82759eabd37147078fdae2d
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Wed Feb 11 23:38:50 2015 +0100
+
+    Remove changelog entries from uploads to private buildd archive
+
+commit 9760c6a3a4f815f6336bef071469749c915f5f63
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Thu May 23 22:24:02 2013 +0200
+
+    don't force mailto to be set in .sbuildrc
+    
+    (cherry picked from commit c173a94e4f48bc28dbf2c356e6b6f5f4a6227884)
+
+commit d7bd88a6395312377f659098348e445dc8482dcc
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Wed Feb 11 23:01:34 2015 +0100
+
+    Require schroot version 1.6.0 or later.
+    
+    Taken from commit d3ab9d32809fbf2d4d5dfd504f81423198f24775
+
+commit ce90f5414edf267dc14282cd04caeda2c2ede8e9
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun Jun 2 10:49:05 2013 +0200
+
+    allow to set maintainer_name and mailfrom in the distribution setting
+    in .builddrc (or in $default), and always set sbuild_mode=buildd, so
+    .sbuildrc doesn't need to exist (unless it contains
+    %individual_stalled_pkg_timeout )
+    
+    (cherry picked from commit a775c5af792f492a7fd6367715f70fbe30a59175)
+
+commit 5ccb3559b0ccbbac7c359c74d6a71321d8d5f9b9
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Tue May 21 00:18:12 2013 +0200
+
+    get mail targets from wanna-build, and allow to set mail_log_also for additional recipients
+    
+    (cherry picked from commit bf209107a75670284a8bde455282ce238456a41a)
+
+commit 5827300296528fb6c2e650022215a5cd32985d10
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Mon May 20 23:44:47 2013 +0200
+
+    allow to specify minimum age of packages
+    
+    (cherry picked from commit 62593e06d33d93282d3b460eb750d2102d92516f)
+
+commit 9cc9ccc557c14089d2ba93835b5e4a4c2876fef6
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun May 19 20:16:56 2013 +0200
+
+    auto-upgrade the buildd chroot configuration during upgrade
+    
+    (cherry picked from commit 78fc946a6dc3a67539044c7275a30af376af7697)
+
+commit 10927b857c3eac10b8001c0ece0fc020408b26ad
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun May 19 20:05:40 2013 +0200
+
+    succesfully (un)install the package if the account database is not local
+    
+    (cherry picked from commit d2a56b4486602fc00219c51466e184f3608cc7bc)
+
+commit a70de7a7ea1d7f227a211c83a8ce5ca3a0d6b3c2
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sat Mar 19 14:48:31 2011 +0100
+
+    debian: Update buildd maintainer scripts
+    
+    (cherry picked from commit 55325edec90d132a65d8af682bb06d637a57648e)
+
+commit ea8ad2e2f42efc61569193a58391c24e0ed5c615
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Tue Aug 19 02:10:13 2014 +0200
+
+    bin/create-chroot: don't add sudo in debfoster keepers
+    
+    (cherry picked from commit 9859cfd32d6ef36f8bc18c2a0f7dcf949e630c94)
+
+commit 14139873686d79e08d0f84393b25b6cc7f25f9ed
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Mon Aug 18 18:22:53 2014 +0200
+
+    bin/create-chroot: don't install sudo in the chroot, we now use fakeroot by default
+    
+    (cherry picked from commit 7241b6b3792a0166aaaf401c1d26983b930492bf)
+
+commit 1dff84941e8294158a1a4346996556d39bcf8d3c
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Dec 29 14:58:09 2013 +0100
+
+    bin/create-chroot: use ext4 instead of ext3
+    
+    (cherry picked from commit 27d8c4be472c38d784cd768f60981d4d6f898a4e)
+
+commit 7998cd0a6ba9ff57bb350a86a163a23c1461e506
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Tue May 21 19:33:24 2013 +0200
+
+    remove suite aliases on chroot creation except for experimental
+    
+    (cherry picked from commit 9107f1b3f05e2cdd84b2f6d1e27e54e328dda8a7)
+
+commit 87647714443aa6b4e9fb83d632d9176d517c66b9
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun May 19 22:25:28 2013 +0200
+
+    bin/create-chroot: remove lenny / volatile remainings
+    
+    (cherry picked from commit 68318e9841342ac5e71b4523b908d46f5d2becdd)
+    
+    Conflicts:
+    	bin/create-chroot
+
+commit 737cc1d3797fea4dd7403ed5a2ef63bc40cc8e2f
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu May 16 22:19:56 2013 +0100
+
+    bin/create-chroot: Add
+    
+    (cherry picked from commit 288b3147b38ab441f44b205b9e38957efe99277f)
+
+commit 3ac05c1d8f0303ef12d5036fb2edaaf75727e86b
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Wed Feb 11 22:16:45 2015 +0100
+
+    Remove changelog entry from upload to private buildd archive
+
+commit c7f8f1b4f7f1f5f1c759b034b8d7d9cd6c95ce1c
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Wed Aug 13 17:45:58 2014 +0200
+
+    99builddsourceslist: stop using incoming.debian.org/debian
+    
+    (cherry picked from commit a2e085c8f2114adc9e3058cca616bf5fe622f335)
+
+commit 8544d5c032459163780849480b044ad69bdef590
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Wed Aug 13 18:53:43 2014 +0200
+
+    99builddsourceslist: add +([^-])-kfreebsd-*-sbuild*
+    
+    sid-kfreebsd-amd64-sbuild would be matched by *-*-*-sbuild*, but is
+    not of the form SUITE-proposed-updates-sbuild*. Adding an extra case
+    avoids this.
+    
+    (cherry picked from commit b4a653e2b43de1e3fd81d61b59e3ca5a93ee8060)
+
+commit b933985a9665f6a349e822a1f838c73a1154b160
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Thu Aug 14 21:04:47 2014 +0200
+
+    etc/99buildsourceslist: check for the English version of the chroot
+    name, not the French one.
+    
+    (cherry picked from commit b8f9de5f60f4046cb73783a2582b26ab401d616f)
+
+commit 5c797ae088a558e9a247218e2a447df6bd5bf850
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Sun Jul 13 16:50:47 2014 +0200
+
+    etc/99buildsourceslist: check for source chroot by looking at
+    CHROOT_DESCRIPTION instead of CHROOT_SESSION_PURGE, which
+    also works on tar based chroots.
+    
+    (cherry picked from commit 7efe96be022a6faf85dcf3ab66997a4ae55bb4d3)
+
+commit 4a92c3148d3fa0c1832f78f0e9f9fa3127c57220
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Sun Jul 13 16:42:19 2014 +0200
+
+    etc/99builddsourceslist: look in priority for mirrors in
+    /etc/schroot/dsa/default-mirror, which is used on DSAed
+    machines.
+    
+    (cherry picked from commit e100ec65b0c15a0f511ccc469b762f597b61604b)
+
+commit d6fed69f70c57fa0cb6d5977c8f2b0159b28c826
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Sun Jul 13 16:39:41 2014 +0200
+
+    etc/99builddsourceslist: don't run for non "buildd" profiles
+    
+    This way porterbox scripts can be co-installed with the buildd ones on
+    DSA machines.
+    
+    (cherry picked from commit 6dffe75026fdc958380453c2488c87ffc0bfbaa1)
+
+commit 4fe6f4539cd4f0bcacd184ba77957f9f4b7542ec
+Author: Philipp Kern <pkern@debian.org>
+Date:   Sun Apr 13 15:28:28 2014 +0200
+
+    etc/99builddsourceslist: add support for squeeze-lts
+    
+    (cherry picked from commit 0d062701373fbd8a6a0a5bec6b1113cb9822833b)
+
+commit b81ba9738c4d423e17daf9acb1b082c82279cf65
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Tue Jul 9 16:23:29 2013 +0200
+
+    etc/99builddsourceslist: fix entry for backports.debian.org
+    
+    (cherry picked from commit c44fcd195a8f76ab46c827ae1c7e8a54dc55fb12)
+
+commit 94b0c2fd529cd0ad53d08bb135a29b1a9028adec
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun May 19 21:37:28 2013 +0200
+
+    remove reminders of using lenny chroots (and apts)
+    
+    (cherry picked from commit 0ff6adb1503afa2838561865ea093db854c73f1d)
+
+commit 89b62119cb100b09ce37dc3f812247d313b61945
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun May 19 21:32:20 2013 +0200
+
+    99builddsourceslist: adjust for new locations for buildds at incoming / security-master
+    
+    (cherry picked from commit 27834f412b2627d15992bedfac66db22c70f03d4)
+
+commit 8c5582c479bc5b416cd465576fee519153910077
+Author: Andreas Barth <aba@not.so.argh.org>
+Date:   Sun May 19 20:17:58 2013 +0200
+
+    install 99builddsourceslist again and update it for new schroot config
+    
+    (cherry picked from commit b6fd9235e7f645a8a334179025f5ad489d102a78)
+
+commit 8b4f2cc4a7395f0611d0fe8876b02559db36e5f2
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 19 17:00:46 2013 +0100
+
+    etc/99builddsourceslist: Update from buildd-0.61.0
+    
+    (cherry picked from commit 93d4a212b1cd70201dd9c228fffa6f14feb74b7f)
+
+commit 211b7a2647838d3a1a3e45dc005f7e26142f0630
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Sun May 19 16:53:23 2013 +0100
+
+    etc/99builddsourceslist: Update from buildd-0.61.0
+    
+    (cherry picked from commit 3c539dcb8f5abcccca640c607005475828d4019d)
+
+commit 92679c9ed7531d98d249059b7365173f3ecf8712
+Author: Roger Leigh <rleigh@debian.org>
+Date:   Thu May 16 22:19:23 2013 +0100
+
+    etc/99builddsourceslist: Add
+    
+    (cherry picked from commit f17ef5b7efe641cfe731b8d9d9835734c744d298)
+
+commit a67baeaa85e7d9982ea32a24a57b60cf5c4791c4
+Author: Roger Leigh <rleigh@codelibre.net>
+Date:   Sun Nov 30 22:51:03 2014 +0000
+
+    debian: Close #771235
+
+commit f3641ab121bd9d458d684f9e1b6a68c56aa940c9
+Author: Lennart Sorensen <lsorense@csclub.uwaterloo.ca>
+Date:   Sun Nov 30 22:49:13 2014 +0000
+
+    Build::Build: Build arch-all packages when other architectures are in the arch list
+
+commit 26678e5a4b53c8d83b067770020765495d16467b
+Author: Roger Leigh <rleigh@codelibre.net>
+Date:   Sun Nov 30 22:47:03 2014 +0000
+
+    debian: Bump version to 0.65.1-1
+
+commit 441d788e6d51e0071c7fc02c4c0d7a81cd548f19
+Author: Roger Leigh <rleigh@codelibre.net>
+Date:   Sun Nov 30 22:46:49 2014 +0000
+
+    NEWS: Bump version to 0.65.1
+
 commit ebd769ff20658519e55d886b1d50089de2e50d0d
 Author: Wookey <wookey@wookware.org>
 Date:   Fri Oct 17 17:21:15 2014 +0100

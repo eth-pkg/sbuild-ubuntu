@@ -290,21 +290,25 @@ top_srcdir = @top_srcdir@
 # Global options for use in all Makefiles.
 perlmoddir = $(PERL_MODULE_DIR)
 sqldir = $(datadir)/wanna-build/postgresql/install
-sql_DATA = \
+SQL = \
 	archive-data.sql	\
 	archive.sql		\
 	build-data.sql		\
 	build.sql		\
-	db.sql			\
 	functions.sql		\
 	install.sql		\
-	language.sql
+	language.sql		\
+	schema.sql
+
+sql_DATA = \
+	$(SQL)			\
+	db.sql
 
 CLEANFILES = \
 	db.sql
 
 EXTRA_DIST = \
-	$(sql_DATA)	\
+	$(SQL)	\
 	db.sql.in
 
 all: all-am

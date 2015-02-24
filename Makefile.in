@@ -349,9 +349,15 @@ SUBDIRS = bin tools configs etc lib man db test
 EXTRA_DIST = \
 	bootstrap			\
 	debian				\
+	lisp				\
 	scripts/git-tag-release		\
 	scripts/git-version		\
+	ChangeLog-buildd		\
 	HACKING				\
+	Makefile-buildd			\
+	NEWS-buildd			\
+	README.buildd-admin		\
+	README.chroot-building		\
 	VERSION
 
 all: config.h

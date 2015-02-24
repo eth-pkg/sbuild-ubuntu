@@ -483,6 +483,7 @@ TESTS = \
 @SBUILD_CHROOT_CHECKS_TRUE@	sbuild
 
 EXTRA_DIST = \
+	logging			\
 	perl-syntax.in		\
 	sbuild-update.in	\
 	sbuild-upgrade.in	\

@@ -319,7 +319,8 @@ CLEANFILES = \
 
 EXTRA_DIST = \
 	defs.man.in			\
-	$(addsuffix .in, $(man_MANS))
+	$(addsuffix .in, $(man_MANS))	\
+	sbuild-debuild.1.in
 
 all: all-am
 
