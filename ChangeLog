@@ -1,3 +1,55 @@
+commit e09b55bf011bc3e7f803b34a45c0d797d66c0f42
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Tue Mar 24 14:21:50 2015 +0100
+
+    changelog for 0.65.2-1
+
+commit 7ec60100ee315e130e8771d4268debc3eaeff9af
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Tue Mar 24 10:08:33 2015 +0100
+
+    lib/Sbuild/Build.pm: only list content for deb/udeb files.
+
+commit 7d6ae7a65a491e2c4c3d0d7d19aff348da5bd69f
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Wed Mar 18 23:45:23 2015 +0100
+
+    Update changelog.
+
+commit 2a00172fd8b83fc4db32443c4fe06ec0852d5ea2
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Wed Mar 18 23:42:50 2015 +0100
+
+    sbuild-createchroot: set profile=sbuild also for tar-based chroots
+    
+    Bug: https://bugs.debian.org/769289
+
+commit 7b38c2c95c87b6c1184114491ad186824e134eec
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Wed Feb 25 20:56:04 2015 +0100
+
+    Update changelog.
+
+commit 07c04c8f6d7c5b78cdf42bf3499da6477b3e5e3f
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Wed Feb 25 20:48:56 2015 +0100
+
+    sbuild-dumpconfig: sort keys of dumped hashes
+    
+    With the patch the generated configuration file and man page no longer
+    change with each invokation of sbuild-dumpconfig.
+    
+    Thanks to Reiner Herrmann for the patch.
+    
+    Bug: https://bugs.debian.org/778482
+    Bug: https://bugs.debian.org/764504
+
+commit ec40e3698d197564617a003c279696e130439333
+Author: Ansgar Burchardt <ansgar@debian.org>
+Date:   Wed Feb 25 20:42:54 2015 +0100
+
+    NEWS: Bump version to 0.65.2.
+
 commit aac4bb664cc83f462fba7852ce5c2419ddaaa4f2
 Author: Ansgar Burchardt <ansgar@debian.org>
 Date:   Tue Feb 24 23:14:20 2015 +0100
