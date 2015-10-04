@@ -348,7 +348,6 @@ perlmoddir = $(PERL_MODULE_DIR)
 SUBDIRS = bin tools configs etc lib man db test
 EXTRA_DIST = \
 	bootstrap			\
-	debian				\
 	lisp				\
 	scripts/git-tag-release		\
 	scripts/git-version		\

@@ -55,6 +55,10 @@ sub set_options {
 		       "no-arch-all" => sub {
 			   $self->set_conf('BUILD_ARCH_ALL', 0);
 		       },
+		       "arch-all-only" => sub {
+			   $self->set_conf('BUILD_ARCH_ALL', 1);
+			   $self->set_conf('BUILD_ARCH_ANY', 0);
+		       },
 		       "profiles=s" => sub {
 			   $_[1] =~ tr/,/ /;
 			   $self->set_conf('BUILD_PROFILES', $_[1]);
@@ -204,9 +208,8 @@ sub set_options {
 			   $self->set_conf('STATS_DIR', $_[1]);
 		       },
 		       "setup-hook=s" => sub {
-			my @command = split(/\s+/, $_[1]);
 			push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"chroot-setup-commands"}},
-			\@command);
+			$_[1]);
 			   $self->set_conf('CHROOT_SETUP_SCRIPT', $_[1]);
 		       },
 		       "use-snapshot" => sub {
@@ -268,34 +271,46 @@ sub set_options {
 				$_[1]);
 		       },
 			"pre-build-commands=s" => sub {
-			   my @command = split(/\s+/, $_[1]);
 			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"pre-build-commands"}},
-				\@command);
+				$_[1]);
 		       },
 			"chroot-setup-commands=s" => sub {
-			   my @command = split(/\s+/, $_[1]);
 			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"chroot-setup-commands"}},
-				\@command);
+				$_[1]);
+		       },
+			"build-deps-failed-commands=s" => sub {
+			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"build-deps-failed-commands"}},
+				$_[1]);
+		       },
+			"build-failed-commands=s" => sub {
+			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"build-failed-commands"}},
+				$_[1]);
+		       },
+			"anything-failed-commands=s" => sub {
+
+			   # --anything-failed-commands simply triggers all the
+			   # --xxx-failed-commands I know about
+
+			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"build-deps-failed-commands"}},
+				$_[1]);
+			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"build-failed-commands"}},
+				$_[1]);
 		       },
 			"starting-build-commands=s" => sub {
-			   my @command = split(/\s+/, $_[1]);
 			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"starting-build-commands"}},
-				\@command);
+				$_[1]);
 		       },
 			"finished-build-commands=s" => sub {
-			   my @command = split(/\s+/, $_[1]);
 			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"finished-build-commands"}},
-				\@command);
+				$_[1]);
 		       },
 			"chroot-cleanup-commands=s" => sub {
-			   my @command = split(/\s+/, $_[1]);
 			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"chroot-cleanup-commands"}},
-				\@command);
+				$_[1]);
 		       },
 			"post-build-commands=s" => sub {
-			   my @command = split(/\s+/, $_[1]);
 			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"post-build-commands"}},
-				\@command);
+				$_[1]);
 		       },
 			"log-external-command-output" => sub {
 			    $self->set_conf('LOG_EXTERNAL_COMMAND_OUTPUT', 1);
@@ -309,6 +324,12 @@ sub set_options {
 			"extra-repository=s" => sub {
 			   push(@{$self->get_conf('EXTRA_REPOSITORIES')}, $_[1]);
 		       },
+			"extra-repository-key=s" => sub {
+			   push(@{$self->get_conf('EXTRA_REPOSITORY_KEYS')}, $_[1]);
+		       },
+			"build-path=s" => sub {
+			   $self->set_conf('BUILD_PATH', $_[1]);
+			},
 	);
 }
 

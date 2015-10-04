@@ -31,6 +31,7 @@ use Errno qw(:POSIX);
 use Fcntl;
 use File::Basename qw(basename dirname);
 use File::Temp qw(tempdir);
+use File::Path qw(make_path);
 use FileHandle;
 use File::Copy qw(); # copy is already exported from Sbuild, so don't export
 		     # anything.
@@ -363,13 +364,11 @@ sub run_chroot_session {
 	my $session = $chroot_info->create('chroot',
 					   $self->get_conf('DISTRIBUTION'),
 					   $self->get_conf('CHROOT'),
-					   $self->get_conf('HOST_ARCH'));
-
-	# Run pre build external commands
-	$self->check_abort();
-	$self->run_external_commands("pre-build-commands",
-				     $self->get_conf('LOG_EXTERNAL_COMMAND_OUTPUT'),
-				     $self->get_conf('LOG_EXTERNAL_COMMAND_ERROR'));
+					   $self->get_conf('BUILD_ARCH'));
+        if (!defined $session) {
+	    Sbuild::Exception::Build->throw(error => "Error creating chroot",
+					    failstage => "create-session");
+        }
 
 	$self->check_abort();
 	if (!$session->begin_session()) {
@@ -393,13 +392,62 @@ sub run_chroot_session {
 	}
 
 	$self->set('Chroot Dir', $session->get('Location'));
-	# TODO: Don't hack the build location in; add a means to customise
-	# the chroot directly.  i.e. allow changing of /build location.
-	$self->set('Chroot Build Dir',
-		   tempdir($self->get('Package') . '-XXXXXX',
-			   DIR =>  $session->get('Location') . "/build"));
+	if (defined($self->get_conf('BUILD_PATH')) && $self->get_conf('BUILD_PATH')) {
+		my $build_path = $session->get('Location') . "/" . $self->get_conf('BUILD_PATH');
+		$self->set('Chroot Build Dir', $build_path);
+		if (!(-d "$build_path")) {
+			make_path($build_path, {error => \my $err} );
+			if (@$err) {
+				my $error;
+				for my $diag (@$err) {
+					my ($file, $message) = %$diag;
+					$error .= "mkdir $file: $message\n";
+				}
+				Sbuild::Exception::Build->throw(
+					error => $error,
+					failstage => "create-session");
+			}
+		} else {
+			my $empty = isEmpty($build_path);
+			if ($empty == 1) {
+				Sbuild::Exception::Build->throw(
+					error => "Buildpath: " . $build_path . " is not empty",
+					failstage => "create-session");
+			}
+			elsif ($empty == 2) {
+				Sbuild::Exception::Build->throw(
+					error => "Buildpath: " . $build_path . " cannot be read. Insufficient permissions?",
+					failstage => "create-session");
+			}
+		}
+	} else {
+		$self->set('Chroot Build Dir',
+			   tempdir($self->get('Package') . '-XXXXXX',
+				   DIR =>  $session->get('Location') . "/build"));
+	}
+	sub isEmpty{
+		my ($dirpath) = @_;
+		my $file;
+		if ( opendir my $dfh, $dirpath){
+			while (defined($file = readdir $dfh)){
+				next if $file eq '.' or $file eq '..';
+				closedir $dfh;
+				return 1;
+			}
+			closedir $dfh;
+			return 0;
+		}
+		return 2;
+	}
+
 
 	$self->set('Build Dir', $session->strip_chroot_path($self->get('Chroot Build Dir')));
+
+	# Run pre build external commands
+	$self->check_abort();
+	$self->run_external_commands("pre-build-commands",
+				     $self->get_conf('LOG_EXTERNAL_COMMAND_OUTPUT'),
+				     $self->get_conf('LOG_EXTERNAL_COMMAND_ERROR'));
 
 	# Log colouring
 	$self->build_log_colour('red', '^E: ');
@@ -483,16 +531,18 @@ sub run_chroot_session {
 
     # End chroot session
     my $session = $self->get('Session');
-    my $end_session =
-	($self->get_conf('PURGE_SESSION') eq 'always' ||
-	 ($self->get_conf('PURGE_SESSION') eq 'successful' &&
-	  $self->get_status() eq 'successful')) ? 1 : 0;
-    if ($end_session) {
-	$session->end_session();
-    } else {
-	$self->log("Keeping session: " . $session->get('Session ID') . "\n");
+    if (defined $session) {
+	    my $end_session =
+		    ($self->get_conf('PURGE_SESSION') eq 'always' ||
+		     ($self->get_conf('PURGE_SESSION') eq 'successful' &&
+		      $self->get_status() eq 'successful')) ? 1 : 0;
+	    if ($end_session) {
+		    $session->end_session();
+	    } else {
+		    $self->log("Keeping session: " . $session->get('Session ID') . "\n");
+	    }
+	    $session = undef;
     }
-    $session = undef;
     $self->set('Session', $session);
 
     my $e;
@@ -520,7 +570,10 @@ sub run_chroot_session_locked {
 
 
 	$self->check_abort();
-	$resolver->setup();
+	if (!$resolver->setup()) {
+		Sbuild::Exception::Build->throw(error => "resolver setup failed",
+						failstage => "resolver setup");
+	}
 
 	$self->check_abort();
 	$self->run_chroot_update();
@@ -642,8 +695,6 @@ sub run_fetch_install_packages {
 					    failstage => "install-deps");
 	}
 
-	$resolver->add_dependencies('ESSENTIAL', $self->read_build_essential(), "", "", "", "", "");
-
 	my $snapshot = "";
 	$snapshot = "gcc-snapshot" if ($self->get_conf('GCC_SNAPSHOT'));
 	$resolver->add_dependencies('GCC_SNAPSHOT', $snapshot , "", "", "", "", "");
@@ -669,12 +720,12 @@ sub run_fetch_install_packages {
 
 	my @build_deps;
 	if ($self->get('Host Arch') eq $self->get('Build Arch')) {
-	    @build_deps = ('ESSENTIAL', 'GCC_SNAPSHOT', 'MANUAL',
+	    @build_deps = ('GCC_SNAPSHOT', 'MANUAL',
 			   $self->get('Package'));
 	} else {
 	    $self->check_abort();
 	    if (!$resolver->install_core_deps('essential',
-					      'ESSENTIAL', 'GCC_SNAPSHOT')) {
+					      'GCC_SNAPSHOT')) {
 		Sbuild::Exception::Build->throw(error => "Essential dependencies not satisfied; skipping",
 						failstage => "install-essential");
 	    }
@@ -722,6 +773,25 @@ sub run_fetch_install_packages {
 	}
     };
 
+    # I catch the exception here and trigger the hook, if needed. Normally I'd
+    # do this at the end of the function, but I want the hook to fire before we
+    # clean up the environment. I re-throw the exception at the end, as usual
+    my $e = Exception::Class->caught('Sbuild::Exception::Build');
+    if ( defined $self->get('Pkg Fail Stage') &&
+         $self->get('Pkg Fail Stage') eq 'build' ) {
+        $self->run_external_commands("build-failed-commands",
+                                     $self->get_conf('LOG_EXTERNAL_COMMAND_OUTPUT'),
+                                     $self->get_conf('LOG_EXTERNAL_COMMAND_ERROR'));
+    } elsif($e) {
+
+        $self->run_external_commands("build-deps-failed-commands",
+                                     $self->get_conf('LOG_EXTERNAL_COMMAND_OUTPUT'),
+                                     $self->get_conf('LOG_EXTERNAL_COMMAND_ERROR'));
+    }
+
+
+
+
     $self->log_subsection("Cleanup");
     my $session = $self->get('Session');
     my $resolver = $self->get('Dependency Resolver');
@@ -759,8 +829,9 @@ sub run_fetch_install_packages {
 	}
     }
 
-    my $e;
-    if ($e = Exception::Class->caught('Sbuild::Exception::Build')) {
+
+    # re-throw the previously-caught exception
+    if ($e) {
 	$e->rethrow();
     }
 }
@@ -1003,10 +1074,20 @@ sub fetch_source_files {
         return keys %set;
     }
 
-    my $merged_depends =
-      deps_parse( deps_concat( grep {defined $_} ($build_depends,
-                                                  $build_depends_arch,
-                                                  $build_depends_indep)));
+    my $build_depends_concat =
+      deps_concat( grep {defined $_} ($build_depends,
+                                      $build_depends_arch,
+                                      $build_depends_indep));
+    my $merged_depends = deps_parse( $build_depends_concat );
+    if( !defined $merged_depends ) {
+        my $msg = "Error! deps_parse() couldn't parse the Build-Depends '$build_depends_concat'";
+        $self->log("$msg\n");
+        Sbuild::Exception::Build->throw(error => $msg,
+                                        status => "skipped",
+                                        failstage => "add-forein-architecture");
+        return 0;
+    }
+
     my @explicit_arches = get_explicit_arches($merged_depends, {});
     my @foreign_arches = grep {$_ !~ /any|all|native/} @explicit_arches;
     my $added_any_new;
@@ -1081,23 +1162,37 @@ sub run_command {
 	    $defaults = $self->get('Host')->{'Defaults'};
 	    $out = $defaults->{'STREAMOUT'} if ($log_output);
 	    $err = $defaults->{'STREAMERR'} if ($log_error);
-	    $self->get('Host')->run_command(
-		{ COMMAND => \@{$command},
-		    PRIORITY => 0,
-		    STREAMOUT => $out,
-		    STREAMERR => $err,
-		});
+
+	    my %args = (PRIORITY  => 0,
+			STREAMOUT => $out,
+			STREAMERR => $err);
+	    if(ref $command) {
+		$args{COMMAND} = \@{$command};
+		$args{COMMAND_STR} = "@{$command}";
+	    } else {
+		$args{COMMAND} = [split('\s+', $command)];
+		$args{COMMAND_STR} = $command;
+	    }
+
+	    $self->get('Host')->run_command( \%args );
 	} else {
 	    $defaults = $self->get('Session')->{'Defaults'};
 	    $out = $defaults->{'STREAMOUT'} if ($log_output);
 	    $err = $defaults->{'STREAMERR'} if ($log_error);
-	    $self->get('Session')->run_command(
-		{ COMMAND => \@{$command},
-		    USER => ($rootuser ? 'root' : $self->get_conf('BUILD_USER')),
-		    PRIORITY => 0,
-		    STREAMOUT => $out,
-		    STREAMERR => $err,
-		});
+
+	    my %args = (USER => ($rootuser ? 'root' : $self->get_conf('BUILD_USER')),
+			PRIORITY => 0,
+			STREAMOUT => $out,
+			STREAMERR => $err);
+	    if(ref $command) {
+		$args{COMMAND} = \@{$command};
+		$args{COMMAND_STR} = "@{$command}";
+	    } else {
+		$args{COMMAND} = [split('\s+', $command)];
+		$args{COMMAND_STR} = $command;
+	    }
+
+	    $self->get('Session')->run_command( \%args );
 	}
     my $status = $?;
 
@@ -1132,6 +1227,14 @@ sub run_external_commands {
     } elsif ($stage eq "chroot-setup-commands") {
 	$self->log_subsection("Chroot Setup Commands");
 	$chroot = 1;
+    } elsif ($stage eq "build-deps-failed-commands") {
+	$self->log_subsection("Build-Deps Install Failed Commands");
+	$chroot = 1;
+        $rootuser = 1;
+    } elsif ($stage eq "build-failed-commands") {
+	$self->log_subsection("Generic Build Failed Commands");
+	$chroot = 1;
+        $rootuser = 0;
     } elsif ($stage eq "starting-build-commands") {
 	$self->log_subsection("Starting Timed Build Commands");
 	$chroot = 1;
@@ -1154,6 +1257,7 @@ sub run_external_commands {
     my $hostarch = $self->get('Host Arch') if ($self->get('Host Arch'));
     my $build_dir = $self->get('Build Dir');
     my $pkgbuild_dir = $build_dir . '/' . $self->get('DSC Dir');
+    my $shell_cmd = "bash -i </dev/tty >/dev/tty 2>/dev/tty";
     my %percent = (
 	"%" => "%",
 	"d" => $dsc, "SBUILD_DSC" => $dsc,
@@ -1161,6 +1265,7 @@ sub run_external_commands {
 	"a" => $hostarch, "SBUILD_HOST_ARCH" => $hostarch,
 	"b" => $build_dir, "SBUILD_BUILD_DIR" => $build_dir,
 	"p" => $pkgbuild_dir, "SBUILD_PKGBUILD_DIR" => $pkgbuild_dir,
+	"s" => $shell_cmd, "SBUILD_SHELL" => $shell_cmd,
     );
     if ($chroot == 0) {
 	my $chroot_dir = $self->get('Chroot Dir');
@@ -1172,17 +1277,30 @@ sub run_external_commands {
 	sort {length $b <=> length $a || $a cmp $b} keys %percent);
     my $returnval = 1;
     foreach my $command (@commands) {
-	foreach my $arg (@{$command}) {
-	    $arg =~ s{
-	        # Match a percent followed by a valid keyword
-	       \%($keyword_pat)
-	    }{
-	        # Substitute with the appropriate value only if it's defined
-	        $percent{$1} || $&
-	    }msxge;
+
+	my $substitute = sub {
+	    foreach(@_) {
+		s{
+		     # Match a percent followed by a valid keyword
+		     \%($keyword_pat)
+	     }{
+		 # Substitute with the appropriate value only if it's defined
+		 $percent{$1} || $&
+	     }msxge;
+	    }
+	};
+
+	my $command_str;
+	if( ref $command ) {
+	    $substitute->(@{$command});
+	    $command_str = join(" ", @{$command});
+	} else {
+	    $substitute->($command);
+	    $command_str = $command;
 	}
-	my $command_str = join(" ", @{$command});
+
 	$self->log_subsubsection("$command_str");
+
 	$returnval = $self->run_command($command, $log_output, $log_error, $chroot, $rootuser);
 	$self->log("\n");
 	if (!$returnval) {
@@ -1480,10 +1598,6 @@ sub build {
     $self->set('Build Start Time', time);
     $self->set('Build End Time', $self->get('Build Start Time'));
 
-    my $binopt = $self->get_conf('BUILD_SOURCE') ?
-	$self->get_conf('FORCE_ORIG_SOURCE') ? "-sa" : "" :
-	$self->get_conf('BUILD_ARCH_ALL') ?	"-b" : "-B";
-
     my $bdir = $self->get('Session')->strip_chroot_path($dscdir);
     if (-f "$self->{'Chroot Dir'}/etc/ld.so.conf" &&
 	! -r "$self->{'Chroot Dir'}/etc/ld.so.conf") {
@@ -1532,7 +1646,12 @@ sub build {
 	}
     }
 
+    use constant dpkgopt => [[["", "-B"], ["-A", "-b" ]], [["-S", "-G"], ["-g", ""]]];
+    my $binopt = dpkgopt->[$self->get_conf('BUILD_SOURCE')]
+			  [$self->get_conf('BUILD_ARCH_ALL')]
+			  [$self->get_conf('BUILD_ARCH_ANY')];
     push (@{$buildcmd}, $binopt) if $binopt;
+    push (@{$buildcmd}, "-sa") if ($self->get_conf('BUILD_SOURCE') && $self->get_conf('FORCE_ORIG_SOURCE'));
     push (@{$buildcmd}, "-r" . $self->get_conf('FAKEROOT'));
 
     if (defined($self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')) &&
@@ -1595,7 +1714,8 @@ sub build {
 	USER => $self->get_conf('BUILD_USER'),
 	SETSID => 1,
 	PRIORITY => 0,
-	DIR => $bdir
+	DIR => $bdir,
+	STREAMERR => \*STDOUT,
     };
 
     my $pipe = $self->get('Session')->pipe_command($command);
@@ -1829,67 +1949,13 @@ sub get_changes {
     my $path=shift;
     my $changes;
 
-    if ( (grep {$_ eq "-A"} @{$self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')})
-	 && -r $path . '/' . $self->get('Package_SVersion') . "_all.changes") {
+    if ( -r $path . '/' . $self->get('Package_SVersion') . "_all.changes") {
 	$changes = $self->get('Package_SVersion') . "_all.changes";
     }
     else {
 	$changes = $self->get('Package_SVersion') . '_' . $self->get('Host Arch') . '.changes';
     }
     return $changes;
-}
-
-sub read_build_essential {
-    my $self = shift;
-    my @essential;
-    local (*F);
-
-    if (open( F, "$self->{'Chroot Dir'}/usr/share/doc/build-essential/essential-packages-list" )) {
-	while( <F> ) {
-	    last if $_ eq "\n";
-	}
-	while( <F> ) {
-	    chomp;
-	    push( @essential, $_ ) if $_ !~ /^\s*$/;
-	}
-	close( F );
-    }
-    else {
-	warn "Cannot open $self->{'Chroot Dir'}/usr/share/doc/build-essential/essential-packages-list: $!\n";
-    }
-
-    if (open( F, "$self->{'Chroot Dir'}/usr/share/doc/build-essential/list" )) {
-	while( <F> ) {
-	    last if $_ eq "BEGIN LIST OF PACKAGES\n";
-	}
-	while( <F> ) {
-	    chomp;
-	    last if $_ eq "END LIST OF PACKAGES";
-	    next if /^\s/ || /^$/;
-	    push( @essential, $_ );
-	}
-	close( F );
-    }
-    else {
-	warn "Cannot open $self->{'Chroot Dir'}/usr/share/doc/build-essential/list: $!\n";
-    }
-
-    # Workaround http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=602571
-    # Also works around Ubuntu Lucid shipping with "diff" instead of
-    # "diffutils": https://bugs.launchpad.net/ubuntu/+source/sbuild/+bug/741897
-    if (open( F, "$self->{'Chroot Dir'}/etc/lsb-release" )) {
-        while( <F> ) {
-            if ($_ eq "DISTRIB_ID=Ubuntu\n") {
-                @essential = grep(!/^sysvinit$/, @essential);
-            }
-            if ($_ eq "DISTRIB_CODENAME=lucid\n") {
-                s/^diff$/diffutils/ for (@essential);
-            }
-        }
-        close( F );
-    }
-
-    return join( ", ", @essential );
 }
 
 sub check_space {
@@ -1998,8 +2064,11 @@ sub generate_stats {
     $self->add_stat('Build Architecture', $self->get('Build Arch'));
     $self->add_stat('Build Profiles', $self->get('Build Profiles'))
         if $self->get('Build Profiles');
-    my @keylist=keys %{$resolver->get('Initial Foreign Arches')};
-    push @keylist, keys %{$resolver->get('Added Foreign Arches')};
+    my @keylist;
+    if (defined $resolver) {
+	@keylist=keys %{$resolver->get('Initial Foreign Arches')};
+	push @keylist, keys %{$resolver->get('Added Foreign Arches')};
+    }
     my $foreign_arches = join ' ', @keylist;
     $self->add_stat('Foreign Architectures', $foreign_arches )
         if $foreign_arches;
@@ -2153,6 +2222,7 @@ sub open_build_log {
 
 	$PROGRAM_NAME = 'package log for ' . $self->get('Package_SVersion') . '_' . $self->get('Host Arch');
 
+	$saved_stdout->autoflush(1);
 	if (!$self->get_conf('NOLOG') &&
 	    $self->get_conf('LOG_DIR_AVAILABLE')) {
 	    unlink $filename; # To prevent opening symlink to elsewhere
@@ -2160,7 +2230,6 @@ sub open_build_log {
 		Sbuild::Exception::Build->throw(error => "Failed to open build log $filename: $!",
 						failstage => "init");
 	    CPLOG->autoflush(1);
-	    $saved_stdout->autoflush(1);
 
 	    # Create 'current' symlinks
 	    if ($self->get_conf('SBUILD_MODE') eq 'buildd') {
@@ -2168,7 +2237,13 @@ sub open_build_log {
 				   $self->get_conf('BUILD_DIR') . '/current-' .
 				   $self->get_conf('DISTRIBUTION'));
 	    } else {
-		$self->log_symlink($filename,
+		my $symlinktarget = $filename;
+		# if symlink target is in the same directory as the symlink
+		# itself, make it a relative link instead of an absolute one
+		if (Cwd::abs_path($self->get_conf('BUILD_DIR')) eq Cwd::abs_path(dirname($filename))) {
+		    $symlinktarget = basename($filename)
+		}
+		$self->log_symlink($symlinktarget,
 				   $self->get_conf('BUILD_DIR') . '/' .
 				   $self->get('Package_SVersion') . '_' .
 				   $self->get('Host Arch') . ".build");
@@ -2192,7 +2267,7 @@ sub open_build_log {
 	    # process in log stream).
 	    if (m/$filter_regex/) {
 		($text,$replacement)=($1,$2);
-		$replacement = "«$replacement»";
+		$replacement = "<<$replacement>>";
 		push (@filter, [$text, $replacement]);
 		$_ = "I: NOTICE: Log filtering will replace '$text' with '$replacement'\n";
 	    } elsif (m/$colour_regex/) {
@@ -2317,7 +2392,10 @@ sub close_build_log {
 
     my $subject = "Log for " . $self->get_status() .
 	" build of " . $self->get('Package_Version');
-    if ($self->get('Host Arch')) {
+
+    if ($self->get_conf('BUILD_ARCH_ALL') && !$self->get_conf('BUILD_ARCH_ANY')) {
+	$subject .= " on all";
+    } elsif ($self->get('Host Arch')) {
 	$subject .= " on " . $self->get('Host Arch');
     }
     if ($self->get_conf('ARCHIVE')) {

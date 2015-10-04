@@ -1,3 +1,465 @@
+commit 7085eef8ca39bc9de8ccb6ab1b20e68c98c8808c
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sun Oct 4 09:22:33 2015 +0200
+
+    Bump version to 0.66.0
+
+commit ec7811f97832d85dd1092eb2fbcbd189fca75155
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sun Oct 4 09:20:31 2015 +0200
+
+    delete ./debian directory to have a separate branch for it
+
+commit 49597f2ee5fab8360f40409f3a291d1f84f1a2eb
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Mon Sep 28 15:39:14 2015 +0200
+
+    lib/Sbuild/AspcudResolver.pm: change aspcud optimization preference
+    
+    The optimization preference used to be
+    
+       -new,-removed,-changed,+sum(solution,apt-pin)
+    
+    But that meant that the first optimization criteria was to minimize the
+    number of newly installed packages even if that would mean to remove
+    many packages or upgrade many. This can lead to the situation where for
+    the sake of finding a solution with the minimal number of new packages,
+    even build-essential and fakeroot are uninstalled as they are not part
+    of the installation request. Furthemore it can happen that the least new
+    packages get installed if some packages get taken from experimental
+    while others get upgraded to their versions in experimental which is
+    also not desired as we only want to use experimental if absolutely
+    necessary.
+    
+    Setting "+sum(solution,apt-pin)" as the first optimization criteria does
+    not help as this would just mean to find a solution that installs as
+    many packages as possible from the distribution with the highest pin
+    value. But we would rather like a small solution.
+    
+    The solution is to use the following preference setting:
+    
+       -removed,-changed,-new,+sum(solution,apt-pin)
+    
+    Since it is assumed that the chroot only contains a base system and
+    build-essential, from which we assume that no package shall be removed,
+    we first minimize the number of removed packages. This means that if
+    there exist solutions that do not remove any packages, then those will
+    be evaluated further. The second optimization criteria is to minimize
+    the number of changed packages. This will take care that no packages of
+    the base system are unnecessarily upgraded to their versions from
+    experimental. It will also avoid any solutions that do need upgrades to
+    the experimental versions and keep the upgrades to a minimum if an
+    upgrade is strictly required. The third criteria minimizes the number of
+    new packages the solution installs. Here it can happen that installing a
+    dependency from experimental instead of unstable will lead to less new
+    packages. But this should only happen if the package in unstable depends
+    on more additional packages compared to the same package in
+    experimental. If the solutions are otherwise equal then as the last
+    criteria, the number of packages from experimental will be minimized by
+    maximizing the sum of the apt-pin values. Since packages from unstable
+    have a higher pin value than those in experimental, this should prefer
+    packages from unstable except if the solution from unstable is so large
+    compared to the one in experimental that their sum of pin values is
+    larger in which case the solution in experimental will be preferred.
+
+commit daa4a9fca9e62b0f718c36fd9fdfec14c7d7936f
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Thu Oct 1 20:43:04 2015 +0200
+
+    test/sbuild.in: now that a custom configuration file can be passed to sbuild, use the default config to reduce influence of the system config on the test cases
+
+commit eae087729bf77b8b4d08b24811da45f53eabd9ac
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Thu Oct 1 20:42:13 2015 +0200
+
+    test/sbuild.in: explicitly set schroot chroot and schroot working directory
+
+commit 8a3e12c3edf768ddeb66b29157d3cf1a7ad3d48d
+Author: Dima Kogan <dima@secretsauce.net>
+Date:   Sat Oct 18 15:41:59 2014 -0700
+
+    Replaced all unicode-printed chars with plain ASCII (Closes: #765886, #665847)
+    
+    Yes, it is nearly 2016 and Debian has been using unicode for over a
+    decade. Yes, everybody should be using it by now. What made me (josch)
+    remove unicode characters and revert to back to ASCII is that the only
+    advantage of using unicode characters is:
+    
+     - Slightly more pretty output. I'd say the improvement is so little
+       that I would call it negligible.
+    
+    But on the other hand, there is a disadvantage which I'd call much more
+    practical than maybe having a more visually pleasing output:
+    
+     - sbuild logs are not necessarily only consumed by users of Debian or
+       transmitted with technologies we ship with Debian. They might be
+       copy-pasted to mail messages (read by people with very different clients),
+       personal book keeping programs and web interfaces of services with no
+       unicode support. Yes, all these places *should* know unicode but sbuild
+       logs should also not become less readable if they don't.
+    
+    Given that there is really no hard *requirement* for keeping the unicode
+    characters for pretty drawing (in contrast to a program which, for
+    example, handles asian script), I'm applying Dima's patch.
+    
+    The reason why ASCII output is now the default instead of adding a
+    --ascii option is, that at the time where the build is done, one does
+    not know which places the build logs might reach.  The same reasoning
+    goes for why unicode support is not enabled or disabled depending on the
+    capabilities of the terminal sbuild outputs to.  Instead, if one is very
+    sure that the log will never be consumed by or transmitted through a
+    medium without unicode support, then there could be a --pretty-unicode
+    option in the future which explicitly enables the pretty boxes again.
+
+commit 8b9c2e45edc6ed08ea9a748a7dcc6b0ef6e1899c
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Thu Oct 1 07:37:59 2015 +0200
+
+    man/sbuild.1.in: update docs for --dist option (Closes: #783135)
+
+commit f1a0217b5752bd98f3456f5245c77292d048e80c
+Author: Dima Kogan <dima@secretsauce.net>
+Date:   Sat Apr 25 12:56:15 2015 -0700
+
+    Added --xxx-failed-commands
+    
+    Added several external commands that trigger on failure. The way these are
+    intended to be used is to spawn a shell if something goes wrong so that the user
+    can poke around and find the problem. Most commonly you would do
+    
+      sbuild --anything-failed-commands %s
+    
+    Currently we have
+    
+     --build-deps-failed-commands
+     --build-failed-commands
+     --anything-failed-commands
+    
+    Where --anything-failed-commands simply activates all of the others
+
+commit f4330987e564a7ab926f8cc65338a3b34ff00c0a
+Author: Dima Kogan <dima@secretsauce.net>
+Date:   Tue Apr 21 16:14:42 2015 -0700
+
+    external command %SBUILD_SHELL produces an interactive shell (Closes: #783091)
+
+commit 2eb53b5150d51b2063544febf35ba92f11abe235
+Author: Dima Kogan <dima@secretsauce.net>
+Date:   Mon Apr 20 22:12:56 2015 -0700
+
+    external commands are now unparsed strings (Closes: #782672)
+    
+    when handling external commands (--starting-build-commands and others), I now
+    keep the input string as is, and pass it to the shell, instead of splitting it
+    on whitespace and then reassembling it. This reassembling was being done
+    improperly, with shell internals such as < being erroneously escaped. Keeping
+    the string as is allows the user to give the command they want.
+    
+    This is implemented by keeping the COMMAND and INTCOMMAND keys same as they were
+    (array-refs of strings), but adds additional COMMAND_STR and INTCOMMAND_STR keys
+    that have the string representation. The non-STR versions are always populated,
+    and the external command options populate the _STR ones as well. When running
+    the commands, we use the _STR options if we have them, otherwise, we recombine
+    as before.
+    
+    Since the old array-ref-based code path is still there, old commandlines and
+    configurations remain working
+
+commit d0cc9b3184349384d32aec7b4adad196f7b68a2a
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Thu Sep 3 08:59:37 2015 +0200
+
+    add aspcud based resolver
+
+commit dce5caaa7bb149032a3fe1777935e2965ff34f86
+Author: Miguel A. Colón Vélez <debian.micove@gmail.com>
+Date:   Tue Sep 15 06:07:46 2015 -0400
+
+    Fix unlink again.
+    
+    - unlink returns an errno so it can't be used before the if statement
+      (x2)
+    - The unlink from the 2nd hunk is also missing.
+
+commit ca2a8f7638fc45d84085ed4459aee1ec062e9382
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Thu Sep 17 07:32:55 2015 +0200
+
+    ./man/sbuild-shell.1.in: add a note that changes will be persistent
+
+commit b095dee3414bfe5e602ddfa1ea27097027658e38
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Tue Sep 15 10:37:30 2015 +0200
+
+    fix up last commit (did unlink() too early)
+
+commit aba0ffb5e7da37070c4e0e626fe557b538fb0a97
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sun Sep 13 18:53:18 2015 +0200
+
+    lib/Sbuild/ResolverBase.pm: close and unlink temporary files created by File::Temp::tempfile() (Closes: #775091)
+
+commit 72dd689d1776e22583d9d98bb66f5bd87f8343bd
+Author: Christian Kastner <debian@kvr.at>
+Date:   Sat Jan 3 23:18:09 2015 +0100
+
+    sbuild-createchroot(8): default suffix is -sbuild, not -chroot (Closes: #774521)
+
+commit b2726d66049d93225e3dc9b591c4ae7f6c66e29c
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sun Sep 13 15:13:25 2015 +0200
+
+    debian/changelog: add note that commit fec82ed7 fixes bug #657392 as commit message omits the closing bug number
+
+commit 3f0bca193cdde321ded5114b8cebf880ad9230e7
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sun Sep 6 08:47:09 2015 +0200
+
+    Report a proper error message in case /var/lib/sbuild inside the chroot is not writable (Closes: #797783)
+    
+     - lib/Sbuild/ResolverBase.pm: setup():
+         * wrap call to File::Temp in eval() block because it croak()s on error
+         * instead of printing to STDERR use $self->log_error
+         * return consistent success/failure
+     - lib/Sbuild/Build.pm: run_chroot_session_locked():
+         * check the return value of resolver->setup() and throw error
+         * accordingly
+
+commit 21662cf4a058f9186d76a77be14d77cb69bd52a9
+Author: Dima Kogan <dima@secretsauce.net>
+Date:   Sat Apr 25 16:09:38 2015 -0700
+
+    If Build-Depends can't be parsed, I now error loudly (Closes: #783335)
+    
+    Previously it was possible for sbuild to continue with mysterious failures later
+    on
+
+commit cdac16a596bf9ffbd069615599a43bc8f14e6cca
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sun Sep 13 14:01:49 2015 +0200
+
+    properly setup buildd unstable chroot (Closes: #731062)
+
+commit 664c5193f513f05bd0f2aaffac33b295e4b01467
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sun Sep 13 13:51:53 2015 +0200
+
+    Handle $session being undefined properly (Closes: #798568, #745851)
+    
+     - lib/Sbuild/ChrootInfo.pm: throw an Sbuild exception instead of just
+       dying
+     - lib/Sbuild/Build.pm: run_chroot_session() throws an except if
+       $session is undefined
+     - lib/Sbuild/Build.pm: do not try to end the session if $session is
+       undefined
+
+commit 15fe6010de397a779012d20760489196f7a64307
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Sun Sep 13 13:47:11 2015 +0200
+
+    Add documentation for the new --arch-all-only option
+
+commit 774707bca7585e047449910e8a5f3a4da2d30f58
+Author: Paul Tagliamonte <paultag@debian.org>
+Date:   Wed Sep 2 10:41:05 2015 -0400
+
+    Add --extra-repository-key flag for extra apt keys (Closes: #796539)
+    
+    This will allow users to specify which OpenPGP key should be added
+    to the trusted keys inside the chroot. This is particularly useful
+    if the target --extra-repository is not signed with a key that's
+    trusted by the base chroot.
+
+commit c07f4c08701d7e3a9582b87c2c90b4ce6dad5c23
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sun Sep 13 12:59:36 2015 +0200
+
+    Instead of explicitly requesting core packages of the build architecture, use :native (Closes: #798323)
+    
+     - The problem is, that the BUILD_ARCH configuration variable gets only
+       set from the command line *after* it was already used as an
+       architecture qualifier. The :native qualifier works around this as it
+       is only replaced by the explicit build architecture in a much later
+       stage.
+
+commit 6d705b3821a725f483496d0d18bd6c25be847e94
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Fri Aug 21 10:45:05 2015 +0200
+
+    make symlink to build log relative if in same directory (Closes: #685416)
+
+commit 23a5140c0837a7241aa90bbff65bcebbb9d60414
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Wed Jul 29 11:09:13 2015 +0200
+
+    partly revert commit 5ad92654 to look for a BUILD_ARCH chroot instead of HOST_ARCH (Closes: #793951)
+
+commit 25ae3f741e32c9de9c5e19bc4a1315f7ee5b531b
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sat Jul 25 18:11:55 2015 +0200
+
+    use dpkg --assert-multi-arch to check for multi-arch support (Closes: #793561)
+
+commit bb5699b836ab329f9b75c33d9c0b7906a4296bcf
+Author: Guillem Jover <guillem@debian.org>
+Date:   Sat Jul 25 05:31:40 2015 +0200
+
+    Sbuild::ResolverBase: Correct inaccurate dpkg Multi-Arch support comment (Closes: #793560)
+
+commit 9155357e19cb0aaf62c23316abe078db9ed2086d
+Author: Luca Falavigna <dktrkranz@debian.org>
+Date:   Sat Jul 25 02:06:00 2015 +0200
+
+    Fix call to add_foreign_architecture to actually have an effect (Closes: #793359)
+
+commit 9f77e6482121afd2bf5c4f1177f4e4023c15478c
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Mon Jul 20 20:34:41 2015 +0200
+
+    Fix crossbuild dependency resolution for apt and aptitude (Closes: #770407)
+    
+     - do not set APT::Architecture to the host architecture when cross building
+       this just "happens to work" but is wrong. Apt and dpkg should agree on the
+       native architecture. Instead let the dummy package be of the host
+       architecture to properly resolve cross build dependencies
+     - build-essential and crossbuild-essential-* must be installed in the
+       build architecture
+     - do not read /usr/share/doc/build-essential/essential-packages-list
+       because build-essential is already installed in an earlier stage.
+       This only fails during cross building as it tries to install host
+       arch binary packages
+     - aptitude cannot find a package foo if foo is not of the native
+       architecture, so append an architecture qualifier to the dummy
+       package name in the aptitude command line
+
+commit b8ec53e09a1dbd5f60c83d350eaf4586f3345809
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sat Jul 11 19:03:55 2015 +0200
+
+    create ~/.gnupg if it did not exist before when running sbuild-update (Closes: #792100)
+
+commit 0e5ed36d9d88985c387ecd4b4b3474a11d44e0cd
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sat Jul 11 09:48:26 2015 +0200
+
+    use httpredir.debian.org instead of ftp.debian.org or ftp.uk.debian.org in documentation (Closes: #792092)
+
+commit d720bb7afe3c7df45f60c3e39a6641a078c726f0
+Author: Maria Valentina Marin Rordrigues <marivalenm@gmail.com>
+Date:   Sat Jul 11 09:32:12 2015 +0200
+
+    add --build-path option and  configuration variable to set a deterministic build path (Closes: #790868)
+
+commit fb718ea63b35e548f52ce034555f32b88f09a383
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sat Jul 11 09:18:27 2015 +0200
+
+    allow to set custom configuration file through $SBUILD_CONFIG environment variable (Closes: #790354)
+
+commit 7780b28af2a8dfb90cf035f534de321e58507507
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sat Jul 11 09:07:24 2015 +0200
+
+    consider stderr as well as stdout before timeout (Closes: #731940)
+
+commit 15b290e0187f4bce39d09474e14d25bb1fe93666
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Sat Jul 11 08:59:28 2015 +0200
+
+    Move running of pre-build-commands until after 'Chroot Dir' is defined
+    
+     - this prevents the %SBUILD_CHROOT_DIR percentage escape being empty
+       when running the pre-build-commands hook (Closes: #774359)
+
+commit 0fbe08075389d7c63d01c184f0e736ad4bcb6a64
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Mon Aug 31 11:28:39 2015 +0200
+
+    new debian/changelog entry for 0.65.3 and demote exim4 to Recommends for libsbuild-perl
+    
+    Both are only required if MAILTO is also set. (Closes: #774310)
+
+commit c71014345f9750b1b5deef4d172de26b7b4b7551
+Author: Johannes 'josch' Schauer <josch@mister-muffin.de>
+Date:   Mon Aug 31 11:20:55 2015 +0200
+
+    make exim4 or mail-transport-agent optional by only validating if sendmail exists if MAILTO is set
+
+commit a0a5449570311d214dd09a1b89f9eac1c007f1f1
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Wed Aug 12 21:19:45 2015 +0200
+
+    Cleanup uploader code
+    
+    Signed-off-by: Aurelien Jarno <aurelien@aurel32.net>
+
+commit d6f12f0c373e6a9ce12ee712ebc025416b58646b
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Wed Aug 12 17:17:38 2015 +0200
+
+    Use --arch-all-only when building an arch:all package
+    
+    Signed-off-by: Aurelien Jarno <aurelien@aurel32.net>
+
+commit fec82ed70d7efdfe17f676c60e1114bd8bb4a888
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Wed Aug 12 15:23:55 2015 +0200
+
+    Add a new --arch-all-only option
+    
+    Used to build arch:all packages or only the arch:all packages of all+any package.
+    
+    Signed-off-by: Aurelien Jarno <aurelien@aurel32.net>
+
+commit b5234f1d9fd8311b716364dff68e598e09db54b2
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Tue Aug 11 11:25:21 2015 +0200
+
+    Pass the correct architecture to wanna-build when uploading packages
+    
+    Signed-off-by: Aurelien Jarno <aurelien@aurel32.net>
+
+commit 367395490888ab6fdac8a7d4ce151d0018d74355
+Author: Christoph Egger <christoph@christoph-egger.org>
+Date:   Thu Jul 30 10:55:48 2015 +0200
+
+    Add support for jessie-kfreebsd suites
+    
+      Update the $CHROOT_ALIAS globs to match jessie-kfreebsd suite (which
+      have one extra dash in them compared to the relative "normal" suites)
+    
+    Signed-off-by: Héctor Orón Martínez <zumbi@debian.org>
+
+commit 60806e10ea34d61f69de1c8c457e8c96aa338d38
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Mon Jul 13 12:34:12 2015 +0100
+
+    sbuild: Autoflush stdout even in --nolog mode
+    
+    The output from sbuild --nolog may be sent to a log file in some other
+    way, and in such cases it's useful for it to be autoflushed rather than
+    block-buffered so that the log file remains current.
+
+commit 1efcd10bfdb3ecf256934b4bbd3c6bf1fa33a5c9
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Wed Apr 15 11:25:40 2015 -0500
+
+    sbuild: Fix handling of exceptions while setting up chroot
+    
+    If chroot setup fails before creating the dependency resolver, then
+    foreign-architecture information will not be available and attempting to
+    fetch it in generate_stats will crash, causing sbuild to hang.  Handle
+    this case.
+
+commit 9619d42ac2a4a904d1851a9044c6c0c1da1434a1
+Author: Colin Watson <cjwatson@ubuntu.com>
+Date:   Tue Apr 14 09:29:28 2015 -0500
+
+    sbuild: Don't sign dummy archive if apt_allow_unauthenticated is set
+    
+    In this mode, apt isn't going to check the signature anyway, so there's
+    no point requiring key generation.
+
 commit e09b55bf011bc3e7f803b34a45c0d797d66c0f42
 Author: Aurelien Jarno <aurelien@aurel32.net>
 Date:   Tue Mar 24 14:21:50 2015 +0100

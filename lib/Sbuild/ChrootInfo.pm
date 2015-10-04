@@ -59,9 +59,13 @@ sub create {
     my $namespace = shift;
     my $distribution = shift;
     my $chroot = shift;
-    my $arch = shift;
+    my $arch = shift; # this is the build arch
 
     my $chrootid = $self->find($namespace, $distribution, $chroot, $arch);
+
+    if (!defined $chrootid) {
+        return undef;
+    }
 
     my $newchroot = $self->_create($chrootid);
 
@@ -78,7 +82,7 @@ sub find {
     my $namespace = shift;
     my $distribution = shift;
     my $chroot = shift;
-    my $arch = shift;
+    my $arch = shift; # this is the build arch
 
     # Use namespace given from $distribution if one is found
     if ($distribution =~ /^([^:]+):/msx) {
@@ -90,12 +94,9 @@ sub find {
 
     # Don't do strict arch checking if ARCH == HOST_ARCH.
     if (!defined($arch) || $arch eq "") {
-	$arch = $self->get_conf('HOST_ARCH');
+	$arch = $self->get_conf('BUILD_ARCH');
     }
-    my $arch_set = ($arch eq $self->get_conf('HOST_ARCH')) ? 0 : 1;
-    my $build_arch = $self->get_conf('BUILD_ARCH');
-
-    my $arch_found = 0;
+    my $host_arch = $self->get_conf('HOST_ARCH');
 
     if (!defined $chroot) {
 	my $ns = $chroots->{$namespace};
@@ -103,26 +104,22 @@ sub find {
 	    if ($namespace ne 'chroot') {
 		$chroot = $self->find('chroot', $distribution, $chroot, $arch);
 	    } else {
-		# TODO: Return error, rather than die.
-		die "Chroot namespace $namespace not found\n";
-		return undef;
+		    Sbuild::Exception::Build->throw(error => "Chroot namespace $namespace not found\n",
+				    failstage => "find-chroot");
 	    }
 	}
 
-        if ($arch ne $build_arch &&
-            defined($ns->{"${distribution}-${build_arch}-${arch}-sbuild"})) {
-            $chroot = "${namespace}:${distribution}-${build_arch}-${arch}-sbuild";
-            $arch_found = 1;
+        if ($arch ne $host_arch &&
+            defined($ns->{"${distribution}-${arch}-${host_arch}-sbuild"})) {
+            $chroot = "${namespace}:${distribution}-${arch}-${host_arch}-sbuild";
         }
-        elsif ($arch ne $build_arch &&
-            defined($ns->{"${distribution}-${build_arch}-${arch}"})) {
-            $chroot = "${namespace}:${distribution}-${build_arch}-${arch}";
-            $arch_found = 1;
+        elsif ($arch ne $host_arch &&
+            defined($ns->{"${distribution}-${arch}-${host_arch}"})) {
+            $chroot = "${namespace}:${distribution}-${arch}-${host_arch}";
         }
         elsif ($arch ne "" &&
             defined($ns->{"${distribution}-${arch}-sbuild"})) {
             $chroot = "${namespace}:${distribution}-${arch}-sbuild";
-            $arch_found = 1;
         }
         elsif (defined($ns->{"${distribution}-sbuild"})) {
             $chroot = "${namespace}:${distribution}-sbuild";
@@ -130,16 +127,9 @@ sub find {
         elsif ($arch ne "" &&
                defined($ns->{"${distribution}-${arch}"})) {
             $chroot = "${namespace}:${distribution}-${arch}";
-            $arch_found = 1;
         } elsif (defined($ns->{$distribution})) {
             $chroot = "${namespace}:${distribution}";
 	}
-
-#	if ($arch_set && !$arch_found && $host_arch ne "") {
-#	    # TODO: Return error, rather than die.
-#	    die "Chroot $distribution for architecture $host_arch not found\n";
-#	    return undef;
-#	}
     }
 
     if (!$chroot) {
@@ -147,9 +137,8 @@ sub find {
 	if ($namespace ne 'chroot') {
 	    $chroot = $self->find('chroot', $distribution, $chroot, $arch);
 	} else {
-	    # TODO: Return error, rather than die.
-	    die "Chroot for distribution $distribution, architecture $arch not found\n";
-	    return undef;
+		    Sbuild::Exception::Build->throw(error => "Chroot for distribution $distribution, architecture $arch not found\n",
+				    failstage => "find-chroot");
 	}
     }
 

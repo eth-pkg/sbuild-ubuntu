@@ -67,6 +67,9 @@ sub new {
         '/etc/apt/sources.list.d/sbuild-build-depends-archive.list';
     $self->set('Dummy archive list file', $dummy_archive_list_file);
 
+    my $dummy_archive_key_file = $session->get('Location') .
+        '/etc/apt/trusted.gpg.d/sbuild-build-depends-archive.gpg';
+    $self->set('Dummy archive key file', $dummy_archive_key_file);
 
     return $self;
 }
@@ -87,28 +90,24 @@ sub setup {
     $self->set('Chroot APT Conf', $chroot_aptconf);
 
     # Always write out apt.conf, because it may become outdated.
-    if (my $F = new File::Temp( TEMPLATE => "$aptconf.XXXXXX",
+    if (my $F = eval {new File::Temp( TEMPLATE => "$aptconf.XXXXXX",
 				DIR => $session->get('Location'),
-				UNLINK => 0) ) {
+				UNLINK => 0) } ) {
 	if ($self->get_conf('APT_ALLOW_UNAUTHENTICATED')) {
 	    print $F "APT::Get::AllowUnauthenticated true;\n";
 	}
 	print $F "APT::Install-Recommends false;\n";
 
-	if ($self->get('Host Arch') ne $self->get('Build Arch')) {
-	    print $F 'APT::Architecture=' . $self->get('Host Arch');
-	    $self->log('Adding APT::Architecture ' . $self->get('Host Arch') . ' to the apt config');
-	}
 	if ($self->get('Split')) {
 	    print $F "Dir \"$chroot_dir\";\n";
 	}
 
 	if (! rename $F->filename, $chroot_aptconf) {
-	    print STDERR "Can't rename $F->filename to $chroot_aptconf: $!\n";
+	    $self->log_error("Can't rename $F->filename to $chroot_aptconf: $!\n");
 	    return 0;
 	}
     } else {
-	print STDERR "Can't create $chroot_aptconf: $!";
+	$self->log_error("Can't create $chroot_aptconf: $!\n");
 	return 0;
     }
 
@@ -136,6 +135,8 @@ sub setup {
     }
 
     $self->cleanup_apt_archive();
+
+    return 1;
 }
 
 sub get_foreign_architectures {
@@ -143,32 +144,26 @@ sub get_foreign_architectures {
 
     my $session = $self->get('Session');
 
+    $session->run_command({ COMMAND => ['dpkg', '--assert-multi-arch'],
+                            USER => 'root'});
+    if ($?)
+    {
+        $self->set('Multiarch Support', 0);
+        $self->log_error("dpkg does not support multi-arch\n");
+        return {};
+    }
+
     my ($tmpfh, $tmpfilename) = tempfile(DIR => $session->get('Location') . "/tmp");
-    my ($tmpfh2, $tmpfilename2) = tempfile(DIR => $session->get('Location') . "/tmp");
 
     $session->run_command({ COMMAND => ['dpkg', '--print-foreign-architectures'],
                             USER => 'root',
-                            STREAMOUT => $tmpfh,
-                            STREAMERR => $tmpfh2});
+                            STREAMOUT => $tmpfh});
     if ($?)
     {
-        seek $tmpfh2, 0, SEEK_SET;
-        while(<$tmpfh2>)
-        {
-            chomp;
-            next unless $_;
-            # if 'unknown option' in stderr then dpkg predates multiarch
-            if (m/unknown option/s)
-            {
-                $self->set('Multiarch Support', 0);
-            }
-        }
-        close $tmpfh2;
-        # quietly return nothing if dpkg is too old (for use on older chroots)
-        if ($self->get('Multiarch Support'))
-        {
-            $self->log_error("Failed to get dpkg foreign-architecture config\n");
-        }
+        $self->set('Multiarch Support', 0);
+        $self->log_error("Failed to get dpkg foreign-architecture config\n");
+        close $tmpfh;
+        unlink $tmpfilename;
         return {};
     } # else dpkg has multiarch support
     seek $tmpfh, 0, SEEK_SET;
@@ -180,6 +175,7 @@ sub get_foreign_architectures {
         push @existing_foreign_arches, $_;
     }
     close $tmpfh;
+    unlink $tmpfilename;
     my %set;
     foreach (@existing_foreign_arches) { $set{$_} = 1; }
     return \%set;
@@ -202,10 +198,12 @@ sub add_foreign_architecture {
 
     # FIXME - allow for more than one foreign arch
     $session->run_command(
-                          # this is the ubuntu dpkg 1.16.2 interface - we ought to check (or configure) which to use with check_dpkg_version
+                          # This is the Ubuntu dpkg 1.16.0~ubuntuN interface;
+                          # we ought to check (or configure) which to use with
+                          # check_dpkg_version:
                           #	{ COMMAND => ['sh', '-c', 'echo "foreign-architecture ' . $self->get('Host Arch') . '" > /etc/dpkg/dpkg.cfg.d/sbuild'],
                           #	  USER => 'root' });
-                          # This is the Debian dpkg >= 1.16.3 interface
+                          # This is the Debian dpkg >= 1.16.2 interface:
                           { COMMAND => ['dpkg', '--add-architecture', $arch],
                             USER => 'root' });
     if ($?)
@@ -251,7 +249,7 @@ sub setup_dpkg {
     $self->set('Initial Foreign Arches', $self->get_foreign_architectures());
 
     if ($self->get('Host Arch') ne $self->get('Build Arch')) {
-	add_foreign_architecture($session, $self->get('Host Arch'))
+	$self->add_foreign_architecture($self->get('Host Arch'))
     }
 }
 
@@ -783,7 +781,7 @@ sub setup_apt_archive {
 	return 0;
     }
 
-    my $arch = $self->get('Build Arch');
+    my $arch = $self->get('Host Arch');
     print DUMMY_CONTROL <<"EOF";
 Package: $dummy_pkg_name
 Version: 0.invalid.0
@@ -806,7 +804,7 @@ EOF
 	push(@negative, $deps->{'Build Conflicts'})
 	    if (defined($deps->{'Build Conflicts'}) &&
 		$deps->{'Build Conflicts'} ne "");
-	if ($self->get_conf('BUILD_ARCH_ALL')) {
+	if ($self->get_conf('BUILD_ARCH_ANY')) {
 	    push(@positive_arch, $deps->{'Build Depends Arch'})
 		if (defined($deps->{'Build Depends Arch'}) &&
 		    $deps->{'Build Depends Arch'} ne "");
@@ -824,16 +822,25 @@ EOF
 	}
     }
 
-    my $positive = deps_parse(join(", ", @positive,
-				   @positive_arch, @positive_indep),
+    my $positive_build_deps = join(", ", @positive,
+				   @positive_arch, @positive_indep);
+    my $positive = deps_parse($positive_build_deps,
 			      reduce_arch => 1,
 			      host_arch => $self->get('Host Arch'),
 			      build_arch => $self->get('Build Arch'),
 			      build_dep => 1,
 			      reduce_profiles => 1,
 			      build_profiles => [ split / /, $self->get('Build Profiles') ]);
-    my $negative = deps_parse(join(", ", @negative,
-				   @negative_arch, @negative_indep),
+    if( !defined $positive ) {
+        my $msg = "Error! deps_parse() couldn't parse the positive Build-Depends '$positive_build_deps'";
+        $self->log_error("$msg\n");
+        $self->cleanup_apt_archive();
+        return 0;
+    }
+
+    my $negative_build_deps = join(", ", @negative,
+				   @negative_arch, @negative_indep);
+    my $negative = deps_parse($negative_build_deps,
 			      reduce_arch => 1,
 			      host_arch => $self->get('Host Arch'),
 			      build_arch => $self->get('Build Arch'),
@@ -841,6 +848,13 @@ EOF
 			      union => 1,
 			      reduce_profiles => 1,
 			      build_profiles => [ split / /, $self->get('Build Profiles') ]);
+    if( !defined $negative ) {
+        my $msg = "Error! deps_parse() couldn't parse the negative Build-Depends '$negative_build_deps'";
+        $self->log_error("$msg\n");
+        $self->cleanup_apt_archive();
+        return 0;
+    }
+
 
     # sbuild turns build dependencies into the dependencies of a dummy binary
     # package. Since binary package dependencies do not support :native the
@@ -979,33 +993,87 @@ EOF
     }
 
     # Sign the release file
-    if (!$self->generate_keys()) {
-        $self->log("Failed to generate archive keys.\n");
-        $self->cleanup_apt_archive();
-        return 0;
+    if (!$self->get_conf('APT_ALLOW_UNAUTHENTICATED')) {
+        if (!$self->generate_keys()) {
+            $self->log("Failed to generate archive keys.\n");
+            $self->cleanup_apt_archive();
+            return 0;
+        }
+        copy($self->get_conf('SBUILD_BUILD_DEPENDS_SECRET_KEY'), $dummy_archive_seckey) unless
+            (-f $dummy_archive_seckey);
+        copy($self->get_conf('SBUILD_BUILD_DEPENDS_PUBLIC_KEY'), $dummy_archive_pubkey) unless
+            (-f $dummy_archive_pubkey);
+        my @gpg_command = ('gpg', '--yes', '--no-default-keyring',
+                           '--homedir',
+                           $session->strip_chroot_path($dummy_gpghome),
+                           '--secret-keyring',
+                           $session->strip_chroot_path($dummy_archive_seckey),
+                           '--keyring',
+                           $session->strip_chroot_path($dummy_archive_pubkey),
+                           '--default-key', 'Sbuild Signer', '-abs',
+                           '-o', $session->strip_chroot_path($dummy_release_file) . '.gpg',
+                           $session->strip_chroot_path($dummy_release_file));
+        $session->run_command(
+            { COMMAND => \@gpg_command,
+              USER => $self->get_conf('BUILD_USER'),
+              PRIORITY => 0});
+        if ($?) {
+            $self->log("Failed to sign dummy archive Release file.\n");
+            $self->cleanup_apt_archive();
+            return 0;
+        }
     }
-    copy($self->get_conf('SBUILD_BUILD_DEPENDS_SECRET_KEY'), $dummy_archive_seckey) unless
-        (-f $dummy_archive_seckey);
-    copy($self->get_conf('SBUILD_BUILD_DEPENDS_PUBLIC_KEY'), $dummy_archive_pubkey) unless
-        (-f $dummy_archive_pubkey);
-    my @gpg_command = ('gpg', '--yes', '--no-default-keyring',
-                       '--homedir',
-                       $session->strip_chroot_path($dummy_gpghome),
-                       '--secret-keyring',
-                       $session->strip_chroot_path($dummy_archive_seckey),
-                       '--keyring',
-                       $session->strip_chroot_path($dummy_archive_pubkey),
-                       '--default-key', 'Sbuild Signer', '-abs',
-                       '-o', $session->strip_chroot_path($dummy_release_file) . '.gpg',
-                       $session->strip_chroot_path($dummy_release_file));
-    $session->run_command(
-	{ COMMAND => \@gpg_command,
-	  USER => $self->get_conf('BUILD_USER'),
-	  PRIORITY => 0});
-    if ($?) {
-	$self->log("Failed to sign dummy archive Release file.\n");
-        $self->cleanup_apt_archive();
-	return 0;
+
+    # Now, we'll add in any provided OpenPGP keys into the archive, so that
+    # builds can (optionally) trust an external key for the duration of the
+    # build.
+    if (@{$self->get_conf('EXTRA_REPOSITORY_KEYS')}) {
+        my $dummy_archive_key_file = $self->get('Dummy archive key file');
+        my ($tmpfh, $tmpfilename) = tempfile(DIR => $session->get('Location') . "/tmp");
+        # Right, so, in order to copy the keys into the chroot (since we may have
+        # a bunch of them), we'll append to a tempfile, and write *all* of the
+        # given keys to the same tempfile. After we're clear, we'll move that file
+        # into the correct location by importing the .asc into a .gpg file.
+
+        for my $repokey (@{$self->get_conf('EXTRA_REPOSITORY_KEYS')}) {
+            debug("Adding archive key: $repokey\n");
+            if (!-f $repokey) {
+                $self->log("Failed to add archive key '${repokey}' - it doesn't exist!\n");
+                $self->cleanup_apt_archive();
+                close($tmpfh);
+                unlink $tmpfilename;
+                return 0;
+            }
+            copy($repokey, $tmpfh);
+            print $tmpfh "\n";
+        }
+        close($tmpfh);
+
+        # Now that we've concat'd all the keys into the chroot, we're going
+        # to use GPG to import the keys into a single keyring. We've stubbed
+        # out the secret ring and home to ensure we don't store anything
+        # except for the public keyring.
+
+        my $tmpgpghome = tempdir('extra-repository-keys' . '-XXXXXX',
+            DIR => $session->get('Location') . "/tmp");
+
+        my @gpg_command = ('gpg', '--import', '--no-default-keyring',
+                           '--homedir', $session->strip_chroot_path($tmpgpghome),
+                           '--secret-keyring', '/dev/null',
+                           '--keyring', $session->strip_chroot_path($dummy_archive_key_file),
+                           $session->strip_chroot_path($tmpfilename));
+
+        $session->run_command(
+            { COMMAND => \@gpg_command,
+              USER => 'root',
+              PRIORITY => 0});
+        if ($?) {
+            $self->log("Failed to import archive keys to the trusted keyring");
+            $self->cleanup_apt_archive();
+            unlink $tmpfilename;
+            return 0;
+        }
+        unlink $tmpfilename;
     }
 
     # Write a list file for the dummy archive if one not create yet.
@@ -1027,6 +1095,7 @@ EOF
         if ($?) {
             $self->log("Failed to create apt list file for dummy archive.\n");
             $self->cleanup_apt_archive();
+            unlink $tmpfilename;
             return 0;
         }
         $session->run_command(
@@ -1037,19 +1106,23 @@ EOF
         if ($?) {
             $self->log("Failed to create apt list file for dummy archive.\n");
             $self->cleanup_apt_archive();
+            unlink $tmpfilename;
             return 0;
         }
+        unlink $tmpfilename;
     }
 
-    # Add the generated key
-    $session->run_command(
-        { COMMAND => ['apt-key', 'add', $session->strip_chroot_path($dummy_archive_pubkey)],
-          USER => 'root',
-          PRIORITY => 0});
-    if ($?) {
-        $self->log("Failed to add dummy archive key.\n");
-        $self->cleanup_apt_archive();
-        return 0;
+    if (!$self->get_conf('APT_ALLOW_UNAUTHENTICATED')) {
+        # Add the generated key
+        $session->run_command(
+            { COMMAND => ['apt-key', 'add', $session->strip_chroot_path($dummy_archive_pubkey)],
+              USER => 'root',
+              PRIORITY => 0});
+        if ($?) {
+            $self->log("Failed to add dummy archive key.\n");
+            $self->cleanup_apt_archive();
+            return 0;
+        }
     }
 
     return 1;
@@ -1073,6 +1146,13 @@ sub cleanup_apt_archive {
 	  USER => 'root',
 	  DIR => '/',
 	  PRIORITY => 0});
+
+    $session->run_command(
+	{ COMMAND => ['rm', '-f', $session->strip_chroot_path($self->get('Dummy archive key file'))],
+	  USER => 'root',
+	  DIR => '/',
+	  PRIORITY => 0});
+
     $self->set('Dummy package path', undef);
     $self->set('Dummy archive directory', undef);
     $self->set('Dummy Release file', undef);

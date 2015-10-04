@@ -571,7 +571,7 @@ sub setup ($) {
 	    VARNAME => 'lock_interval',
 	    GROUP => 'Build timeouts',
 	    DEFAULT => 5,
-	    HELP => 'Lock wait interval (seconds).  Maximum wait time is (max_lock_trys × lock_interval).'
+	    HELP => 'Lock wait interval (seconds).  Maximum wait time is (max_lock_trys x lock_interval).'
 	},
 	'CHROOT_MODE'				=> {
 	    TYPE => 'STRING',
@@ -612,6 +612,13 @@ sub setup ($) {
 	    EXAMPLE => '$build_dir = \'/home/pete/build\';',
 	    CHECK => $validate_directory,
 	    HELP => 'This option is deprecated.  Directory for chroot symlinks and sbuild logs.  Defaults to the current directory if unspecified.  It is used as the location of chroot symlinks (obsolete) and for current build log symlinks and some build logs.  There is no default; if unset, it defaults to the current working directory.  $HOME/build is another common configuration.'
+	},
+	'BUILD_PATH'				=> {
+	    TYPE => 'STRING',
+	    VARNAME => 'build_path',
+	    GROUP => 'Build options',
+	    DEFAULT => undef,
+	    HELP => 'By default the package is built in a path of the following format /build/packagename-XXXXXX/packagename-version/ where XXXXXX is a random ascii string. This option allows one to specify a custom path where the package is built inside the chroot. Notice that the sbuild user in the chroot must have permissions to create the path. Common writable locations are subdirectories of /tmp or /build. The buildpath must be an empty directory because the last component of the path will be removed after the build is finished. If you are running multiple sbuild instances with the same build path in parallel for the same package, make sure that your build path is not in a directory commonly mounted by all sbuild instances (like /tmp or /home). In that case, use for example /build instead. Otherwise, your builds will probably fail or contain wrong content.'
 	},
 	'SBUILD_MODE'				=> {
 	    TYPE => 'STRING',
@@ -761,7 +768,7 @@ sub setup ($) {
 	    TYPE => 'ARRAY:STRING',
 	    VARNAME => 'core_depends',
 	    GROUP => 'Core options',
-	    DEFAULT => ['build-essential', 'fakeroot'],
+	    DEFAULT => ['build-essential:native', 'fakeroot:native'],
 	    HELP => 'Packages which must be installed in the chroot for all builds.'
 	},
 	'MANUAL_DEPENDS'			=> {
@@ -804,14 +811,14 @@ sub setup ($) {
 	    TYPE => 'HASH:ARRAY:STRING',
 	    VARNAME => 'crossbuild_core_depends',
 	    GROUP => 'Multiarch support (transitional)',
-	    DEFAULT => { arm64 => ['crossbuild-essential-arm64'],
-			 armel => ['crossbuild-essential-armel'],
-			 armhf => ['crossbuild-essential-armhf'],
-			 ia64 => ['crossbuild-essential-ia64'],
-			 mips => ['crossbuild-essential-mips'],
-			 mipsel => ['crossbuild-essential-mipsel'],
-			 powerpc => ['crossbuild-essential-powerpc'],
-			 sparc => ['crossbuild-essential-sparc']
+	    DEFAULT => { arm64 => ['crossbuild-essential-arm64:native'],
+			 armel => ['crossbuild-essential-armel:native'],
+			 armhf => ['crossbuild-essential-armhf:native'],
+			 ia64 => ['crossbuild-essential-ia64:native'],
+			 mips => ['crossbuild-essential-mips:native'],
+			 mipsel => ['crossbuild-essential-mipsel:native'],
+			 powerpc => ['crossbuild-essential-powerpc:native'],
+			 sparc => ['crossbuild-essential-sparc:native']
 	    	       },
 	    HELP => 'Per-architecture dependencies required for cross-building.'
 	},	'BUILD_SOURCE'				=> {
@@ -881,11 +888,11 @@ sub setup ($) {
 
 		die '$key: Invalid build-dependency resolver \'' .
 		    $conf->get($key) .
-		    "'\nValid algorithms are 'apt', 'aptitude' and 'xapt'\n"
+		    "'\nValid algorithms are 'apt', 'aptitude', 'aspcud' and 'xapt'\n"
 		    if !isin($conf->get($key),
-			     qw(apt aptitude xapt));
+			     qw(apt aptitude aspcud xapt));
 	    },
-	    HELP => 'Build dependency resolver.  The \'apt\' resolver is currently the default, and recommended for most users.  This resolver uses apt-get to resolve dependencies.  Alternative resolvers are \'apt\' and \'aptitude\', which use a built-in resolver module and aptitude to resolve build dependencies, respectively.  The aptitude resolver is similar to apt, but is useful in more complex situations, such as where multiple distributions are required, for example when building from experimental, where packages are needed from both unstable and experimental, but defaulting to unstable.'
+	    HELP => 'Build dependency resolver.  The \'apt\' resolver is currently the default, and recommended for most users.  This resolver uses apt-get to resolve dependencies.  Alternative resolvers are \'apt\', \'aptitude\' and \'aspcud\'. The \'apt\' resolver uses a built-in resolver module while the \'aptitude\' resolver uses aptitude to resolve build dependencies.  The aptitude resolver is similar to apt, but is useful in more complex situations, such as where multiple distributions are required, for example when building from experimental, where packages are needed from both unstable and experimental, but defaulting to unstable. If the dependency situation is too complex for either apt or aptitude to solve it, you can use the \'aspcud\' resolver which is a real SAT solver and will thus alwyas find a solution if a solution exists.'
 	},
 	'LINTIAN'				=> {
 	    TYPE => 'STRING',
@@ -965,12 +972,14 @@ sub setup ($) {
 	    HELP => 'Preceding arguments to launch piuparts as root. If no arguments are specified, piuparts will be launched via sudo.'
 	},
 	'EXTERNAL_COMMANDS'			=> {
-	    TYPE => 'HASH:ARRAY:ARRAY:STRING',
+	    TYPE => 'HASH:ARRAY:STRING',
 	    VARNAME => 'external_commands',
 	    GROUP => 'Chroot options',
 	    DEFAULT => {
 		"pre-build-commands" => [],
 		"chroot-setup-commands" => [],
+		"build-deps-failed-commands" => [],
+		"build-failed-commands" => [],
 		"starting-build-commands" => [],
 		"finished-build-commands" => [],
 		"chroot-cleanup-commands" => [],
@@ -984,6 +993,14 @@ sub setup ($) {
         [\'bar\', \'arg1\', \'arg2\', \'arg3\'],
     ],
     "chroot-setup-commands" => [
+        [\'foo\', \'arg1\', \'arg2\'],
+        [\'bar\', \'arg1\', \'arg2\', \'arg3\'],
+    ],
+    "build-deps-failed-commands" => [
+        [\'foo\', \'arg1\', \'arg2\'],
+        [\'bar\', \'arg1\', \'arg2\', \'arg3\'],
+    ],
+    "build-failed-commands" => [
         [\'foo\', \'arg1\', \'arg2\'],
         [\'bar\', \'arg1\', \'arg2\', \'arg3\'],
     ],
@@ -1061,6 +1078,12 @@ sub setup ($) {
 	    DEFAULT => [],
 	    HELP => 'Additional per-build packages available as build dependencies.  Do not set by hand.'
 	},
+	'EXTRA_REPOSITORY_KEYS'				=> {
+	    TYPE => 'ARRAY:STRING',
+	    GROUP => '__INTERNAL',
+	    DEFAULT => [],
+	    HELP => 'Additional per-build apt repository keys.  Do not set by hand.'
+	},
 	'EXTRA_REPOSITORIES'				=> {
 	    TYPE => 'ARRAY:STRING',
 	    GROUP => '__INTERNAL',
@@ -1086,6 +1109,8 @@ sub read ($) {
 
     my $files = ["$Sbuild::Sysconfig::paths{'SBUILD_CONF'}",
 		 "$HOME/.sbuildrc"];
+
+    push @{$files}, $ENV{'SBUILD_CONFIG'} if defined $ENV{'SBUILD_CONFIG'};
 
     # For compatibility only.  Non-scalars are deprecated.
     my $deprecated_init = <<END;

@@ -73,8 +73,8 @@ sub run {
 
     my $uploaded_pkgs = $self->get('Uploaded Pkgs');
 
-    foreach my $dist (keys %{$uploaded_pkgs}) {
-	$self->log("Set to Uploaded($dist):$uploaded_pkgs->{$dist}");
+    foreach my $archdist (keys %{$uploaded_pkgs}) {
+	$self->log("Set to Uploaded($archdist):$uploaded_pkgs->{$archdist}");
     }
 
     return 0;
@@ -83,43 +83,34 @@ sub run {
 sub uploaded ($@) {
     my $self = shift;
     my $pkg = shift;
+    my $arch_name = shift;
+    my $dist_name = shift;
 
-    my @propagated_pkgs = ();
+    my $msgs = "";
 
-    foreach my $dist_name (@_) {
-	my $msgs = "";
+    my $dist_config = $self->get_arch_dist_config_by_name($arch_name, $dist_name);
+    my $db = $self->get_db_handle($dist_config);
 
-	my $dist_config = $self->get_dist_config_by_name($dist_name);
-	my $db = $self->get_db_handle($dist_config);
+    my $pipe = $db->pipe_query('--uploaded', $pkg);
 
-	my $pipe = $db->pipe_query('--uploaded', '--dist=' . $dist_name, $pkg);
-
-	if ($pipe) {
-	    while(<$pipe>) {
-		if (/^(\S+): Propagating new state /) {
-		    push( @propagated_pkgs, $1 );
-		}
-		elsif (/^(\S+): already uploaded/ &&
-		       Buildd::isin( $1, @propagated_pkgs )) {
-		    # be quiet on this
-		}
-		else {
-		    $msgs .= $_;
-		}
-	    }
-	    close($pipe);
-	    if ($msgs or $?) {
-		$self->log($msgs) if $msgs;
-		$self->log("wanna-build --uploaded failed with status ",
-			   exitstatus($?), "\n" )
-		    if $?;
-	    } else {
-		$self->get('Uploaded Pkgs')->{$dist_name} .= " $pkg";
+    if ($pipe) {
+        while(<$pipe>) {
+	    if (!/^(\S+): Propagating new state /) {
+		$msgs .= $_;
 	    }
 	}
-	else {
-	    $self->log("Can't spawn wanna-build --uploaded: $!\n");
+	close($pipe);
+	if ($msgs or $?) {
+	    $self->log($msgs) if $msgs;
+	    $self->log("wanna-build --uploaded failed with status ",
+			exitstatus($?), "\n" )
+		if $?;
+	} else {
+	    my $archdist_name = "$arch_name/$dist_name";
+	    $self->get('Uploaded Pkgs')->{$archdist_name} .= " $pkg";
 	}
+    } else {
+	$self->log("Can't spawn wanna-build --uploaded: $!\n");
     }
 }
 
@@ -167,6 +158,11 @@ sub upload ($$) {
 	    my $text;
 	    { local($/); undef $/; $text = <F>; }
 	    close( F );
+	    if ($text !~ /^Architecture:\s*(.*)\s*$/m) {
+		$self->log("$f doesn't have a Architecture: field\n");
+		next;
+	    }
+	    my @archs = split( /\s+/, $1 );
 	    if ($text !~ /^Distribution:\s*(.*)\s*$/m) {
 		$self->log("$f doesn't have a Distribution: field\n");
 		next;
@@ -184,7 +180,7 @@ sub upload ($$) {
 	    } else {
 		($pkg = $f) =~ s/_\S+\.changes$//;
 	    }
-	    $self->uploaded($pkg,@dists);
+	    $self->uploaded($pkg, @archs, @dists);
 	} else {
 	    push (@after, $f);
 	}
