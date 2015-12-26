@@ -14,8 +14,8 @@ Build-Depends: debhelper (>> 7.0.0),
                libio-zlib-perl,
                libmime-lite-perl
 Standards-Version: 3.9.6
-Vcs-Browser: https://anonscm.debian.org/cgit/buildd-tools/sbuild.git
-Vcs-Git: git://anonscm.debian.org/buildd-tools/sbuild
+Vcs-Browser: https://anonscm.debian.org/cgit/buildd-tools/sbuild.git?h=debian/unstable
+Vcs-Git: git://anonscm.debian.org/buildd-tools/sbuild -b debian/unstable
 XS-Testsuite: autopkgtest
 
 Package: libsbuild-perl
@@ -37,6 +37,7 @@ Depends: adduser,
          ${perl:Depends}
 Recommends:
          exim4 | mail-transport-agent,
+Suggests: libwww-perl
 Replaces: sbuild (<= 0.58.4-1)
 Description: Tool for building Debian binary packages from Debian sources
  The sbuild suite of programs (wanna-build, buildd and sbuild) are
