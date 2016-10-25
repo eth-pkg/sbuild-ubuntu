@@ -3,16 +3,16 @@ Section: devel
 Priority: extra
 Maintainer: Debian buildd-tools Developers <buildd-tools-devel@lists.alioth.debian.org>
 Uploaders: Michael Banck <mbanck@debian.org>,
-           Roger Leigh <rleigh@debian.org>,
            Francesco Paolo Lovergine <frankie@debian.org>,
            Wookey <wookey@debian.org>
-Build-Depends: debhelper (>> 7.0.0),
+Build-Depends: debhelper (>= 10),
                groff-base,
                libdpkg-perl (>= 1.17.2),
                libexception-class-perl,
                libfilesys-df-perl,
                libio-zlib-perl,
-               libmime-lite-perl
+               libmime-lite-perl,
+               libyaml-tiny-perl
 Standards-Version: 3.9.6
 Vcs-Browser: https://anonscm.debian.org/cgit/buildd-tools/sbuild.git?h=debian/unstable
 Vcs-Git: git://anonscm.debian.org/buildd-tools/sbuild -b debian/unstable
@@ -33,6 +33,7 @@ Depends: adduser,
          libio-zlib-perl,
          libmime-lite-perl,
          schroot (>= 1.6.0),
+         gnupg (>= 2.1),
          ${misc:Depends},
          ${perl:Depends}
 Recommends:
@@ -85,6 +86,7 @@ Depends: adduser,
          libyaml-tiny-perl,
          sbuild (<< ${source:Version}.1~),
          sbuild (>= ${source:Version}),
+         lsb-base (>= 3.0-6),
          ${misc:Depends},
          ${perl:Depends}
 Suggests: wanna-build

@@ -1,3 +1,37 @@
+sbuild (0.72.0-1) unstable; urgency=medium
+
+  * New upstream release
+  * Remove all patches (they have been integrated upstream)
+  * Convert package to dh 10, allowing the most simple d/rules file.
+  * Remove Roger Leigh from the Uploaders field (they left Debian)
+  * Add dependency of buildd on lsb-base (>= 3.0-6) because of the init script
+    it ships (/etc/init.d/buildd)
+  * lib/Sbuild/Build.pm: fixing that if build() raises an exception then build
+    time and space doesn't get set (closes: #835338)
+  * lib/Sbuild/AptitudeResolver.pm: Do not add architecture qualifiers to
+    dependencies if chroot doesn't support multiarch (closes: #836737)
+  * lib/Sbuild/Build.pm: Don't do architecture check if BUILD_SOURCE is true
+    (closes: #836154)
+  * lib/Sbuild/ChrootSudo.pm: Instead of forbidding single quotes, properly
+    quote the exec string (closes: #836175)
+  * When printing ASCII art boxes, cater for the situation where their content
+    is longer than their default width by increasing the box width (closes:
+    #841015)
+  * bin/sbuild-createchroot: do not overwrite /etc/hosts if it already existed
+    and also write ipv6 entries if it didn't (closes: #841165)
+  * sbuild-createchroot: clean up downloaded .deb archives (closes: #841169)
+  * Add --bd-uninstallable-explainer and make dose3 the default (closes:
+    #839566)
+  * Warn if a binary package of incompatible architecture with the chroot is
+    added via --extra-package (closes: #820882)
+  * Accommodate for the autopkgtest 4.0 release by renaming all adt command
+    line options and configuration variables from adt to autopkgtest because
+    the same renaming was done by the autopkgtest release (closes: #833436)
+  * Add Depends on gnupg (>= 2.1) because sbuild now makes use of features
+    like --pinentry-mode=loopback for key creation (closes: #840575)
+
+ -- Johannes Schauer <josch@debian.org>  Tue, 25 Oct 2016 07:43:07 +0200
+
 sbuild (0.71.0-2) unstable; urgency=medium
 
   * add patch to not check for the fakeroot binary on the host. Thanks
