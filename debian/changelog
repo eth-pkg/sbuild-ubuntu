@@ -1,3 +1,76 @@
+sbuild (0.73.0-1) unstable; urgency=medium
+
+  * New upstream release
+  * man/sbuild.1.in: clarify docs for --append-to-version and --make-binNMU
+    (closes: #844583)
+  * Allow passing a directory to --extra-package which will add all .deb inside
+    (closes: #844457)
+  * Unconditionally update repositories given via --extra-repository
+    (closes: #842281)
+  * For binNMUs, instead of copying the timestamp of the last changelog entry,
+    generate a new one (closes: #843773)
+  * Output build type in buildlog in the format used by dpkg-buildpackage
+    --build (closes: #820977)
+  * Install extra packages into their own internal repository which is created
+    at resolver creation time so that extra packages are considered during the
+    upgrade step (closes: #843694)
+  * Also output .buildinfo in buildlog (closes: #843933)
+  * pass the absolute path of extra .deb package to dpkg-deb (closes: #843692)
+  * Always pass the source package to lintian (closes: #843622)
+  * Do not print negative used space but n/a instead (closes: #842947)
+  * bin/sbuild-apt: pass --yes to apt operations as the apt operations are not
+    interactive (closes: #842138)
+  * Do not set 'Changes File' in copy_changes to avoid it being set to the
+    source-only changes file (closes: #842705)
+  * starting-build-command and finished-build-commands are now run as root.
+  * The autopkgtest-virt backends are no longer supplied with the chroot name.
+  * Add SBUILD_BUILD_ARCH percent escape.
+  * Use Dpkg::Build::Info::get_build_env_whitelist() to generate the default of
+    ENVIRONMENT_FILTER.
+  * Add the --binNMU-timestamp command line option to allow one to pass a
+    custom timestamp for the new binNMU changelog entry.
+  * Add option --binNMU-changelog which allows one to pass a complete
+    debian/changelog entry for binary-only builds.
+  * The autopkgtest backend now runs into its own process group.
+  * Bump sbuild Depends on libdpkg-perl to at least 1.18.14 because of its use
+    of Dpkg::Build::Info::get_build_env_whitelist()
+  * Move most Build-Depends to Build-Depends-Indep
+  * Drop dependency and build dependency on libio-zlib-perl which is provided
+    by perl-modules even in old-stable
+  * Drop dependency on apt-utils because sbuild does not use apt-ftparchive
+    anymore
+  * Do not let libsbuild-perl depend on adduser, dctrl-tools and devscripts as
+    it doesn't use them.
+  * Make schroot and autopkgtest Recommends as they are both working backends
+  * Run dh_installinit with --no-start and --no-restart-on-upgrade so that the
+    buildd daemon does not get started on installation (closes: #842057)
+  * Update autopkgtest
+      - Don't sign internal dummy repository anymore
+      - Download source package inside the build chroot because the host might
+        not be having the requested release in its sources.list
+      - Do not depend on procenv build depends as they should be installed
+        inside the build chroot and not on the host
+      - use "apt install" instead of "dpkg -i" to also install dependencies
+      - Several tiny fixes to make the test suite succeed again
+  * Make schroot a hard dependency of buildd (it requires
+    /etc/schroot/chroot.d/ in its postinst script)
+  * Add patch to remove DCMD config value which is not used and just uselessly
+    making libsbuild-perl depend on devscripts
+  * Add kmod to Suggests of sbuild because modprobe is optionally used by
+    sbuild-createchroot
+  * Add patch to use dpkg-query instead of grep-status so that dependency on
+    grep-dctrl is not needed anymore
+  * Add patch that suppresses schroot writing to stderr in sbuild-createchroot
+  * Add patch that checks for modprobe in sbuild-createchroot
+  * Remove xs-testsuite header from debian/control
+  * Adapt libsbuild-perl short description to not say "Tool" anymore but
+    "Library"
+  * Replace git:// in Vcs-Git field by https://
+  * Bump Standard-Version to 3.9.8 (no changes required)
+  * Convert debian/copyright to DEP-5 (make machine readable)
+
+ -- Johannes Schauer <josch@debian.org>  Sat, 24 Dec 2016 02:28:48 +0100
+
 sbuild (0.72.0-2) unstable; urgency=medium
 
   * Fix regression from 0.72.0 upload: install forward file as .forward and
