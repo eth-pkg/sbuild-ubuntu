@@ -5,7 +5,8 @@ Maintainer: Debian buildd-tools Developers <buildd-tools-devel@lists.alioth.debi
 Uploaders: Johannes Schauer <josch@debian.org>,
            Michael Banck <mbanck@debian.org>,
            Francesco Paolo Lovergine <frankie@debian.org>,
-           Wookey <wookey@debian.org>
+           Wookey <wookey@debian.org>,
+           Michael Stapelberg <stapelberg@debian.org>
 Build-Depends: debhelper (>= 10)
 Build-Depends-Indep:
                groff-base,
@@ -74,6 +75,23 @@ Description: Tool for building Debian binary packages from Debian sources
  controlled, clean environment.  sbuild installs only essential and
  build-essential packages, plus those in the package build
  dependencies.
+
+Package: sbuild-debian-developer-setup
+Architecture: all
+Depends: sbuild,
+         schroot,
+         apt-cacher-ng | apt-cacher,
+         cron-daemon,
+         ${misc:Depends},
+         ${perl:Depends},
+         ${shlibs:Depends}
+Description: Convenience script to set up an sbuild environment for Debian Developers
+ Run "sudo sbuild-debian-developer-setup" to add the current user to the sbuild
+ group, create an schroot for building packages for Debian unstable, and create
+ a cronjob which updates said schroot daily.
+ .
+ This script assumes you are on an un-metered internet connection (daily schroot
+ updates might be costly otherwise).
 
 Package: buildd
 Architecture: all

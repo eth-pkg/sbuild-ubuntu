@@ -940,11 +940,12 @@ sub run_fetch_install_packages {
 		    failstage => "run-build-failed-commands");
 	    }
 	} elsif($self->get('Pkg Fail Stage') eq 'install-deps' ) {
+            my $could_not_explain = undef;
+
 	    if (defined $self->get_conf('BD_UNINSTALLABLE_EXPLAINER')
 		&& $self->get_conf('BD_UNINSTALLABLE_EXPLAINER') ne '') {
 		if (!$self->explain_bd_uninstallable()) {
-		    Sbuild::Exception::Build->throw(error => "Failed to explain bd-uninstallable",
-			failstage => "explain-bd-uninstallable");
+                    $could_not_explain = 1;
 		}
 	    }
 
@@ -952,6 +953,11 @@ sub run_fetch_install_packages {
 		Sbuild::Exception::Build->throw(error => "Failed to execute build-deps-failed-commands",
 		    failstage => "run-build-deps-failed-commands");
 	    }
+
+            if( $could_not_explain ) {
+                Sbuild::Exception::Build->throw(error => "Failed to explain bd-uninstallable",
+                                                failstage => "explain-bd-uninstallable");
+            }
 	}
     }
 
@@ -1191,7 +1197,7 @@ sub fetch_source_files {
     my $pdsc = Dpkg::Control->new(type => CTRL_PKG_SRC);
     $pdsc->set_options(allow_pgp => 1);
     if (!$pdsc->parse($pipe, "$build_dir/$dsc")) {
-	$self->log_error("Error parsing $build_dir/$dsc");
+	$self->log_error("Error parsing $build_dir/$dsc\n");
 	return 0;
     }
 
@@ -1657,7 +1663,7 @@ sub run_lintian {
 	push @lintian_command, $dsc;
     }
 
-    $resolver->add_dependencies('LINTIAN', 'lintian', "", "", "", "", "");
+    $resolver->add_dependencies('LINTIAN', 'lintian:native', "", "", "", "", "");
     return 1 unless $resolver->install_core_deps('lintian', 'LINTIAN');
 
     $session->run_command(
@@ -1885,7 +1891,7 @@ sub explain_bd_uninstallable {
 	# restrictions, we don't want to limit ourselves by it. In cases where
 	# apt cannot find a solution, this check is supposed to allow the user
 	# to know that choosing a different resolver might fix the problem.
-	$resolver->add_dependencies('DOSE3', 'dose-distcheck', "", "", "", "", "");
+	$resolver->add_dependencies('DOSE3', 'dose-distcheck:native', "", "", "", "", "");
 	if (!$resolver->install_core_deps('dose3', 'DOSE3')) {
 	    return 0;
 	}
@@ -2010,7 +2016,7 @@ sub build {
 	      PRIORITY => 0,
 	      DIR => $dscdir});
 	if (!$clog) {
-	    $self->log_error("unable to read from dpkg-parsechangelog");
+	    $self->log_error("unable to read from dpkg-parsechangelog\n");
 	    Sbuild::Exception::Build->throw(error => "unable to read from dpkg-parsechangelog",
 					    failstage => "check-unpacked-version");
 	}
@@ -2026,7 +2032,7 @@ sub build {
     $self->log_subsubsection("Check disk space");
     chomp(my $current_usage = $session->read_command({ COMMAND => ["du", "-k", "-s", "$dscdir"]}));
     if ($?) {
-	$self->log_error("du exited with non-zero exit status $?");
+	$self->log_error("du exited with non-zero exit status $?\n");
 	Sbuild::Exception::Build->throw(error => "du exited with non-zero exit status $?", failstage => "check-space");
     }
     $current_usage =~ /^(\d+)/;
@@ -2039,7 +2045,7 @@ sub build {
 	}
 	close $pipe;
 	if ($?) {
-	    $self->log_error("df exited with non-zero exit status $?");
+	    $self->log_error("df exited with non-zero exit status $?\n");
 	    Sbuild::Exception::Build->throw(error => "df exited with non-zero exit status $?", failstage => "check-space");
 	}
 	if ($free < 2*$current_usage && $self->get_conf('CHECK_SPACE')) {
@@ -2057,14 +2063,14 @@ sub build {
 	  PRIORITY => 0,
 	  DIR => $dscdir });
     if (!$clogpipe) {
-	    $self->log_error("unable to read from dpkg-parsechangelog");
+	    $self->log_error("unable to read from dpkg-parsechangelog\n");
 	    Sbuild::Exception::Build->throw(error => "unable to read from dpkg-parsechangelog",
 					    failstage => "check-unpacked-version");
     }
 
     my $clog = Dpkg::Control->new(type => CTRL_CHANGELOG);
     if (!$clog->parse($clogpipe, "$dscdir/debian/changelog")) {
-	$self->log_error("unable to parse debian/changelog");
+	$self->log_error("unable to parse debian/changelog\n");
 	Sbuild::Exception::Build->throw(error => "unable to parse debian/changelog",
 	    failstage => "check-unpacked-version");
     }
@@ -2291,7 +2297,7 @@ sub build {
 	      DIR => $dscdir
 	    });
 	if (!$envcmd) {
-	    $self->log_error("unable to open pipe");
+	    $self->log_error("unable to open pipe\n");
 	    Sbuild::Exception::Build->throw(error => "unable to open pipe",
 					    failstage => "dump-build-env");
 	}
@@ -2317,7 +2323,7 @@ sub build {
 
     my $pipe = $session->pipe_command($command);
     if (!$pipe) {
-	$self->log_error("unable to open pipe");
+	$self->log_error("unable to open pipe\n");
 	Sbuild::Exception::Build->throw(error => "unable to open pipe",
 	    failstage => "dpkg-buildpackage");
     }
@@ -2674,15 +2680,17 @@ sub check_space {
     my $sum = 0;
 
     my $dscdir = $self->get('DSC Dir');
+    my $build_dir = $self->get('Build Dir');
+    my $pkgbuilddir = "$build_dir/$dscdir";
 
-    # if the source package was not yet unpacked, then DSC Dir is undefined
-    # and we will not attempt to compute the required space
-    if (!defined $dscdir) {
+    # if the source package was not yet unpacked, we will not attempt to compute
+    # the required space.
+    unless( defined $dscdir && -d $dscdir)
+    {
 	return -1;
     }
 
-    my $build_dir = $self->get('Build Dir');
-    my $pkgbuilddir = "$build_dir/$dscdir";
+
     my ($space, $spacenum);
 
     # get the required space for the unpacked source package in the chroot

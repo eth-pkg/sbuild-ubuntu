@@ -1,3 +1,22 @@
+sbuild (0.74.0-1) unstable; urgency=medium
+
+  * New upstream release
+  * Install dose-distcheck and lintian for the native architecture
+  * remove DCMD config value which is not used and just uselessly making
+    libsbuild-perl depend on devscripts
+  * use dpkg-query instead of grep-status so that dependency on grep-dctrl is
+    not needed anymore
+  * suppress schroot writing to stderr in sbuild-createchroot
+  * check for modprobe in sbuild-createchroot
+  * Add missing newline character to a bunch of error messages
+  * dose3 failures no longer mask the --build-deps-failed-commands
+  * Build arch: all packages by default (closes: #870263)
+  * Run lintian by default (closes: #870263)
+  * sbuild-createchroot: add --command-prefix (closes: #870260)
+  * add sbuild-debian-developer-setup package (closes: #859867)
+
+ -- Michael Stapelberg <stapelberg@debian.org>  Wed, 14 Mar 2018 21:55:42 +0100
+
 sbuild (0.73.0-4) unstable; urgency=medium
 
   * Retroactively add two entries into debian/NEWS for the Stretch release.

@@ -138,7 +138,7 @@ sub setup ($) {
 	    TYPE => 'BOOL',
 	    VARNAME => 'build_arch_all',
 	    GROUP => 'Build options',
-	    DEFAULT => 0,
+	    DEFAULT => 1,
 	    HELP => 'Build architecture: all packages by default.',
 	    CLI_OPTIONS => ['--arch-all', '--no-arch-all']
 	},
@@ -367,14 +367,6 @@ sub setup ($) {
 	    DEFAULT => [],
 	    HELP => 'Additional command-line options for dpkg-source',
 	    CLI_OPTIONS => ['--dpkg-source-opt', '--dpkg-source-opts']
-	},
-	'DCMD'					=> {
-	    TYPE => 'STRING',
-	    VARNAME => 'dcmd',
-	    GROUP => 'Programs',
-	    CHECK => $validate_program,
-	    DEFAULT => 'dcmd',
-	    HELP => 'Path to dcmd binary'
 	},
 	'MD5SUM'				=> {
 	    TYPE => 'STRING',
@@ -1085,7 +1077,7 @@ $crossbuild_core_depends = {
 		my $conf = shift;
 		$conf->check('LINTIAN');
 	    },
-	    DEFAULT => 0,
+	    DEFAULT => 1,
 	    HELP => 'Run lintian?',
 	    CLI_OPTIONS => ['--run-lintian', '--no-run-lintian']
 	},

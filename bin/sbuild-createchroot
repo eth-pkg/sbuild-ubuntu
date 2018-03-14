@@ -84,6 +84,9 @@ sub setup {
 	'EXTRA_REPOSITORIES'			=> {
 	    DEFAULT => []
 	},
+	'COMMAND_PREFIX'			=> {
+	    DEFAULT => ''
+	},
     );
 
     $conf->set_allowed_keys(\%createchroot_keys);
@@ -160,6 +163,9 @@ sub set_options {
 	},
 	"extra-repository=s" => sub {
 	    push @{$self->get_conf('EXTRA_REPOSITORIES')}, $_[1];
+	},
+        "command-prefix=s" => sub {
+	    $self->set_conf('COMMAND_PREFIX', $_[1]);
 	});
 }
 
@@ -177,6 +183,8 @@ use File::Path qw(mkpath rmtree);
 use File::Temp qw(tempfile);
 use File::Copy;
 use Cwd qw(abs_path);
+use IPC::Open3;
+use File::Spec;
 
 sub add_items ($@);
 sub makedir ($$);
@@ -209,11 +217,14 @@ if (defined $conf->get('CHROOT_PREFIX') && $conf->get('CHROOT_PREFIX') ne "") {
 }
 $chrootname .= "-" . $conf->get('BUILD_ARCH') . $conf->get('CHROOT_SUFFIX');
 
-open my $pipe, 'schroot -l --all-source-chroots |';
-while (my $line = <$pipe>) {
+# We redirect stderr to /dev/null because otherwise schroot might print
+# warnings on stderr which throws off autopkgtest
+open(NULL, ">", File::Spec->devnull);
+my $pid = open3(my $in = '', \*PH, \*NULL, 'schroot', '-l', '--all-source-chroots');
+while (my $line = <PH>) {
 	$line ne "source:$chrootname\n" or die "chroot with name $chrootname already exists";
 }
-close $pipe;
+waitpid($pid, 0);
 
 # Create the target directory in advance so abs_path (which is buggy)
 # won't fail.  Remove if abs_path is replaced by something better.
@@ -359,9 +370,9 @@ EOF
 } else {
     # Determine whether system has overlayfs capability
     my $uniontype = "none";
-    if (lc("$^O") =~ /linux/) {
-	system(qw(/sbin/modprobe overlay));
-	if (open(FILE, "/proc/filesystems")) {
+    if (lc("$^O") =~ /linux/ && -e '/sbin/modprobe') {
+	my $ret = system(qw(/sbin/modprobe overlay));
+	if ($ret == 0 && open(FILE, "/proc/filesystems")) {
 	    if (grep {/\soverlay$/} <FILE>) {
 		$uniontype = "overlay";
 	    }
@@ -379,6 +390,10 @@ EOF
 if (scalar @{$conf->get('ALIASES')} > 0) {
     my $aliases = join ',', @{$conf->get('ALIASES')};
     $config_entry .= "aliases=$aliases\n";
+}
+
+if ($conf->get('COMMAND_PREFIX') ne '') {
+    $config_entry .= "command-prefix=" . $conf->get('COMMAND_PREFIX') . "\n";
 }
 
 if (-d "/etc/schroot/chroot.d") {
