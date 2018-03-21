@@ -512,6 +512,7 @@ sub do_build {
 			'--apt-update',
 			'--no-apt-upgrade',
 			'--no-apt-distupgrade',
+			'--no-run-lintian',
 			'--batch',
 			"--stats-dir=" . $self->get_conf('HOME') . "/stats",
 			"--dist=" . $dist_config->get('DIST_NAME');
@@ -537,15 +538,11 @@ sub do_build {
     if ($dist_config->get('BUILD_DEP_RESOLVER') || $todo->{'build_dep_resolver'}) {
 	push @sbuild_args, '--build-dep-resolver=' . ($dist_config->get('BUILD_DEP_RESOLVER') || $todo->{'build_dep_resolver'});
     }
-    # Check if we need to build the arch:all.
-    if (defined($todo->{'arch_all'}) && $todo->{'arch_all'}) {
-	push @sbuild_args, '--arch-all';
-    }
     if ($dist_config->get('BUILT_ARCHITECTURE')) {
         if ($dist_config->get('BUILT_ARCHITECTURE') eq 'all') {
 	    push ( @sbuild_args, "--arch-all", "--no-arch-any" );
         } else {
-            push ( @sbuild_args, "--arch=" . $dist_config->get('BUILT_ARCHITECTURE') );
+            push ( @sbuild_args, "--no-arch-all", "--arch-any", "--arch=" . $dist_config->get('BUILT_ARCHITECTURE') );
 	}
     }
     push ( @sbuild_args, "--chroot=" . $dist_config->get('SBUILD_CHROOT') )
