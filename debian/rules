@@ -3,5 +3,10 @@
 %:
 	dh $@
 
+override_dh_install:
+	cp etc/sbuild-update-all etc/sbuild-debian-developer-setup-update-all
+	chmod +x etc/sbuild-debian-developer-setup-update-all
+	dh_install
+
 override_dh_installinit:
 	dh_installinit --no-start --no-restart-on-upgrade
