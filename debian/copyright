@@ -1,10 +1,9 @@
-Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: sbuild
-Source: http://alioth.debian.org/projects/buildd-tools/.
+Source: https://salsa.debian.org/debian/sbuild
 Comment:
  sbuild is maintained by the Debian buildd-tools project team.  It was
- downloaded from git://git.debian.org/git/buildd-tools/sbuild.git.
- Team information and mailing list are available at
+ downloaded from https://salsa.debian.org/debian/sbuild.git.
  .
  The upstream source was originally downloaded from the CVS repository
    :pserver:anon@cvs.linux-m68k.org:/CVS (module: wanna-build)

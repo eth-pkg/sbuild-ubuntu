@@ -21,7 +21,6 @@
 use strict;
 use warnings;
 
-use Sbuild::ChrootSetup qw(generate_keys);
 use Sbuild::ChrootRoot;
 use Sbuild::Resolver qw(get_resolver);
 
@@ -52,8 +51,8 @@ sub setup {
 	'AUTOREMOVE'			=> {
 	    DEFAULT => 0
 	},
-	'KEYGEN'			=> {
-	    DEFAULT => 0
+	'CHROOT_MODE'				=> {
+	    DEFAULT => 'schroot'
 	},
     );
 
@@ -78,6 +77,9 @@ sub set_options {
     my $self = shift;
 
     $self->add_options(
+	"chroot-mode=s" => sub {
+	    $self->set_conf('CHROOT_MODE', $_[1]);
+	},
 	"arch=s" => sub {
 	    $self->set_conf('ARCH', $_[1]);
 	    $self->set_conf('HOST_ARCH', $_[1]);
@@ -106,10 +108,6 @@ sub set_options {
 	"autoremove|r" => sub {
 	    $self->set_conf('AUTOREMOVE', 1);
 	    $self->set_conf('COMPAT', 0);
-	},
-	"keygen|k" => sub {
-	    $self->set_conf('KEYGEN', 1);
-	    $self->set_conf('COMPAT', 0);
 	});
 }
 
@@ -124,7 +122,7 @@ Conf::setup($conf);
 exit 1 if !defined($conf);
 my $options = Options->new($conf, "sbuild-update", "1");
 exit 1 if !defined($options);
-check_group_membership();
+check_group_membership() if $conf->get('CHROOT_MODE') eq 'schroot';
 
 if ($conf->get('COMPAT')) {
     my $msg = "$0 will perform apt-get command 'update' now, however this ";
@@ -133,10 +131,7 @@ if ($conf->get('COMPAT')) {
     $conf->set('UPDATE', 1);
 }
 
-if (@ARGV >= 1 && $conf->get('KEYGEN')) {
-    usage_error("sbuild-update", "Incorrect number of options");
-}
-if (@ARGV < 1 && !$conf->get('KEYGEN')) {
+if (@ARGV < 1) {
     usage_error("sbuild-update", "No chroot was specified");
 }
 
@@ -144,30 +139,10 @@ my $status = 0;
 
 my $host = Sbuild::ChrootRoot->new($conf);
 
-if ($conf->get('KEYGEN')) {
-    print "Generating archive key.\n";
-
-    my $host = Sbuild::ChrootRoot->new($conf);
-    if (!$host->begin_session()) {
-	die "Chroot setup failed";
-    }
-
-    $status = generate_keys($host, $conf);
-
-    $host->end_session();
-
-    $status >>= 8;
-    if ($status) {
-	print STDERR "Exiting from key generation with status $status.\n";
-	exit($status ? 1 : 0);
-    }
-    exit 0;
-}
-
 foreach (@ARGV) {
-    my $chroot = Sbuild::Utility::get_dist($_);
+    my $distribution = Sbuild::Utility::get_dist($_);
 
-    my $session = setup('source', $chroot, $conf) or die "Chroot setup failed";
+    my $session = setup('source', $distribution, $conf) or die "Chroot setup failed";
     if (!$host->begin_session()) {
 	die "Chroot setup failed";
     }
@@ -180,7 +155,7 @@ foreach (@ARGV) {
     $resolver->setup();
 
     if ($conf->get('UPDATE')) {
-	print "$chroot: Performing update.\n";
+	print "$distribution: Performing update.\n";
 	$status = $resolver->update($session, $conf);
 	$status >>= 8;
 	if ($status) {
@@ -190,7 +165,7 @@ foreach (@ARGV) {
     }
 
     if ($conf->get('UPGRADE')) {
-	print "$chroot: Performing upgrade.\n";
+	print "$distribution: Performing upgrade.\n";
 	my $status = $resolver->upgrade($session, $conf);
 	$status >>= 8;
 	if ($status) {
@@ -200,7 +175,7 @@ foreach (@ARGV) {
     }
 
     if ($conf->get('DISTUPGRADE')) {
-	print "$chroot: Performing dist-upgrade.\n";
+	print "$distribution: Performing dist-upgrade.\n";
 	my $status = $resolver->distupgrade($session, $conf);
 	$status >>= 8;
 	if ($status) {
@@ -210,7 +185,7 @@ foreach (@ARGV) {
     }
 
     if ($conf->get('CLEAN')) {
-	print "$chroot: Performing clean.\n";
+	print "$distribution: Performing clean.\n";
 	my $status = $resolver->clean($session, $conf);
 	$status >>= 8;
 	if ($status) {
@@ -220,7 +195,7 @@ foreach (@ARGV) {
     }
 
     if ($conf->get('AUTOCLEAN')) {
-	print "$chroot: Performing autoclean.\n";
+	print "$distribution: Performing autoclean.\n";
 	my $status = $resolver->autoclean($session, $conf);
 	$status >>= 8;
 	if ($status) {
@@ -230,7 +205,7 @@ foreach (@ARGV) {
     }
 
     if ($conf->get('AUTOREMOVE')) {
-	print "$chroot: Performing autoremove.\n";
+	print "$distribution: Performing autoremove.\n";
 	my $status = $resolver->autoremove($session, $conf);
 	$status >>= 8;
 	if ($status) {

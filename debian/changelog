@@ -1,3 +1,65 @@
+sbuild (0.77.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * debian/control: move "exim4 | mail-transport-agent" from Recommends to
+    Suggests (closes: #863718)
+  * Set maintainer address to sbuild@packages.debian.org (closes: #899688)
+  * lib/Sbuild/Build.pm: filter out foreign essential and multiarch foreign
+    packages before passing them to dose3 (closes: #865432)
+  * man/sbuild.1.in: pre- and post-build-commands are run as non-root (closes:
+    #900916)
+  * Add null resolver which does not install, upgrade or remove any packages
+    (closes: #858899)
+  * lib/Sbuild/ResolverBase.pm: also print kernel version (closes: #866402)
+  * lib/Sbuild/Build.pm: install (cross-)build-essential, manual depends and
+    build depends with a single dummy package (closes: #871968)
+  * lib/Sbuild/Build.pm: dump .dsc content before extracting it (closes:
+    #901727)
+  * Add config variables that allow sbuild to fail if lintian, piuparts or
+    autopkgtest fail (closes: #891590)
+  * lib/Sbuild/ResolverBase.pm: run dpkg-scanpackages with -m to allow
+    multiple architectures of the same package (closes: #886257)
+  * lib/Sbuild/Build.pm: additional Lintian reasons info and warn (closes:
+    #893228)
+  * man/sbuild.1.in: fix typo (closes: #891588)
+  * lib/Sbuild/Build.pm: also cope with special characters when filtering the
+    log (closes: #901730)
+  * Add new log filtering for /build/pkg-minimal-XXX/resolver-YYY:
+    <<RESOLVERDIR>> (closes: #901725)
+  * lib/Sbuild/Build.pm: only run autopkgtest if debian/tests/control exists
+    (closes: #901167)
+  * lib/Sbuild/Options.pm: --make-binNMU implies --no-arch-all (closes:
+    #898946)
+  * etc/sbuild-update-all: set executable bit (closes: #870451)
+  * lib/Sbuild/ChrootSetup.pm: If BUILD_PATH is set, use it instead of /build
+    (closes: #868657)
+  * lib/Sbuild/ResolverBase.pm: clean /var/cache/apt/archive/*.deb after
+    package installation (closes: #861762)
+  * bin/sbuild-createchroot: also check exit status of schroot (closes:
+    #866006)
+  * Replace httpredir.debian.org with deb.debian.org (closes: #901372)
+  * lib/Sbuild/ChrootSetup.pm: run groupadd instead of copying entry from host
+    (closes: #867180)
+  * man/sbuild-createchroot.8.in: fix outdated path in text description
+    (closes: #901360)
+  * bin/sbuild-createchroot: error out early when the target directory exists
+    and is not empty (closes: #888710)
+  * Remove support for signing the dummy archive (closes: #837188)
+  * I now detect more directly if the source wasn't yet unpacked (closes:
+    #882057)
+  * debian/control: replace priority:extra by optional
+  * debian/copyright: use secure copyright format uri
+  * debian/copyright: fix some outdated information now that sbuild lives on
+    salsa
+  * debian/control: update vcs-git and vcs-browser to salsa
+  * debian/control: fix my name
+  * debian/control: depend on real cron as first alternative before virtual
+    cron-daemon
+  * debian/control: add alternative default-mta before mail-transport-agent
+  * debian/sbuild.postinst: avoid recursive chown
+
+ -- Johannes 'josch' Schauer <josch@debian.org>  Fri, 06 Jul 2018 23:11:45 +0200
+
 sbuild (0.76.0-1) unstable; urgency=medium
 
   * Install sbuild-debian-developer-setup-update-all cronjob (closes: #893577)

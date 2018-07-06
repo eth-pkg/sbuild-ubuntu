@@ -50,6 +50,7 @@ use Sbuild qw($devnull binNMU_version copy isin debug send_mail
               dsc_files dsc_pkgver strftime_c);
 use Sbuild::Base;
 use Sbuild::ChrootInfoSchroot;
+use Sbuild::ChrootInfoUnshare;
 use Sbuild::ChrootInfoSudo;
 use Sbuild::ChrootInfoAutopkgtest;
 use Sbuild::ChrootRoot;
@@ -419,6 +420,8 @@ sub run_chroot_session {
 	    $chroot_info = Sbuild::ChrootInfoSchroot->new($self->get('Config'));
 	} elsif ($self->get_conf('CHROOT_MODE') eq 'autopkgtest') {
 	    $chroot_info = Sbuild::ChrootInfoAutopkgtest->new($self->get('Config'));
+	} elsif ($self->get_conf('CHROOT_MODE') eq 'unshare') {
+	    $chroot_info = Sbuild::ChrootInfoUnshare->new($self->get('Config'));
 	} else {
 	    $chroot_info = Sbuild::ChrootInfoSudo->new($self->get('Config'));
 	}
@@ -526,7 +529,9 @@ END
 	$self->build_log_colour('green', '^Status: successful$');
 	$self->build_log_colour('yellow', '^Keeping session: ');
 	$self->build_log_colour('red', '^Lintian:');
+	$self->build_log_colour('yellow', '^Lintian: warn$');
 	$self->build_log_colour('green', '^Lintian: pass$');
+	$self->build_log_colour('green', '^Lintian: info$');
 	$self->build_log_colour('red', '^Piuparts:');
 	$self->build_log_colour('green', '^Piuparts: pass$');
 	$self->build_log_colour('red', '^Autopkgtest:');
@@ -644,6 +649,11 @@ sub run_chroot_session_locked {
 		Sbuild::Exception::Build->throw(error => "resolver setup failed",
 						failstage => "resolver setup");
 	}
+
+	my $filter;
+	$filter = $resolver->get('Dummy package path');
+	$filter =~ s;^/;;;
+	$self->build_log_filter($filter , 'RESOLVERDIR');
 
 	$self->check_abort();
 	$self->run_chroot_update();
@@ -775,12 +785,6 @@ sub run_fetch_install_packages {
 	    $self->log_warning($msg);
 	}
 
-	if ($self->get('Host Arch') ne $self->get('Build Arch')) {
-	    $self->log_subsection("Install crossbuild-essential");
-	} else {
-	    $self->log_subsection("Install build-essential");
-	}
-
 	$self->check_abort();
 	$self->set('Install Start Time', time);
 	$self->set('Install End Time', $self->get('Install Start Time'));
@@ -793,65 +797,28 @@ sub run_fetch_install_packages {
 		push(@coredeps, 'crossbuild-essential-' . $self->get('Host Arch') . ':native');
             }
 	}
-	$resolver->add_dependencies('CORE', join(", ", @coredeps) , "", "", "", "", "");
 
-	if (!$resolver->install_core_deps('core', 'CORE')) {
-	    Sbuild::Exception::Build->throw(error => "Core build dependencies not satisfied; skipping",
-					    failstage => "install-deps");
-	}
+	my @snapshot = ();
+	@snapshot = ("gcc-snapshot") if ($self->get_conf('GCC_SNAPSHOT'));
 
-	# the architecture check has to be done *after* build-essential is
-	# installed because as part of the architecture check a perl script is
-	# run inside the chroot which requires the Dpkg::Arch module which is
-	# in libdpkg-perl which might not exist in the chroot but will get
-	# installed by the build-essential package
-	if(!$self->check_architectures()) {
-	    Sbuild::Exception::Build->throw(error => "Architecture check failed",
-					    failstage => "check-architecture");
-	}
-
-	my $snapshot = "";
-	$snapshot = "gcc-snapshot" if ($self->get_conf('GCC_SNAPSHOT'));
-	$resolver->add_dependencies('GCC_SNAPSHOT', $snapshot , "", "", "", "", "");
-
-	# Add additional build dependencies specified on the command-line.
-	# TODO: Split dependencies into an array from the start to save
-	# lots of joining.
-	$resolver->add_dependencies('MANUAL',
-				    join(", ", @{$self->get_conf('MANUAL_DEPENDS')}),
-				    join(", ", @{$self->get_conf('MANUAL_DEPENDS_ARCH')}),
-				    join(", ", @{$self->get_conf('MANUAL_DEPENDS_INDEP')}),
-				    join(", ", @{$self->get_conf('MANUAL_CONFLICTS')}),
-				    join(", ", @{$self->get_conf('MANUAL_CONFLICTS_ARCH')}),
-				    join(", ", @{$self->get_conf('MANUAL_CONFLICTS_INDEP')}));
-
-	$resolver->add_dependencies($self->get('Package'),
-				    $self->get('Build Depends'),
-				    $self->get('Build Depends Arch'),
-				    $self->get('Build Depends Indep'),
-				    $self->get('Build Conflicts'),
-				    $self->get('Build Conflicts Arch'),
-				    $self->get('Build Conflicts Indep'));
-
-	my @build_deps;
-	if ($self->get('Host Arch') eq $self->get('Build Arch')) {
-	    @build_deps = ('GCC_SNAPSHOT', 'MANUAL',
-			   $self->get('Package'));
-	} else {
-	    $self->check_abort();
-	    if (!$resolver->install_core_deps('essential',
-					      'GCC_SNAPSHOT')) {
-		Sbuild::Exception::Build->throw(error => "Essential dependencies not satisfied; skipping",
-						failstage => "install-essential");
-	    }
-	    @build_deps = ('MANUAL', $self->get('Package'));
-	}
+	$resolver->add_dependencies('MAIN',
+	    join(", ", $self->get('Build Depends') // (),
+		       @{$self->get_conf('MANUAL_DEPENDS')}, @snapshot, @coredeps),
+	    join(", ", $self->get('Build Depends Arch') // (),
+		       @{$self->get_conf('MANUAL_DEPENDS_ARCH')}),
+	    join(", ", $self->get('Build Depends Indep') // (),
+		       @{$self->get_conf('MANUAL_DEPENDS_INDEP')}),
+	    join(", ", $self->get('Build Conflicts') // (),
+		       @{$self->get_conf('MANUAL_CONFLICTS')}),
+	    join(", ", $self->get('Build Conflicts Arch') // (),
+		       @{$self->get_conf('MANUAL_CONFLICTS_ARCH')}),
+	    join(", ", $self->get('Build Conflicts Indep') // (),
+		       @{$self->get_conf('MANUAL_CONFLICTS_INDEP')}));
 
 	$self->log_subsection("Install package build dependencies");
 
 	$self->check_abort();
-	if (!$resolver->install_main_deps($self->get('Package'),
-					  @build_deps)) {
+	if (!$resolver->install_deps('main', 'MAIN')) {
 	    Sbuild::Exception::Build->throw(error => "Package build dependencies not satisfied; skipping",
 					    failstage => "install-deps");
 	}
@@ -864,6 +831,16 @@ sub run_fetch_install_packages {
 	}
 	$self->set('Install End Time', time);
 
+	# the architecture check has to be done *after* build-essential is
+	# installed because as part of the architecture check a perl script is
+	# run inside the chroot which requires the Dpkg::Arch module which is
+	# in libdpkg-perl which might not exist in the chroot but will get
+	# installed by the build-essential package
+	if(!$self->check_architectures()) {
+	    Sbuild::Exception::Build->throw(error => "Architecture check failed",
+					    failstage => "check-architecture");
+	}
+
 	$self->check_abort();
 	$resolver->dump_build_environment();
 
@@ -875,6 +852,18 @@ sub run_fetch_install_packages {
 	    $self->set_status('failed');
 	}
 
+	# We run it here and not inside build() because otherwise, we cannot
+	# set the overall status to failed due to lintian errors
+	if ($self->get('Pkg Status') eq "successful") {
+	    # Run lintian.
+	    $self->check_abort();
+	    my $ret = $self->run_lintian();
+	    if (!$ret && $self->get_conf('LINTIAN_REQUIRE_SUCCESS')) {
+		$self->set('Pkg Fail Stage', "post-build");
+		$self->set_status("failed");
+	    }
+	}
+
 	# Run specified chroot cleanup commands
 	$self->check_abort();
 	if (!$self->run_external_commands("chroot-cleanup-commands")) {
@@ -882,16 +871,27 @@ sub run_fetch_install_packages {
 		failstage => "run-chroot-cleanup-commands");
 	}
 
+	# piuparts and autopkgtest must be run while the chroot is still open
+	# because they might need files that are not available on the host,
+	# for example the .dsc which might have been downloaded
 	if ($self->get('Pkg Status') eq "successful") {
 	    $self->log_subsection("Post Build");
 
 	    # Run piuparts.
 	    $self->check_abort();
-	    $self->run_piuparts();
+	    my $ret = $self->run_piuparts();
+	    if (!$ret && $self->get_conf('PIUPARTS_REQUIRE_SUCCESS')) {
+		$self->set('Pkg Fail Stage', "post-build");
+		$self->set_status("failed");
+	    }
 
 	    # Run autopkgtest.
 	    $self->check_abort();
-	    $self->run_autopkgtest();
+	    $ret = $self->run_autopkgtest();
+	    if (!$ret && $self->get_conf('AUTOPKGTEST_REQUIRE_SUCCESS')) {
+		$self->set('Pkg Fail Stage', "post-build");
+		$self->set_status("failed");
+	    }
 
 	    # Run post build external commands
 	    $self->check_abort();
@@ -1012,16 +1012,16 @@ sub copy_to_chroot {
 
     $self->check_abort();
     if(!$session->copy_to_chroot($source, $chrootdest)) {
-	$self->log_error("E: Failed to copy $source to $chrootdest\n");
+	$self->log_error("Failed to copy $source to $chrootdest\n");
 	return 0;
     }
 
     if (!$session->chown($chrootdest, $self->get_conf('BUILD_USER'), 'sbuild')) {
-	$self->log_error("E: Failed to set sbuild group ownership on $chrootdest\n");
+	$self->log_error("Failed to set sbuild group ownership on $chrootdest\n");
 	return 0;
     }
     if (!$session->chmod($chrootdest, "ug=rw,o=r,a-s")) {
-	$self->log_error("E: Failed to set 0644 permissions on $chrootdest\n");
+	$self->log_error("Failed to set 0644 permissions on $chrootdest\n");
 	return 0;
     }
 
@@ -1633,6 +1633,7 @@ sub run_lintian {
     my $session = $self->get('Session');
 
     return 1 unless ($self->get_conf('RUN_LINTIAN'));
+    $self->set('Lintian Reason', 'error');
 
     if (!defined($session)) {
 	$self->log_error("Session is undef. Cannot run lintian.\n");
@@ -1664,20 +1665,31 @@ sub run_lintian {
     }
 
     $resolver->add_dependencies('LINTIAN', 'lintian:native', "", "", "", "", "");
-    return 1 unless $resolver->install_core_deps('lintian', 'LINTIAN');
+    return 1 unless $resolver->install_deps('lintian', 'LINTIAN');
 
-    $session->run_command(
+    # we are not using read_command() because we also need the output for
+    # non-zero exit codes
+    my $pipe = $session->pipe_command(
         { COMMAND => \@lintian_command,
           PRIORITY => 0,
-          DIR => $self->get('Build Dir')
+          DIR => $self->get('Build Dir'),
+	  PIPE => "in"
         });
-    my $status = $? >> 8;
-    $self->set('Lintian Reason', 'pass');
+    if (!$pipe) {
+        $self->log_error("Failed to exec Lintian: $!\n");
+	return 0;
+    }
+    my $lintian_output = "";
+    while (my $line = <$pipe>) {
+	$self->log($line);
+	$lintian_output .= $line;
+    }
+    close $pipe;
 
     $self->log("\n");
     if ($?) {
+	my $status = $? >> 8;
         my $why = "unknown reason";
-	$self->set('Lintian Reason', 'error');
 	$self->set('Lintian Reason', 'fail') if ($status == 1);
         $why = "runtime error" if ($status == 2);
         $why = "policy violation" if ($status == 1);
@@ -1685,6 +1697,14 @@ sub run_lintian {
         $self->log_error("Lintian run failed ($why)\n");
 
         return 0;
+    } else {
+	$self->set('Lintian Reason', 'pass');
+	if ($lintian_output =~ m/^I: /m) {
+	    $self->set('Lintian Reason', 'info');
+	}
+	if ($lintian_output =~ m/^W: /m) {
+	    $self->set('Lintian Reason', 'warn');
+	}
     }
 
     $self->log_info("Lintian run was successful.\n");
@@ -1757,6 +1777,13 @@ sub run_autopkgtest {
 
     $self->log_subsubsection("autopkgtest");
 
+    my $session = $self->get('Session');
+    if (!$session->test_regular_file($self->get('Build Dir') . '/' . $self->get('DSC Dir') . '/debian/tests/control')) {
+	$self->set('Autopkgtest Reason', 'no tests');
+	$self->log_info("Autopkgtest was not executed because this package is missing debian/tests/control.\n");
+	return 1;
+    }
+
     my $autopkgtest = $self->get_conf('AUTOPKGTEST');
     my @autopkgtest_command;
     # The default value is the empty array.
@@ -1792,7 +1819,6 @@ sub run_autopkgtest {
 	if (! -f $dsc || ! -r $dsc) {
 	    my $build_dir = $self->get('Build Dir');
 	    $tmpdir = mkdtemp("/tmp/tmp.sbuild.XXXXXXXXXX");
-	    my $session = $self->get('Session');
 	    if (!$session->copy_from_chroot("$build_dir/$dsc", "$tmpdir/$dsc")) {
 		$self->log_error("cannot copy .dsc from chroot\n");
 		rmdir $tmpdir;
@@ -1863,8 +1889,7 @@ sub explain_bd_uninstallable {
 
     my $resolver = $self->get('Dependency Resolver');
 
-    my $pkgname = $self->get('Package');
-    my $dummy_pkg_name = $resolver->get_sbuild_dummy_pkg_name($pkgname);
+    my $dummy_pkg_name = $resolver->get_sbuild_dummy_pkg_name('main');
 
     if (!defined $self->get_conf('BD_UNINSTALLABLE_EXPLAINER')) {
 	return 0;
@@ -1892,65 +1917,117 @@ sub explain_bd_uninstallable {
 	# apt cannot find a solution, this check is supposed to allow the user
 	# to know that choosing a different resolver might fix the problem.
 	$resolver->add_dependencies('DOSE3', 'dose-distcheck:native', "", "", "", "", "");
-	if (!$resolver->install_core_deps('dose3', 'DOSE3')) {
+	if (!$resolver->install_deps('dose3', 'DOSE3')) {
 	    return 0;
 	}
 
-	# We execute the desired commands as part of a pipe from within a bash
-	# script running inside the chroot. Rationale:
-	#
-	# - Constructing bidirectional communication between processes
-	#   requires IPC::Open2 and expressing this in perl is very verbose
-	#   compared to a pipe in shell.
-	# - Bash is chosen over sh because it offers -o pipefail. Without it,
-	#   the bash process will only fail if the last command in the pipe
-	#   fails. But we also want to fail if any of the earlier commands
-	#   fail.
-	# - Using perl over shell would require perl being installed inside
-	#   the chroot. We want to minimize the requirements we have on the
-	#   chroot.
-	# - bash is Essential:yes so it has to be installed inside the chroot.
-	# - Using multiple pipe_command() calls by sbuild instead of a bash
-	#   script running inside the chroot would require the data to be
-	#   copied from one process to the other with a while/read/write loop.
-	#   This is expensive if the chroot lives on a foreign host and thus
-	#   the data would have to be copied *twice* (forth and back) over the
-	#   network. Thus, we start all the processes under a common process on
-	#   inside the chroot to be able to connect them with normal pipes.
-	# - The dose-debcheck command is in curly braces because the |
-	#   operator takes precedence over the || operator and we only want to
-	#   check the exit code of dose-debcheck and not the exit code of the
-	#   whole pipe.
-	# - We expect an exit code of less than 64 of dose-debcheck. Any other
-	#   exit code indicates abnormal program termination.
+	my $session = $self->get('Session');
+	my $pipe_apt = $session->pipe_command({
+		COMMAND => [ 'apt-get', 'indextargets', '--format', '$(FILENAME)', 'Created-By: Packages' ],
+		USER => $self->get_conf('BUILD_USER'),
+	    });
+	if (!$pipe_apt) {
+	    $self->log_error("cannot open reading pipe from apt-get indextargets\n");
+	    return 0;
+	}
+
+	my $host = $self->get_conf('HOST_ARCH');
+	my @debforeignarg = ();
+	if ($self->get_conf('BUILD_ARCH') ne $self->get_conf('HOST_ARCH')) {
+	    @debforeignarg = ('--deb-foreign-archs', $self->get_conf('HOST_ARCH'));
+	}
+
 	# - We run dose-debcheck instead of dose-builddebcheck because we want
 	#   to check the dummy binary package created by sbuild instead of the
 	#   original source package Build-Depends.
 	# - We use dose-debcheck instead of dose-distcheck because we cannot
 	#   use the deb:// prefix on data from standard input.
-	my $native = $self->get_conf('BUILD_ARCH');
-	my $host = $self->get_conf('HOST_ARCH');
-	my $debforeignarg = '';
-	if ($self->get_conf('BUILD_ARCH') ne $self->get_conf('HOST_ARCH')) {
-	    $debforeignarg = '--deb-foreign-archs=' . $self->get_conf('HOST_ARCH');
-	}
-	my $command = << "EOF";
-apt-get indextargets --format '\$(FILENAME)' "Created-By: Packages" \\
-    | xargs --delimiter=\\\\n /usr/lib/apt/apt-helper cat-file \\
-    | { dose-debcheck --checkonly=$dummy_pkg_name:$host \\
-	--verbose --failures --successes --explain --deb-native-arch=$native \\
-	$debforeignarg || [ \$? -lt 64 ]; }
-EOF
-
-	my $session = $self->get('Session');
-	$session->run_command({
-		COMMAND => ['bash', '-o', 'pipefail', '-c', $command],
+	my $pipe_dose = $session->pipe_command({
+		COMMAND => ['dose-debcheck',
+		    '--checkonly', "$dummy_pkg_name:$host", '--verbose',
+		    '--failures', '--successes', '--explain',
+		    '--deb-native-arch', $self->get_conf('BUILD_ARCH'), @debforeignarg ],
 		PRIORITY => 0,
 		USER => $self->get_conf('BUILD_USER'),
+		PIPE => 'out'
 	    });
-	if ($? != 0) {
+	if (!$pipe_dose) {
+	    $self->log_error("cannot open writing pipe to dose-debcheck\n");
 	    return 0;
 	}
+
+	# We parse file by file instead of concatenating all files because if
+	# there are many files, we might exceed the maximum command length and
+	# it avoids having to have the data from all Packages files in memory
+	# all at once. Working with a smaller Dpkg::Index structure should
+	# also result in faster store and retrieval times.
+	while (my $fname = <$pipe_apt>) {
+	    chomp $fname;
+	    my $pipe_cat = $session->pipe_command({
+		    COMMAND => [ '/usr/lib/apt/apt-helper', 'cat-file', $fname ],
+		    USER => $self->get_conf('BUILD_USER'),
+		});
+	    if (!$pipe_cat) {
+		$self->log_error("cannot open reading pipe from apt-helper\n");
+		return 0;
+	    }
+
+	    # For native compilation we just pipe the output of apt-helper to
+	    # dose3. For cross compilation we need to filter foreign
+	    # architecture packages that are Essential:yes or
+	    # Multi-Arch:foreign or otherwise dose3 might present a solution
+	    # that installs foreign architecture Essential:yes or
+	    # Multi-Arch:foreign packages.
+	    if ($self->get_conf('BUILD_ARCH') eq $self->get_conf('HOST_ARCH')) {
+		File::Copy::copy $pipe_cat, $pipe_dose;
+	    } else {
+		my $key_func = sub {
+		    return $_[0]->{Package} . ' ' . $_[0]->{Version} . ' ' . $_[0]->{Architecture};
+		};
+
+		my $index = Dpkg::Index->new(get_key_func=>$key_func);
+
+		if (!$index->parse($pipe_cat, 'apt-helper cat-file')) {
+		    $self->log_error("Cannot parse output of apt-helper cat-file: $!\n");
+		    return 0;
+		}
+
+		foreach my $key ($index->get_keys()) {
+		    my $cdata = $index->get_by_key($key);
+		    my $arch = $cdata->{'Architecture'} // '';
+		    my $ess = $cdata->{'Essential'} // '';
+		    my $ma = $cdata->{'Multi-Arch'} // '';
+		    if ($arch ne 'all' && $arch ne $host
+			&& ($ess eq 'yes' || $ma eq 'foreign')) {
+			next;
+		    }
+		    $cdata->output($pipe_dose);
+		    print $pipe_dose "\n";
+		}
+	    }
+
+	    close($pipe_cat);
+	    if (($? >> 8) != 0) {
+		$self->log_error("apt-helper failed\n");
+		return 0;
+	    }
+	}
+
+	close $pipe_dose;
+	# - We expect an exit code of less than 64 of dose-debcheck. Any other
+	#   exit code indicates abnormal program termination.
+	if (($? >> 8) >= 64) {
+	    $self->log_error("dose-debcheck failed\n");
+	    return 0;
+	}
+
+	close $pipe_apt;
+	if (($? >> 8) != 0) {
+	    $self->log_error("apt-get indextargets failed\n");
+	    return 0;
+	}
+
+
     }
 
     return 1;
@@ -1986,6 +2063,13 @@ sub build {
 	$self->log_error("Cannot unpack source: a symlink to a directory with the\n".
 		   "same name already exists.\n");
 	return 0;
+    }
+    my $dsccontent = $session->read_file("$build_dir/$dscfile");
+    if (!$dsccontent) {
+	$self->log_error("Cannot read $build_dir/$dscfile\n");
+    } else {
+	$self->log($dsccontent);
+	$self->log("\n");
     }
     if (!$session->test_directory($dscdir)) {
 	$self->set('Sub Task', "dpkg-source");
@@ -2319,6 +2403,7 @@ sub build {
 	PRIORITY => 0,
 	DIR => $dscdir,
 	STREAMERR => \*STDOUT,
+	DISABLE_NETWORK => 1,
     };
 
     my $pipe = $session->pipe_command($command);
@@ -2468,14 +2553,6 @@ sub build {
 	if (!$session->chmod($self->get('Build Dir'), 'g+w', { RECURSIVE => 1 })) {
 	    $self->log_error("chmod g+w " . $self->get('Build Dir') . " failed.\n");
 	    return 0;
-	}
-
-	if (!$rv) {
-	    $self->log_subsection("Post Build Chroot");
-
-	    # Run lintian.
-	    $self->check_abort();
-	    $self->run_lintian();
 	}
 
 	$self->log_subsection("Changes");
@@ -3060,7 +3137,7 @@ sub open_build_log {
 		# Filter out any matching patterns
 		foreach my $pattern (@filter) {
 		    ($text,$replacement) = @{$pattern};
-		    s/$text/$replacement/g;
+		    s/\Q$text\E/$replacement/g;
 		}
 	    }
 	    if (m/Deprecated key/ || m/please update your configuration/) {

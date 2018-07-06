@@ -226,6 +226,14 @@ sub setup ($) {
 	    DEFAULT => ['-q'],
 	    HELP => 'Additional command-line options for schroot'
 	},
+	'UNSHARE_TMPDIR_TEMPLATE'			=> {
+	    TYPE => 'STRING',
+	    VARNAME => 'unshare_tmpdir_template',
+	    GROUP => 'Programs',
+	    DEFAULT => '/tmp/tmp.sbuild.XXXXXXXXXX',
+	    HELP => 'Template used to create the temporary unpack directory for the unshare chroot mode.'
+	    # CLI_OPTIONS => ['--unshare-tmpdir-template']
+	},
 	'AUTOPKGTEST_VIRT_SERVER'			=> {
 	    TYPE => 'STRING',
 	    VARNAME => 'autopkgtest_virt_server',
@@ -654,10 +662,10 @@ sub setup ($) {
 
 		die "Bad chroot mode \'" . $conf->get('CHROOT_MODE') . "\'"
 		    if !isin($conf->get('CHROOT_MODE'),
-			     qw(schroot sudo autopkgtest));
+			     qw(schroot sudo autopkgtest unshare));
 	    },
 	    DEFAULT => 'schroot',
-	    HELP => 'Mechanism to use for chroot virtualisation.  Possible value are "schroot" (default), "sudo" and "autopkgtest".',
+	    HELP => 'Mechanism to use for chroot virtualisation.  Possible value are "schroot" (default), "sudo", "autopkgtest" and "unshare".',
 	    CLI_OPTIONS => ['--chroot-mode']
 	},
 	'CHROOT_SPLIT'				=> {
@@ -1029,11 +1037,11 @@ $crossbuild_core_depends = {
 
 		die '$key: Invalid build-dependency resolver \'' .
 		    $conf->get($key) .
-		    "'\nValid algorithms are 'apt', 'aptitude', 'aspcud' and 'xapt'\n"
+		    "'\nValid algorithms are 'apt', 'aptitude', 'aspcud', 'xapt', and 'null'\n"
 		    if !isin($conf->get($key),
-			     qw(apt aptitude aspcud xapt));
+			     qw(apt aptitude aspcud xapt null));
 	    },
-	    HELP => 'Build dependency resolver.  The \'apt\' resolver is currently the default, and recommended for most users.  This resolver uses apt-get to resolve dependencies.  Alternative resolvers are \'apt\', \'aptitude\' and \'aspcud\'. The \'apt\' resolver uses a built-in resolver module while the \'aptitude\' resolver uses aptitude to resolve build dependencies.  The aptitude resolver is similar to apt, but is useful in more complex situations, such as where multiple distributions are required, for example when building from experimental, where packages are needed from both unstable and experimental, but defaulting to unstable. If the dependency situation is too complex for either apt or aptitude to solve it, you can use the \'aspcud\' resolver which (in contrast to apt and aptitude) is a real solver (in the math sense) and will thus always find a solution if a solution exists.',
+	    HELP => 'Build dependency resolver.  The \'apt\' resolver is currently the default, and recommended for most users.  This resolver uses apt-get to resolve dependencies.  Alternative resolvers are \'apt\', \'aptitude\' and \'aspcud\'. The \'apt\' resolver uses a built-in resolver module while the \'aptitude\' resolver uses aptitude to resolve build dependencies.  The aptitude resolver is similar to apt, but is useful in more complex situations, such as where multiple distributions are required, for example when building from experimental, where packages are needed from both unstable and experimental, but defaulting to unstable. If the dependency situation is too complex for either apt or aptitude to solve it, you can use the \'aspcud\' resolver which (in contrast to apt and aptitude) is a real solver (in the math sense) and will thus always find a solution if a solution exists. Additionally, the \'null\' solver is provided. It is a dummy resolver which does not install, upgrade or remove any packages. This allows one to completely control package installation via hooks.',
 	    CLI_OPTIONS => ['--build-dep-resolver']
 	},
 	'ASPCUD_CRITERIA'			=> {
@@ -1078,6 +1086,13 @@ $crossbuild_core_depends = {
 	    DEFAULT => [],
 	    HELP => 'Options to pass to lintian.  Each option is a separate arrayref element.  For example, [\'-i\', \'-v\'] to add -i and -v.',
 	    CLI_OPTIONS => ['--lintian-opt', '--lintian-opts']
+	},
+	'LINTIAN_REQUIRE_SUCCESS'				=> {
+	    TYPE => 'BOOL',
+	    VARNAME => 'lintian_require_success',
+	    GROUP => 'Build validation',
+	    DEFAULT => 0,
+	    HELP => 'Let sbuild fail if lintian fails.'
 	},
 	'PIUPARTS'				=> {
 	    TYPE => 'STRING',
@@ -1163,6 +1178,13 @@ $piuparts_root_args = [\'\', \'whatever\'];
 ',
 	    CLI_OPTIONS => ['--piuparts-root-arg', '--piuparts-root-args']
 	},
+	'PIUPARTS_REQUIRE_SUCCESS'				=> {
+	    TYPE => 'BOOL',
+	    VARNAME => 'piuparts_require_success',
+	    GROUP => 'Build validation',
+	    DEFAULT => 0,
+	    HELP => 'Let sbuild fail if piuparts fails.'
+	},
 	'AUTOPKGTEST'				=> {
 	    TYPE => 'STRING',
 	    VARNAME => 'autopkgtest',
@@ -1247,6 +1269,13 @@ $autopkgtest_root_args = [\'\', \'whatever\'];
 ',
 	    CLI_OPTIONS => ['--autopkgtest-root-arg', '--autopkgtest-root-args']
 	},
+	'AUTOPKGTEST_REQUIRE_SUCCESS'				=> {
+	    TYPE => 'BOOL',
+	    VARNAME => 'autopkgtest_require_success',
+	    GROUP => 'Build validation',
+	    DEFAULT => 0,
+	    HELP => 'Let sbuild fail if autopkgtest fails.'
+	},
 	'EXTERNAL_COMMANDS'			=> {
 	    TYPE => 'HASH:ARRAY:STRING',
 	    VARNAME => 'external_commands',
@@ -1262,9 +1291,10 @@ $autopkgtest_root_args = [\'\', \'whatever\'];
 		"chroot-cleanup-commands" => [],
 		"post-build-commands" => [],
 	    },
-	    HELP => 'External commands to run at various stages of a build. Commands are held in a hash of arrays of arrays data structure.',
+	    HELP => 'External commands to run at various stages of a build. Commands are held in a hash of arrays of arrays data structure. There is no equivalent for the --anything-failed-commands command line option. All percent escapes mentioned in the sbuild man page can be used.',
 	    EXAMPLE =>
-'$external_commands = {
+'# general format
+$external_commands = {
     "pre-build-commands" => [
         [\'foo\', \'arg1\', \'arg2\'],
         [\'bar\', \'arg1\', \'arg2\', \'arg3\'],
@@ -1301,6 +1331,13 @@ $autopkgtest_root_args = [\'\', \'whatever\'];
         [\'foo\', \'arg1\', \'arg2\'],
         [\'bar\', \'arg1\', \'arg2\', \'arg3\'],
     ],
+};
+# the equivalent of specifying --anything-failed-commands=%SBUILD_SHELL on the
+# command line
+$external_commands = {
+    "chroot-update-failed-commands" => [ [ \'%SBUILD_SHELL\' ] ],
+    "build-deps-failed-commands" => [ [ \'%SBUILD_SHELL\' ] ],
+    "build-failed-commands" => [ [ \'%SBUILD_SHELL\' ] ],
 };',
 	    CLI_OPTIONS => ['--setup-hook', '--pre-build-commands', '--chroot-setup-commands', '--chroot-update-failed-commands', '--build-deps-failed-commands', '--build-failed-commands', '--anything-failed-commands', '--starting-build-commands', '--finished-build-commands', '--chroot-cleanup-commands', '--post-build-commands']
 	},
@@ -1342,20 +1379,6 @@ $autopkgtest_root_args = [\'\', \'whatever\'];
 	    EXAMPLE => '$resolve_alternatives = 0;',
 	    HELP => 'Should the dependency resolver use alternatives in Build-Depends, Build-Depends-Arch and Build-Depends-Indep?  By default, using \'apt\' resolver, only the first alternative will be used; all other alternatives will be removed.  When using the \'aptitude\' resolver, it will default to using all alternatives.  Note that this does not include architecture-specific alternatives, which are reduced to the build architecture prior to alternatives removal.  This should be left disabled when building for unstable; it may be useful when building for experimental or backports.  Set to undef to use the default, 1 to enable, or 0 to disable.',
 	    CLI_OPTIONS => ['--resolve-alternatives', '--no-resolve-alternatives']
-	},
-	'SBUILD_BUILD_DEPENDS_SECRET_KEY'		=> {
-	    TYPE => 'STRING',
-	    VARNAME => 'sbuild_build_depends_secret_key',
-	    GROUP => 'Dependency resolution',
-	    DEFAULT => '/var/lib/sbuild/apt-keys/sbuild-key.sec',
-	    HELP => 'GPG secret key for temporary local apt archive.'
-	},
-	'SBUILD_BUILD_DEPENDS_PUBLIC_KEY'		=> {
-	    TYPE => 'STRING',
-	    VARNAME => 'sbuild_build_depends_public_key',
-	    GROUP => 'Dependency resolution',
-	    DEFAULT => '/var/lib/sbuild/apt-keys/sbuild-key.pub',
-	    HELP => 'GPG public key for temporary local apt archive.'
 	},
 	'EXTRA_PACKAGES'				=> {
 	    TYPE => 'ARRAY:STRING',

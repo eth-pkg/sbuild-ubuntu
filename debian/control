@@ -1,8 +1,8 @@
 Source: sbuild
 Section: devel
-Priority: extra
-Maintainer: Debian buildd-tools Developers <buildd-tools-devel@lists.alioth.debian.org>
-Uploaders: Johannes Schauer <josch@debian.org>,
+Priority: optional
+Maintainer: sbuild maintainers <sbuild@packages.debian.org>
+Uploaders: Johannes 'josch' Schauer <josch@debian.org>,
            Michael Banck <mbanck@debian.org>,
            Francesco Paolo Lovergine <frankie@debian.org>,
            Wookey <wookey@debian.org>,
@@ -16,8 +16,8 @@ Build-Depends-Indep:
                libmime-lite-perl,
                libyaml-tiny-perl
 Standards-Version: 3.9.8
-Vcs-Browser: https://anonscm.debian.org/cgit/buildd-tools/sbuild.git?h=debian/unstable
-Vcs-Git: https://anonscm.debian.org/git/buildd-tools/sbuild.git -b debian/unstable
+Vcs-Browser: https://salsa.debian.org/debian/sbuild/tree/debian/unstable
+Vcs-Git: https://salsa.debian.org/debian/sbuild.git -b debian/unstable
 
 Package: libsbuild-perl
 Architecture: all
@@ -32,10 +32,9 @@ Depends: apt,
          ${misc:Depends},
          ${perl:Depends}
 Recommends:
-         exim4 | mail-transport-agent,
          schroot (>= 1.6.0),
          autopkgtest (>= 4.0.4),
-Suggests: libwww-perl
+Suggests: libwww-perl, default-mta | mail-transport-agent
 Replaces: sbuild (<= 0.58.4-1)
 Description: Library for building Debian binary packages from Debian sources
  The sbuild suite of programs (wanna-build, buildd and sbuild) are
@@ -81,7 +80,7 @@ Architecture: all
 Depends: sbuild,
          schroot,
          apt-cacher-ng | apt-cacher,
-         cron-daemon,
+         cron | cron-daemon,
          ${misc:Depends},
          ${perl:Depends},
          ${shlibs:Depends}
@@ -98,7 +97,7 @@ Architecture: all
 Depends: adduser,
          cron,
          dupload,
-         exim4 | mail-transport-agent,
+         default-mta | mail-transport-agent,
          libsbuild-perl,
          libyaml-tiny-perl,
          sbuild (<< ${source:Version}.1~),

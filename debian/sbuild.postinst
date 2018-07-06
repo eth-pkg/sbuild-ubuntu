@@ -70,7 +70,7 @@ case "$1" in
 	# Unlock account in case it was locked from previous purge.
 	usermod -U -e '' sbuild || true
 
-        chown -R sbuild:sbuild /var/lib/sbuild
+        chown sbuild:sbuild /var/lib/sbuild /var/lib/sbuild/apt-keys /var/lib/sbuild/build
         chmod 02770 /var/lib/sbuild
         chmod 02770 /var/lib/sbuild/apt-keys
 	[ -f /var/lib/sbuild/avg-build-space ] && \

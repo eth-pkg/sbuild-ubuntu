@@ -9,5 +9,4 @@ debian/tmp/usr/share/man/man1/buildd-watcher.1	usr/share/man/man1
 debian/tmp/usr/share/man/man5/buildd.conf.5	usr/share/man/man5
 debian/tmp/usr/share/perl5/Buildd*		usr/share/perl5
 debian/tmp/var/lib/buildd			var/lib
-etc/apt-keys/*.asc				usr/share/buildd
 debian/.forward var/lib/buildd/

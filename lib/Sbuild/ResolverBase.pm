@@ -73,10 +73,6 @@ sub new {
         '/etc/apt/sources.list.d/sbuild-extra-repositories.list';
     $self->set('Extra repositories archive list file', $extra_repositories_archive_list_file);
 
-    my $dummy_archive_key_file =
-        '/etc/apt/trusted.gpg.d/sbuild-build-depends-archive.gpg';
-    $self->set('Dummy archive key file', $dummy_archive_key_file);
-
     my $extra_packages_archive_list_file =
         '/etc/apt/sources.list.d/sbuild-extra-packages-archive.list';
     $self->set('Extra packages archive list file', $extra_packages_archive_list_file);
@@ -119,6 +115,8 @@ sub setup {
     print $F qq(APT::AutoRemove::SuggestsImportant "false";\n);
     print $F qq(APT::AutoRemove::RecommendsImportant "false";\n);
     print $F qq(Acquire::Languages "none";\n); # do not download translations
+    # remove packages from /var/cache/apt/archive/*.deb after installation
+    print $F qq(APT::Keep-Downloaded-Packages "false";\n);
 
     if ($self->get('Split')) {
 	print $F "Dir \"$chroot_dir\";\n";
@@ -132,12 +130,12 @@ sub setup {
     }
 
     if (!$session->chown($aptconf, $self->get_conf('BUILD_USER'), 'sbuild')) {
-	$self->log_error("E: Failed to set " . $self->get_conf('BUILD_USER') .
+	$self->log_error("Failed to set " . $self->get_conf('BUILD_USER') .
 			 ":sbuild ownership on apt.conf at $aptconf\n");
 	return 0;
     }
     if (!$session->chmod($aptconf, '0664')) {
-	$self->log_error("E: Failed to set 0664 permissions on apt.conf at $aptconf\n");
+	$self->log_error("Failed to set 0664 permissions on apt.conf at $aptconf\n");
 	return 0;
     }
 
@@ -213,18 +211,18 @@ sub setup {
 	    if (! defined $self->get('Extra packages path')) {
 		my $tmpdir = $session->mktemp({ TEMPLATE => $self->get('Build Dir') . '/resolver-XXXXXX', DIRECTORY => 1});
 		if (!$tmpdir) {
-		    $self->log_error("E: mktemp -d " . $self->get('Build Dir') . '/resolver-XXXXXX failed\n');
+		    $self->log_error("mktemp -d " . $self->get('Build Dir') . '/resolver-XXXXXX failed\n');
 		    return 0;
 		}
 		$self->set('Extra packages path', $tmpdir);
 	    }
 	    if (!$session->chown($self->get('Extra packages path'), $self->get_conf('BUILD_USER'), 'sbuild')) {
-		$self->log_error("E: Failed to set " . $self->get_conf('BUILD_USER') .
+		$self->log_error("Failed to set " . $self->get_conf('BUILD_USER') .
 		    ":sbuild ownership on extra packages dir\n");
 		return 0;
 	    }
 	    if (!$session->chmod($self->get('Extra packages path'), '0770')) {
-		$self->log_error("E: Failed to set 0770 permissions on extra packages dir\n");
+		$self->log_error("Failed to set 0770 permissions on extra packages dir\n");
 		return 0;
 	    }
 	    my $extra_packages_dir = $self->get('Extra packages path');
@@ -293,13 +291,6 @@ sub setup {
 		}
 
 		# We always trust the extra packages apt repositories.
-		# This means that if SBUILD_BUILD_DEPENDS_{SECRET|PUBLIC}_KEY do not
-		# exist and thus the extra packages repositories do not get signed, apt will
-		# still trust it. This allows one to run sbuild without generating
-		# keys which is useful on machines with little randomness.
-		# Older apt from squeeze will still require keys to be generated as it
-		# ignores the trusted=yes. Older apt ignoring this is also why we can add
-		# this unconditionally.
 		print $tmpfh 'deb [trusted=yes] file://' . $extra_packages_archive_dir . " ./\n";
 		print $tmpfh 'deb-src [trusted=yes] file://' . $extra_packages_archive_dir . " ./\n";
 
@@ -423,6 +414,16 @@ sub setup {
 	    }
 	}
 
+    }
+
+    #Prepare a path to build a dummy package containing our deps:
+    if (! defined $self->get('Dummy package path')) {
+	my $tmpdir = $session->mktemp({ TEMPLATE => $self->get('Build Dir') . '/resolver-XXXXXX', DIRECTORY => 1});
+	if (!$tmpdir) {
+	    $self->log_error("mktemp -d " . $self->get('Build Dir') . '/resolver-XXXXXX failed\n');
+	    return 0;
+	}
+	$self->set('Dummy package path', $tmpdir);
     }
 
     return 1;
@@ -719,20 +720,6 @@ sub add_dependencies {
     $self->get('AptDependencies')->{$pkg} = $deps;
 }
 
-sub install_core_deps {
-    my $self = shift;
-    my $name = shift;
-
-    return $self->install_deps($name, @_);
-}
-
-sub install_main_deps {
-    my $self = shift;
-    my $name = shift;
-
-    return $self->install_deps($name, @_);
-}
-
 sub uninstall_deps {
     my $self = shift;
 
@@ -806,7 +793,7 @@ sub dump_build_environment {
     my $arch = $self->get('Arch');
     my ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
     $self->log_subsection("Build environment");
-    $self->log("Kernel: $sysname $release $arch ($machine)\n");
+    $self->log("Kernel: $sysname $release $version $arch ($machine)\n");
 
     $self->log("Toolchain package versions:");
     foreach my $name (sort keys %{$status}) {
@@ -953,23 +940,22 @@ sub get_dpkg_status {
     my $self = shift;
     my @interest = @_;
     my %result;
-    local( *STATUS );
 
     debug("Requesting dpkg status for packages: @interest\n");
-    my $dpkg_status_file = $self->get('Session')->get('Location') . '/var/lib/dpkg/status';
-    if (!open( STATUS, '<', $dpkg_status_file)) {
-	$self->log("Can't open $dpkg_status_file: $!\n");
+    my $STATUS = $self->get('Session')->get_read_file_handle('/var/lib/dpkg/status');
+    if (!$STATUS) {
+	$self->log("Can't open /var/lib/dpkg/status inside chroot: $!\n");
 	return ();
     }
     local( $/ ) = "";
-    while( <STATUS> ) {
+    while( <$STATUS> ) {
 	my( $pkg, $status, $version, $provides );
 	/^Package:\s*(.*)\s*$/mi and $pkg = $1;
 	/^Status:\s*(.*)\s*$/mi and $status = $1;
 	/^Version:\s*(.*)\s*$/mi and $version = $1;
 	/^Provides:\s*(.*)\s*$/mi and $provides = $1;
 	if (!$pkg) {
-	    $self->log_error("parse error in $dpkg_status_file: no Package: field\n");
+	    $self->log_error("parse error in /var/lib/dpkg/status: no Package: field\n");
 	    next;
 	}
 	if (defined($version)) {
@@ -978,7 +964,7 @@ sub get_dpkg_status {
 	    debug("$pkg status: $status\n") if $self->get_conf('DEBUG') >= 2;
 	}
 	if (!$status) {
-	    $self->log_error("parse error in $dpkg_status_file: no Status: field for package $pkg\n");
+	    $self->log_error("parse error in /var/lib/dpkg/status: no Status: field for package $pkg\n");
 	    next;
 	}
 	if ($status !~ /\sinstalled$/) {
@@ -988,7 +974,7 @@ sub get_dpkg_status {
 	    next;
 	}
 	if (!defined $version || $version eq "") {
-	    $self->log_error("parse error in $dpkg_status_file: no Version: field for package $pkg\n");
+	    $self->log_error("parse error in /var/lib/dpkg/status: no Version: field for package $pkg\n");
 	    next;
 	}
 	$result{$pkg} = { Installed => 1, Version => $version }
@@ -1001,7 +987,7 @@ sub get_dpkg_status {
 	    }
 	}
     }
-    close( STATUS );
+    close( $STATUS );
     return \%result;
 }
 
@@ -1014,22 +1000,13 @@ sub setup_apt_archive {
     my $session = $self->get('Session');
 
 
-    #Prepare a path to build a dummy package containing our deps:
-    if (! defined $self->get('Dummy package path')) {
-	my $tmpdir = $session->mktemp({ TEMPLATE => $self->get('Build Dir') . '/resolver-XXXXXX', DIRECTORY => 1});
-	if (!$tmpdir) {
-	    $self->log_error("E: mktemp -d " . $self->get('Build Dir') . '/resolver-XXXXXX failed\n');
-	    return 0;
-	}
-	$self->set('Dummy package path', $tmpdir);
-    }
     if (!$session->chown($self->get('Dummy package path'), $self->get_conf('BUILD_USER'), 'sbuild')) {
-	$self->log_error("E: Failed to set " . $self->get_conf('BUILD_USER') .
+	$self->log_error("Failed to set " . $self->get_conf('BUILD_USER') .
 			 ":sbuild ownership on dummy package dir\n");
 	return 0;
     }
     if (!$session->chmod($self->get('Dummy package path'), '0770')) {
-	$self->log_error("E: Failed to set 0770 permissions on dummy package dir\n");
+	$self->log_error("Failed to set 0770 permissions on dummy package dir\n");
 	return 0;
     }
     my $dummy_dir = $self->get('Dummy package path');
@@ -1052,7 +1029,7 @@ sub setup_apt_archive {
         return 0;
     }
     if (!$session->chown($dummy_gpghome, $self->get_conf('BUILD_USER'), 'sbuild')) {
-	$self->log_error('E: Failed to set ' . $self->get_conf('BUILD_USER') .
+	$self->log_error('Failed to set ' . $self->get_conf('BUILD_USER') .
 			 ':sbuild ownership on $dummy_gpghome\n');
 	return 0;
     }
@@ -1224,7 +1201,7 @@ EOF
 		      $dummy_pkg_dir,
 		      $dummy_archive_dir) {
 	if (!$session->chown($path, $self->get_conf('BUILD_USER'), 'sbuild')) {
-	    $self->log_error("E: Failed to set " . $self->get_conf('BUILD_USER')
+	    $self->log_error("Failed to set " . $self->get_conf('BUILD_USER')
 			   . ":sbuild ownership on $path\n");
 	    return 0;
 	}
@@ -1282,111 +1259,6 @@ EOF
         return 0;
     }
 
-    # Sign the release file
-    # This will only be done if the sbuild keys are present.
-    # Once squeeze is not supported anymore, we want to never sign the
-    # dummy repository anymore but instead make use of apt's support for
-    # [trusted=yes] in wheezy and later.
-    # On hosts that include apt 1.3~exp1 or newer (Debian squeeze or later)
-    # the gnupg package will no longer be installed because apt doesn't depend
-    # on it anymore. So in cases where the gpg utility is not available, we do
-    # not sign the repository either. This should be okay because apt should
-    # be new enough to understand [trusted=yes].
-    if (((-f $self->get_conf('SBUILD_BUILD_DEPENDS_SECRET_KEY')) &&
-	    (-f $self->get_conf('SBUILD_BUILD_DEPENDS_PUBLIC_KEY'))) &&
-	!$self->get_conf('APT_ALLOW_UNAUTHENTICATED') &&
-	$session->can_run("gpg")) {
-	my $kill_gpgagent = sub {
-	    if ($session->can_run("gpgconf")) {
-		# run gpgconf --kill gpg-agent (for gpg > 2.1) to kill any
-		# remaining gpg-agent
-		$session->run_command(
-		    { COMMAND => ['gpgconf', '--kill', 'gpg-agent'],
-			ENV => { GNUPGHOME => $dummy_gpghome }, # gpgconf (< 2.1.12) doesn't have a --homedir argument
-			USER => $self->get_conf('BUILD_USER'),
-			PRIORITY => 0});
-		if ($?) {
-		    my $err = $? >> 8;
-		    $self->log_error("gpgconf --kill gpg-agent died with exit $err\n");
-		    return 0;
-		}
-	    }
-	};
-
-	# only import the key if it hasn't been imported before
-	if (!$session->test_regular_file($dummy_archive_seckey) || !$session->test_regular_file($dummy_archive_pubkey)) {
-	    # copy the public and private key from the host into the chroot
-	    if (!$session->test_regular_file($dummy_archive_seckey)) {
-		if (!$session->copy_to_chroot($self->get_conf('SBUILD_BUILD_DEPENDS_SECRET_KEY'), $dummy_archive_seckey)) {
-		    $self->log_error("Failed to copy secret key\n");
-		    return 0;
-		}
-	    }
-	    if (!$session->test_regular_file($dummy_archive_pubkey)) {
-		if (!$session->copy_to_chroot($self->get_conf('SBUILD_BUILD_DEPENDS_PUBLIC_KEY'), $dummy_archive_pubkey)) {
-		    $self->log_error("Failed to copy public key\n");
-		    return 0;
-		}
-	    }
-	    # import the keys
-	    my @import_command;
-	    @import_command = ('gpg', '--homedir', $dummy_gpghome, '--import', $dummy_archive_pubkey);
-	    $session->run_command(
-		{ COMMAND => \@import_command,
-		    USER => $self->get_conf('BUILD_USER'),
-		    PRIORITY => 0});
-	    if ($?) {
-		$self->log_error("Failed to import public key\n");
-		&$kill_gpgagent();
-		return 0;
-	    }
-	    @import_command = ('gpg', '--homedir', $dummy_gpghome, '--allow-secret-key-import', '--import', $dummy_archive_seckey);
-	    $session->run_command(
-		{ COMMAND => \@import_command,
-		    USER => $self->get_conf('BUILD_USER'),
-		    PRIORITY => 0});
-	    if ($?) {
-		$self->log_error("Failed to import private key\n");
-		&$kill_gpgagent();
-		return 0;
-	    }
-	}
-
-	# sign the release file
-	my @gpg_command = (
-	    'gpg', '--homedir', $dummy_gpghome, '--yes',
-	    '--default-key', 'Sbuild Signer', '-abs',
-	    '--digest-algo', 'SHA512',
-	    '-o', $dummy_release_file . '.gpg',
-	    $dummy_release_file);
-	$session->run_command(
-	    { COMMAND => \@gpg_command,
-		USER => $self->get_conf('BUILD_USER'),
-		PRIORITY => 0});
-	if ($?) {
-	    $self->log_error("Failed to sign dummy archive Release file.\n");
-	    &$kill_gpgagent();
-	    return 0;
-	}
-
-	# Add the imported key to apt's trusted keys
-	#
-	# Write into a temporary file first so that we can run gpg as the
-	# BUILD_USER instead of root (gpg will complain otherwise)
-	my $tmpfilename = $session->mktemp({USER => $self->get_conf('BUILD_USER')});
-	$session->run_command(
-	    { COMMAND => ['gpg', '--homedir', $dummy_gpghome, '--batch', '--yes', '--export', '--output', $tmpfilename, 'Sbuild Signer'],
-		USER => $self->get_conf('BUILD_USER'),
-		PRIORITY => 0});
-	if ($?) {
-	    $self->log("Failed to add dummy archive key.\n");
-	    &$kill_gpgagent();
-	    return 0;
-	}
-	$session->rename($tmpfilename, $self->get('Dummy archive key file'));
-	&$kill_gpgagent();
-    }
-
     # Write a list file for the dummy archive if one not create yet.
     if (!$session->test_regular_file($dummy_archive_list_file)) {
 	my $tmpfilename = $session->mktemp();
@@ -1402,14 +1274,7 @@ EOF
 	    return 0;
 	}
 
-	# We always trust the dummy apt repositories.
-	# This means that if SBUILD_BUILD_DEPENDS_{SECRET|PUBLIC}_KEY do not
-	# exist and thus the dummy repositories do not get signed, apt will
-	# still trust it. This allows one to run sbuild without generating
-	# keys which is useful on machines with little randomness.
-	# Older apt from squeeze will still require keys to be generated as it
-	# ignores the trusted=yes. Older apt ignoring this is also why we can add
-	# this unconditionally.
+	# We always trust the dummy apt repositories by setting trusted=yes.
 	#
 	# We use copy:// instead of file:// as URI because the latter will make
 	# apt use symlinks in /var/lib/apt/lists. These symlinks will become
@@ -1452,8 +1317,6 @@ sub cleanup_apt_archive {
     }
 
     $session->unlink($self->get('Dummy archive list file'), { FORCE => 1 });
-
-    $session->unlink($self->get('Dummy archive key file'), { FORCE => 1 });
 
     $session->unlink($self->get('Extra repositories archive list file'), { FORCE => 1 });
 
@@ -1524,7 +1387,7 @@ sub hash_file($$)
 	return $hash;
 }
 
-system_redir_stdout('Packages', 'dpkg-scanpackages', '.', '/dev/null');
+system_redir_stdout('Packages', 'dpkg-scanpackages', '-m', '.', '/dev/null');
 system_redir_stdout('Sources', 'dpkg-scansources', '.', '/dev/null');
 
 gzip 'Packages' => 'Packages.gz' or die "gzip failed: $GzipError\n";

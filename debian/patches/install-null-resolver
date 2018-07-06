@@ -1,0 +1,10 @@
+--- a/lib/Sbuild/Makefile.am
++++ b/lib/Sbuild/Makefile.am
+@@ -45,6 +45,7 @@ MODULES =			\
+ 	AptResolver.pm		\
+ 	AspcudResolver.pm	\
+ 	XaptResolver.pm		\
++	NullResolver.pm		\
+ 	Resolver.pm		\
+ 	Conf.pm			\
+ 	ConfBase.pm		\
