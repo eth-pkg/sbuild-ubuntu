@@ -1,3 +1,10 @@
+sbuild (0.77.0-2) unstable; urgency=medium
+
+  * Install /usr/sbin/sbuild-adduser and /usr/sbin/sbuild-destroychroot again
+    (closes: #903269)
+
+ -- Johannes 'josch' Schauer <josch@debian.org>  Sun, 08 Jul 2018 15:52:22 +0200
+
 sbuild (0.77.0-1) unstable; urgency=medium
 
   * New upstream release.
