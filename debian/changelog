@@ -1,3 +1,9 @@
+sbuild (0.77.0-3) unstable; urgency=medium
+
+  * Patch sbuild-destroychroot with an import of SchrootInfo (closes: #903513)
+
+ -- Johannes 'josch' Schauer <josch@debian.org>  Wed, 11 Jul 2018 21:32:04 +0200
+
 sbuild (0.77.0-2) unstable; urgency=medium
 
   * Install /usr/sbin/sbuild-adduser and /usr/sbin/sbuild-destroychroot again
