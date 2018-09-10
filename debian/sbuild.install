@@ -15,7 +15,18 @@ debian/tmp/usr/bin/sbuild-createchroot         usr/bin
 debian/tmp/usr/sbin/sbuild-adduser             usr/sbin
 debian/tmp/usr/sbin/sbuild-destroychroot       usr/sbin
 debian/tmp/usr/share/doc/sbuild                usr/share/doc
-debian/tmp/usr/share/man/man1/sbuild*          usr/share/man/man1
+# sbuild*, but not sbuild-debian-developer-setup
+debian/tmp/usr/share/man/man1/sbuild.1         usr/share/man/man1
+debian/tmp/usr/share/man/man1/sbuild-checkpackages.1 usr/share/man/man1
+debian/tmp/usr/share/man/man1/sbuild-abort.1   usr/share/man/man1
+debian/tmp/usr/share/man/man1/sbuild-shell.1   usr/share/man/man1
+debian/tmp/usr/share/man/man1/sbuild-unhold.1  usr/share/man/man1
+debian/tmp/usr/share/man/man1/sbuild-hold.1    usr/share/man/man1
+debian/tmp/usr/share/man/man1/sbuild-update.1  usr/share/man/man1
+debian/tmp/usr/share/man/man1/sbuild-clean.1   usr/share/man/man1
+debian/tmp/usr/share/man/man1/sbuild-apt.1     usr/share/man/man1
+debian/tmp/usr/share/man/man1/sbuild-upgrade.1 usr/share/man/man1
+debian/tmp/usr/share/man/man1/sbuild-distupgrade.1 usr/share/man/man1
 debian/tmp/usr/share/man/man5/sbuild*          usr/share/man/man5
 debian/tmp/usr/share/man/man7/sbuild*          usr/share/man/man7
 debian/tmp/usr/share/man/man8/sbuild*          usr/share/man/man8

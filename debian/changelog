@@ -1,3 +1,12 @@
+sbuild (0.77.1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Run dpkg-source --before-build and --after-build (closes: #886633)
+  * Move sbuild-debian-developer-setup man page to correct package (closes:
+    #907076)
+
+ -- Johannes 'josch' Schauer <josch@debian.org>  Tue, 11 Sep 2018 00:08:08 +0200
+
 sbuild (0.77.0-3) unstable; urgency=medium
 
   * Patch sbuild-destroychroot with an import of SchrootInfo (closes: #903513)

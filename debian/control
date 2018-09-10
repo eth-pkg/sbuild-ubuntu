@@ -77,13 +77,15 @@ Description: Tool for building Debian binary packages from Debian sources
 
 Package: sbuild-debian-developer-setup
 Architecture: all
-Depends: sbuild,
+Depends: sbuild (>= 0.77.0-5),
          schroot,
          apt-cacher-ng | apt-cacher,
          cron | cron-daemon,
          ${misc:Depends},
          ${perl:Depends},
          ${shlibs:Depends}
+Replaces: sbuild (<< 0.77.0-5)
+Breaks: sbuild (<< 0.77.0-5)
 Description: Convenience script to set up an sbuild environment for Debian Developers
  Run "sudo sbuild-debian-developer-setup" to add the current user to the sbuild
  group, create an schroot for building packages for Debian unstable, and create
