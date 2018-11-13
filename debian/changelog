@@ -1,3 +1,9 @@
+sbuild (0.77.1-2) unstable; urgency=medium
+
+  * Add patch allowing to control merged /usr (closes: #913228)
+
+ -- Johannes 'josch' Schauer <josch@debian.org>  Tue, 13 Nov 2018 16:07:19 +0100
+
 sbuild (0.77.1-1) unstable; urgency=medium
 
   * New upstream release.
@@ -6,6 +12,13 @@ sbuild (0.77.1-1) unstable; urgency=medium
     #907076)
 
  -- Johannes 'josch' Schauer <josch@debian.org>  Tue, 11 Sep 2018 00:08:08 +0200
+
+sbuild (0.77.0-4) unstable; urgency=medium
+
+  * Add patch to fix the empty directory check of sbuild-create-chroot
+    (closes: #904722)
+
+ -- Johannes 'josch' Schauer <josch@debian.org>  Fri, 27 Jul 2018 14:03:10 +0200
 
 sbuild (0.77.0-3) unstable; urgency=medium
 
