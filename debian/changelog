@@ -1,3 +1,34 @@
+sbuild (0.78.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * remove debian/patches (have been applied upstream)
+  * Add libc-dev and libstdc++-dev when cross compiling (closes: #905346)
+  * default to --no-arch-all for cross builds (closes: #905347)
+  * Set build profiles cross and nocheck by default when cross building
+    (closes: #905345)
+  * bin/sbuild-createchroot: allow an empty lost+found directory in the target
+    directory (closes: #909378)
+  * add --no-source-only-changes option (closes: #904968)
+  * sbuild-createchroot: Do not check for empty directory if --setup-only
+    option is used (closes: #916009)
+  * do not check debian/tests/control when running autopkgtest (closes:
+    #916924)
+  * add sbuild and BUILD_USER if they didn't exist yet (closes: #911979)
+  * let --append-to-version imply --no-arch-all like it's the case for
+    --make-binNMU (closes: #911399)
+  * allow chroots with nothing more but Essenital:yes packages, apt and their
+    hard dependencies and create missing users and groups as needed
+    (closes: #909847)
+  * run wrap-and-sort
+  * let sbuild Suggests e2fsprogs for /usr/share/sbuild/create-chroot (closes:
+    #887264)
+  * remove /var/log/sbuild-update-all.log if sbuild-debian-developer-setup
+    gets purged (closes: #905513)
+  * bump debhelper compat to 11
+  * debian/control: bump Standards-Version to 4.3.0 (no changes)
+
+ -- Johannes 'josch' Schauer <josch@debian.org>  Wed, 09 Jan 2019 05:53:49 +0100
+
 sbuild (0.77.1-2) unstable; urgency=medium
 
   * Add patch allowing to control merged /usr (closes: #913228)

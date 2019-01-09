@@ -94,6 +94,9 @@ sub set_options {
 			   if ($opt_make_binnmu) {
 			       die "--arch-all cannot be used together with --make-binNMU";
 			   }
+			   if ($opt_append_to_version) {
+			       die "--arch-all cannot be used together with --append-to-version";
+			   }
 			   $self->set_conf('BUILD_ARCH_ALL', 1);
 			   $opt_arch_all = 1;
 		       },
@@ -173,6 +176,7 @@ sub set_options {
 			   }
 			   $self->set_conf('APPEND_TO_VERSION', $_[1]);
 			   $opt_append_to_version = 1;
+			   $self->set_conf('BUILD_ARCH_ALL', 0);
 		       },
 		       "binNMU-changelog=s" => sub {
 			   if ($opt_make_binnmu) {
@@ -189,6 +193,9 @@ sub set_options {
 			   }
 			   $self->set_conf('BIN_NMU_CHANGELOG', $_[1]);
 			   $opt_binnmu_changelog = 1;
+		       },
+		       "build-dir=s" => sub {
+			   $self->set_conf('BUILD_DIR', $_[1]);
 		       },
 		       "c|chroot=s" => sub {
 			   $self->set_conf('CHROOT', $_[1]);
@@ -569,6 +576,10 @@ sub set_options {
 			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"post-build-commands"}},
 				$_[1]);
 		       },
+			"post-build-failed-commands=s" => sub {
+			   push(@{${$self->get_conf('EXTERNAL_COMMANDS')}{"post-build-failed-commands"}},
+				$_[1]);
+		       },
 			"log-external-command-output" => sub {
 			    $self->set_conf('LOG_EXTERNAL_COMMAND_OUTPUT', 1);
 		       },
@@ -589,6 +600,9 @@ sub set_options {
 			},
 			"source-only-changes" => sub {
 			   $self->set_conf('SOURCE_ONLY_CHANGES', 1);
+			},
+			"no-source-only-changes" => sub {
+			   $self->set_conf('SOURCE_ONLY_CHANGES', 0);
 			},
 			"purge-extra-packages" => sub {
 			    $self->set_conf('PURGE_EXTRA_PACKAGES', 1);

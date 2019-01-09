@@ -138,7 +138,25 @@ sub setup ($) {
 	    TYPE => 'BOOL',
 	    VARNAME => 'build_arch_all',
 	    GROUP => 'Build options',
-	    DEFAULT => 1,
+	    DEFAULT => undef,
+	    GET => sub {
+		my $conf = shift;
+		my $entry = shift;
+
+		my $retval = $conf->_get($entry->{'NAME'});
+
+		if (!defined($retval)) {
+		    if ($conf->get('BUILD_ARCH') ne $conf->get('HOST_ARCH')) {
+			# default for cross
+			$retval = 0;
+		    } else {
+			# default for native
+			$retval = 1;
+		    }
+		}
+
+		return $retval;
+	    },
 	    HELP => 'Build architecture: all packages by default.',
 	    CLI_OPTIONS => ['--arch-all', '--no-arch-all']
 	},
@@ -149,6 +167,32 @@ sub setup ($) {
 	    DEFAULT => 1,
 	    HELP => 'Build architecture: any packages by default.',
 	    CLI_OPTIONS => ['--arch-any', '--no-arch-any']
+	},
+	'BUILD_PROFILES'        => {
+	    TYPE => 'STRING',
+	    VARNAME => 'build_profiles',
+	    GROUP => 'Build options',
+	    DEFAULT => undef,
+	    GET => sub {
+		my $conf = shift;
+		my $entry = shift;
+
+		my $retval = $conf->_get($entry->{'NAME'});
+
+		if (!defined($retval)) {
+		    if ($conf->get('BUILD_ARCH') ne $conf->get('HOST_ARCH')) {
+			# default for cross
+			$retval = $ENV{'DEB_BUILD_PROFILES'} || 'cross nocheck';
+		    } else {
+			# default for native
+			$retval = $ENV{'DEB_BUILD_PROFILES'} || '';
+		    }
+		}
+
+		return $retval;
+	    },
+	    HELP => 'Build profiles. Separated by spaces. Defaults to the value of the DEB_BUILD_PROFILES environment variable when building natively and to the cross and nocheck profiles when cross-building.',
+	    CLI_OPTIONS => ['--profiles']
 	},
 	'NOLOG'					=> {
 	    TYPE => 'BOOL',
@@ -457,13 +501,6 @@ sub setup ($) {
 	    DEFAULT => 1,
 	    HELP => 'Filter variable strings from log messages such as the chroot name and build directory'
 	},
-	'LOG_COLOUR'				=> {
-	    TYPE => 'BOOL',
-	    VARNAME => 'log_colour',
-	    GROUP => 'Logging options',
-	    DEFAULT => 1,
-	    HELP => 'Colour log messages such as critical failures, warnings and success'
-	},
 	'LOG_DIR_AVAILABLE'			=> {
 	    TYPE => 'BOOL',
 	    GROUP => '__INTERNAL',
@@ -690,7 +727,8 @@ sub setup ($) {
 	    IGNORE_DEFAULT => 1, # Don't dump class to config
 	    EXAMPLE => '$build_dir = \'/home/pete/build\';',
 	    CHECK => $validate_directory,
-	    HELP => 'This option is deprecated.  Directory for chroot symlinks and sbuild logs.  Defaults to the current directory if unspecified.  It is used as the location of chroot symlinks (obsolete) and for current build log symlinks and some build logs.  There is no default; if unset, it defaults to the current working directory.  $HOME/build is another common configuration.'
+	    HELP => 'Output directory for build artifacts created by dpkg-buildpackage and the log file. Defaults to the current directory if unspecified. It is used as the location of chroot symlinks (obsolete) and for current build log symlinks and some build logs.  There is no default; if unset, it defaults to the current working directory.  $HOME/build is another common configuration.',
+	    CLI_OPTIONS => ['--build-dir']
 	},
 	'BUILD_PATH'				=> {
 	    TYPE => 'STRING',
@@ -939,7 +977,7 @@ $environment_filter = [map /^FOOBAR$/ ? () : $_, Dpkg::Build::Info::get_build_en
 	    VARNAME => 'crossbuild_core_depends',
 	    GROUP => 'Multiarch support (transitional)',
 	    DEFAULT => {},
-	    HELP => 'Per-architecture dependencies required for cross-building. By default, if a Debian architecture is not found as a key in this hash, the package crossbuild-essential-${hostarch}:native will be installed.',
+	    HELP => 'Per-architecture dependencies required for cross-building. By default, if a Debian architecture is not found as a key in this hash, the following will be added to the Build-Depends: crossbuild-essential-${hostarch}:native, libc-dev, libstdc++-dev. The latter two are to work around bug #815172.',
 	    EXAMPLE => '
 $crossbuild_core_depends = {
     nios2 => [\'crossbuild-essential-nios2:native\', \'special-package\'],
@@ -1331,6 +1369,10 @@ $external_commands = {
         [\'foo\', \'arg1\', \'arg2\'],
         [\'bar\', \'arg1\', \'arg2\', \'arg3\'],
     ],
+    "post-build-failed-commands" => [
+        [\'foo\', \'arg1\', \'arg2\'],
+        [\'bar\', \'arg1\', \'arg2\', \'arg3\'],
+    ],
 };
 # the equivalent of specifying --anything-failed-commands=%SBUILD_SHELL on the
 # command line
@@ -1339,7 +1381,7 @@ $external_commands = {
     "build-deps-failed-commands" => [ [ \'%SBUILD_SHELL\' ] ],
     "build-failed-commands" => [ [ \'%SBUILD_SHELL\' ] ],
 };',
-	    CLI_OPTIONS => ['--setup-hook', '--pre-build-commands', '--chroot-setup-commands', '--chroot-update-failed-commands', '--build-deps-failed-commands', '--build-failed-commands', '--anything-failed-commands', '--starting-build-commands', '--finished-build-commands', '--chroot-cleanup-commands', '--post-build-commands']
+	    CLI_OPTIONS => ['--setup-hook', '--pre-build-commands', '--chroot-setup-commands', '--chroot-update-failed-commands', '--build-deps-failed-commands', '--build-failed-commands', '--anything-failed-commands', '--starting-build-commands', '--finished-build-commands', '--chroot-cleanup-commands', '--post-build-commands', '--post-build-failed-commands']
 	},
 	'LOG_EXTERNAL_COMMAND_OUTPUT'		=> {
 	    TYPE => 'BOOL',

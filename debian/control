@@ -7,15 +7,14 @@ Uploaders: Johannes 'josch' Schauer <josch@debian.org>,
            Francesco Paolo Lovergine <frankie@debian.org>,
            Wookey <wookey@debian.org>,
            Michael Stapelberg <stapelberg@debian.org>
-Build-Depends: debhelper (>= 10)
-Build-Depends-Indep:
-               groff-base,
-               libdpkg-perl (>= 1.18.14),
-               libexception-class-perl,
-               libfilesys-df-perl,
-               libmime-lite-perl,
-               libyaml-tiny-perl
-Standards-Version: 3.9.8
+Build-Depends: debhelper (>= 11)
+Build-Depends-Indep: groff-base,
+                     libdpkg-perl (>= 1.18.14),
+                     libexception-class-perl,
+                     libfilesys-df-perl,
+                     libmime-lite-perl,
+                     libyaml-tiny-perl
+Standards-Version: 4.3.0
 Vcs-Browser: https://salsa.debian.org/debian/sbuild/tree/debian/unstable
 Vcs-Git: https://salsa.debian.org/debian/sbuild.git -b debian/unstable
 
@@ -24,17 +23,15 @@ Architecture: all
 Section: perl
 Depends: apt,
          dpkg-dev,
+         gnupg (>= 2.1),
          libdpkg-perl (>= 1.18.14),
          libexception-class-perl,
          libfilesys-df-perl,
          libmime-lite-perl,
-         gnupg (>= 2.1),
          ${misc:Depends},
          ${perl:Depends}
-Recommends:
-         schroot (>= 1.6.0),
-         autopkgtest (>= 4.0.4),
-Suggests: libwww-perl, default-mta | mail-transport-agent
+Recommends: autopkgtest (>= 4.0.4), schroot (>= 1.6.0)
+Suggests: default-mta | mail-transport-agent, libwww-perl
 Replaces: sbuild (<= 0.58.4-1)
 Description: Library for building Debian binary packages from Debian sources
  The sbuild suite of programs (wanna-build, buildd and sbuild) are
@@ -53,12 +50,8 @@ Depends: adduser,
          ${misc:Depends},
          ${perl:Depends},
          ${shlibs:Depends}
-Recommends: debootstrap,
-         schroot (>= 1.6.0),
-         autopkgtest (>= 4.0.4),
-# kmod provides modprobe which is used by sbuild-creatchroot for auto-detecting
-# overlayfs capabilities
-Suggests: deborphan, wget, kmod
+Recommends: autopkgtest (>= 4.0.4), debootstrap, schroot (>= 1.6.0)
+Suggests: deborphan, e2fsprogs, kmod, wget
 Description: Tool for building Debian binary packages from Debian sources
  The sbuild suite of programs (buildd and sbuild) are used to build
  binary packages from source packages.  sbuild does the actual package
@@ -77,10 +70,10 @@ Description: Tool for building Debian binary packages from Debian sources
 
 Package: sbuild-debian-developer-setup
 Architecture: all
-Depends: sbuild (>= 0.77.0-5),
-         schroot,
-         apt-cacher-ng | apt-cacher,
+Depends: apt-cacher-ng | apt-cacher,
          cron | cron-daemon,
+         sbuild (>= 0.77.0-5),
+         schroot,
          ${misc:Depends},
          ${perl:Depends},
          ${shlibs:Depends}
@@ -98,13 +91,13 @@ Package: buildd
 Architecture: all
 Depends: adduser,
          cron,
-         dupload,
          default-mta | mail-transport-agent,
+         dupload,
          libsbuild-perl,
          libyaml-tiny-perl,
+         lsb-base (>= 3.0-6),
          sbuild (<< ${source:Version}.1~),
          sbuild (>= ${source:Version}),
-         lsb-base (>= 3.0-6),
          schroot,
          ${misc:Depends},
          ${perl:Depends}

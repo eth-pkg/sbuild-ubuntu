@@ -92,6 +92,9 @@ sub setup {
 	'CHROOT_MODE'				=> {
 	    DEFAULT => 'schroot'
 	},
+	'MERGED_USR'				=> {
+	    DEFAULT => 0
+	},
     );
 
     $conf->set_allowed_keys(\%createchroot_keys);
@@ -174,6 +177,15 @@ sub set_options {
 	},
         "command-prefix=s" => sub {
 	    $self->set_conf('COMMAND_PREFIX', $_[1]);
+	},
+	"merged-usr" => sub {
+	    $self->set_conf('MERGED_USR', 1)
+	},
+	"auto-merged-usr" => sub {
+	    $self->set_conf('MERGED_USR', 'auto')
+	},
+	"no-merged-usr" => sub {
+	    $self->set_conf('MERGED_USR', 0)
 	});
 }
 
@@ -271,12 +283,39 @@ if (-e $target) {
     if (!-d $target) {
 	die "$target exists and is not a directory";
     }
-    opendir(my $dh, $target) or die "Can't opendir($target): $!\n";
-    # Attempt reading the directory thrice. If the third time succeeds, then it
-    # has more entries than just "." and ".." and must thus not be empty.
-    readdir $dh;
-    readdir $dh;
-    die "$target is not empty" if (readdir $dh);
+    # only check if the directory is empty if the --setup-only option is not
+    # given because that option needs an already populated directory
+    if (!$conf->get('SETUP_ONLY')) {
+	# check if the directory is empty or contains nothing more than an
+	# empty lost+found directory. The latter exists on freshly created
+	# ext3 and ext4 partitions.
+	# rationale for requiring an empty directory: https://bugs.debian.org/833525
+	opendir(my $dh, $target) or die "Can't opendir($target): $!";
+	while (my $entry = readdir $dh) {
+	    # skip the "." and ".." entries
+	    next if $entry eq ".";
+	    next if $entry eq "..";
+	    # if the entry is a directory named "lost+found" then skip it
+	    # if it's empty
+	    if ($entry eq "lost+found" and -d "$target/$entry") {
+		opendir(my $dh2, "$target/$entry");
+		# Attempt reading the directory thrice. If the third time
+		# succeeds, then it has more entries than just "." and ".."
+		# and must thus not be empty.
+		readdir $dh2;
+		readdir $dh2;
+		# rationale for requiring an empty directory:
+		# https://bugs.debian.org/833525
+		if (readdir $dh2) {
+		    die "$target contains a non-empty lost+found directory";
+		}
+		closedir($dh2);
+	    } else {
+		die "$target is not empty";
+	    }
+	}
+	closedir($dh);
+    }
 } else {
     # Create the target directory in advance so abs_path (which is buggy)
     # won't fail.  Remove if abs_path is replaced by something better.
@@ -309,6 +348,10 @@ push @args, "--keyring=" . $conf->get('KEYRING') if $conf->get('KEYRING');
 push @args, "--no-check-gpg" if defined $conf->get('KEYRING') && $conf->get('KEYRING') eq "";
 push @args, $conf->get('RESOLVE_DEPS') ?
     "--resolve-deps" : "--no-resolve-deps";
+if ($conf->get('MERGED_USR') ne 'auto') {
+	push @args, $conf->get('MERGED_USR') ?
+	    "--merged-usr" : "--no-merged-usr";
+}
 push @args, "$suite", "$target", "$mirror";
 push @args, "$script" if $script;
 
