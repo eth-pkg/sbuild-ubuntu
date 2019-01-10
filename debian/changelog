@@ -1,3 +1,10 @@
+sbuild (0.78.0-2) unstable; urgency=medium
+
+  * Fix debian/sbuild-debian-developer-setup.postrm by removing wrong default
+    case
+
+ -- Johannes 'josch' Schauer <josch@debian.org>  Thu, 10 Jan 2019 17:03:25 +0100
+
 sbuild (0.78.0-1) unstable; urgency=medium
 
   * New upstream release.

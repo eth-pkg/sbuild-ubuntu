@@ -8,10 +8,6 @@ case "$1" in
 			rm /var/log/sbuild-update-all.log
 		fi
 		;;
-	*)
-		echo "postrm called with unknown argument \`$1'" >&2
-		exit 0
-		;;
 esac
 
 #DEBHELPER#
