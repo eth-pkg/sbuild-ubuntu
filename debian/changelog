@@ -1,3 +1,16 @@
+sbuild (0.78.1-2) unstable; urgency=medium
+
+  [ Mike Gabriel ]
+  * debian/patches: Add support-gzip-in-wheezy.patch. The gzip command
+    in Debian wheezy lacks support for the --keep cmdline option, so
+    avoid using it. (closes: #926161)
+
+  [ Aurelien Jarno ]
+  * debian/patches: Add fix-disk-space-directory-check.patch. The right
+    directory has to be checked inside the chroot. (closes: #923484)
+
+ -- Johannes 'josch' Schauer <josch@debian.org>  Wed, 03 Apr 2019 14:08:12 +0200
+
 sbuild (0.78.1-1) unstable; urgency=medium
 
   * New upstream release.
