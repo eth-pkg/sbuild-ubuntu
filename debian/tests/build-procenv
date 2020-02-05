@@ -129,10 +129,7 @@ extract="$ADTTMP/extract"
 echo "INFO: Extracting '$deb' to '$extract'"
 dpkg --extract "$deb" "$extract"
 
-# We should probably only attempt to install and run procenv if the release of
-# the build chroot is equal to the host, but lets be brave and try anyway
-if true
-#if [ "$release" = "$host_release" ]
+if [ "$release" = "$host_release" ]
 then
     echo "INFO: Installing package '$pkg' from '$deb'"
     apt -o Apt::Cmd::Disable-Script-Warning=1 -o APT::Get::Assume-Yes=1 install "$(pwd)/$deb"

@@ -1,3 +1,20 @@
+sbuild (0.79.0-1) unstable; urgency=medium
+
+  * Team upload.
+  * New upstream release.
+  * remove debian/patches (have been applied upstream)
+  * add buildd depends on devscripts and recommends on sudo (closes: #920335,
+    #774856)
+  * debian/tests/build-procenv: don't install packages from a different distro
+    (closes: #928366)
+  * pass the right .changes file to lintian (closes: #934721)
+  * sbuild-createchroot: use umask 0022 (closes: #921675)
+  * fix etc/sbuild-debian-developer-setup-update-all (closes: #922148)
+  * add apt_keep_downloaded_packages option (closes: #933723)
+  * add option --dpkg-file-suffix
+
+ -- Ivo De Decker <ivodd@debian.org>  Wed, 05 Feb 2020 17:41:38 +0100
+
 sbuild (0.78.1-2) unstable; urgency=medium
 
   [ Mike Gabriel ]
