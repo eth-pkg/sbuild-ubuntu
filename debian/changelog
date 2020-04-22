@@ -1,3 +1,15 @@
+sbuild (0.79.1-1) unstable; urgency=medium
+
+  * Team upload.
+  * New upstream release.
+  * add option --dpkg-file-suffix to buildd
+  * switch to debhelper compat 12
+  * switch dh_installinit call to --no-stop-on-upgrade
+  * buildd: remove calls to dpkg-maintscript-helper
+  * test build-procenv: replace ADTTMP with AUTOPKGTEST_TMP
+
+ -- Ivo De Decker <ivodd@debian.org>  Wed, 22 Apr 2020 22:35:33 +0000
+
 sbuild (0.79.0-1) unstable; urgency=medium
 
   * Team upload.

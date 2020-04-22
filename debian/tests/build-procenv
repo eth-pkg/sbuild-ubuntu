@@ -58,8 +58,8 @@ fi
 arch=$(dpkg --print-architecture 2>/dev/null)
 [ -z "$arch" ] && die "cannot establish architecture"
 
-[ -z "$ADTTMP" ] && die "ADTTMP not set"
-dir="$ADTTMP/schroot-$release"
+[ -z "$AUTOPKGTEST_TMP" ] && die "AUTOPKGTEST_TMP not set"
+dir="$AUTOPKGTEST_TMP/schroot-$release"
 
 # The expected name of the schroot that sbuild-createchroot will create
 chroot="${release}-${arch}-sbuild"
@@ -125,7 +125,7 @@ dpkg --info "$deb"
 echo "INFO: Listing contents of '$deb'"
 dpkg --contents "$deb"
 
-extract="$ADTTMP/extract"
+extract="$AUTOPKGTEST_TMP/extract"
 echo "INFO: Extracting '$deb' to '$extract'"
 dpkg --extract "$deb" "$extract"
 
@@ -147,7 +147,7 @@ fi
 # There is no sbuild/schroot command to actually delete the chroot, but
 # we do want to clean up fully. The best we can do is end the schroot
 # session, and remove the sym links. Removing the chroot itself is not
-# necessary since it is created below $ADTTMP so will be removed
+# necessary since it is created below $AUTOPKGTEST_TMP so will be removed
 # automatically by the AutoPkgTest environment.
 
 echo "INFO: Establishing schroot sessions for chroot '$chroot'"
