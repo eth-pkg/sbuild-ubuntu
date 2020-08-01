@@ -1681,6 +1681,8 @@ sub run_lintian {
     $resolver->add_dependencies('LINTIAN', 'lintian:native', "", "", "", "", "");
     return 1 unless $resolver->install_deps('lintian', 'LINTIAN');
 
+    $self->log("Running lintian...\n");
+
     # we are not using read_command() because we also need the output for
     # non-zero exit codes
     my $pipe = $session->pipe_command(
@@ -2356,7 +2358,6 @@ sub build {
 			  [$self->get_conf('BUILD_ARCH_ALL')]
 			  [$self->get_conf('BUILD_ARCH_ANY')];
     push (@{$buildcmd}, $binopt) if $binopt;
-    push (@{$buildcmd}, "-sa") if ($self->get_conf('BUILD_SOURCE') && $self->get_conf('FORCE_ORIG_SOURCE'));
     push (@{$buildcmd}, "-r" . $self->get_conf('FAKEROOT'));
 
     if ($self->get_conf('DPKG_FILE_SUFFIX')) {
@@ -2681,6 +2682,10 @@ sub build {
 		} else {
 		    push (@{$genchangescmd}, $self->get_conf('SIGNING_OPTIONS'));
 		}
+	    }
+	    my $changes_opts = $self->get_changes_opts();
+	    if ($changes_opts) {
+		    push (@{$genchangescmd}, @{$changes_opts});
 	    }
 	    my $cfile = $session->read_command(
 		{ COMMAND => $genchangescmd,
@@ -3261,8 +3266,10 @@ sub open_build_log {
     $self->log_section($head);
 
     $self->log("Package: " . $self->get('Package') . "\n");
-    if ($self->get('Version') && $self->get('OVersion')) {
+    if (defined $self->get('Version')) {
 	$self->log("Version: " . $self->get('Version') . "\n");
+    }
+    if (defined $self->get('OVersion')) {
 	$self->log("Source Version: " . $self->get('OVersion') . "\n");
     }
     $self->log("Distribution: " . $self->get_conf('DISTRIBUTION') . "\n");
@@ -3487,6 +3494,30 @@ sub log_symlink {
 
     unlink $dest; # Don't return on failure, since the symlink will fail.
     symlink $log, $dest;
+}
+
+sub get_changes_opts {
+    my $self = shift;
+    my @changes_opts = ();
+	foreach (@{$self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')}) {
+	    if (/^--changes-option=(.*)$/) {
+		    push @changes_opts, $1;
+	    } elsif (/^-s[iad]$/) {
+		    push @changes_opts, $_;
+	    } elsif (/^--build=.*$/) {
+		    push @changes_opts, $_;
+	    } elsif (/^-m.*$/) {
+		    push @changes_opts, $_;
+	    } elsif (/^-e.*$/) {
+		    push @changes_opts, $_;
+	    } elsif (/^-v.*$/) {
+		    push @changes_opts, $_;
+	    } elsif (/^-C.*$/) {
+		    push @changes_opts, $_;
+	    }
+	}
+
+    return \@changes_opts;
 }
 
 1;

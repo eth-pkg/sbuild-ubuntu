@@ -777,18 +777,14 @@ sub setup ($) {
 	    DEFAULT => {},
 	    HELP => 'Some packages may exceed the general timeout (e.g. redirecting output to a file) and need a different timeout.  This has is a mapping between source package name and timeout.  Note that for backward compatibility, this is also settable using the hash %individual_stalled_pkg_timeout (deprecated) , rather than a hash reference.',
 	    EXAMPLE =>
-'%individual_stalled_pkg_timeout = (smalleiffel => 300,
-				   jade => 300,
-				   atlas => 300,
-				   glibc => 1000,
-				   \'gcc-3.3\' => 300,
-				   kwave => 600);'
+'$individual_stalled_pkg_timeout->{\'llvm-toolchain-3.8\'} = 300;
+$individual_stalled_pkg_timeout->{\'kicad-packages3d\'} = 90;'
 	},
 	'ENVIRONMENT_FILTER'			=> {
 	    TYPE => 'ARRAY:STRING',
 	    VARNAME => 'environment_filter',
 	    GROUP => 'Core options',
-	    DEFAULT => [ sort (map "^$_\$", Dpkg::Build::Info::get_build_env_whitelist()) ],
+	    DEFAULT => [ sort (map "^$_\$", Dpkg::Build::Info::get_build_env_allowed()) ],
 #	    GET => sub {
 #		my $conf = shift;
 #		my $entry = shift;
@@ -796,12 +792,12 @@ sub setup ($) {
 #		my $retval = $conf->_get($entry->{'NAME'});
 #
 #		if (!defined($retval)) {
-#		    $retval = [ map "^$_\$", Dpkg::Build::Info::get_build_env_whitelist() ];
+#		    $retval = [ map "^$_\$", Dpkg::Build::Info::get_build_env_allowed() ];
 #		}
 #
 #		return $retval;
 #	    },
-	    HELP => 'Only environment variables matching one of the regular expressions in this arrayref will be passed to dpkg-buildpackage and other programs run by sbuild. The default value for this configuration setting is the list of variable names as returned by Dpkg::Build::Info::get_build_env_whitelist() which is also the list of variable names that is whitelisted to be recorded in .buildinfo files. Caution: the default value listed below was retrieved from the dpkg Perl library version available when this man page was generated. It might be different if your dpkg Perl library version differs.',
+	    HELP => 'Only environment variables matching one of the regular expressions in this arrayref will be passed to dpkg-buildpackage and other programs run by sbuild. The default value for this configuration setting is the list of variable names as returned by Dpkg::Build::Info::get_build_env_allowed() which is also the list of variable names that is whitelisted to be recorded in .buildinfo files. Caution: the default value listed below was retrieved from the dpkg Perl library version available when this man page was generated. It might be different if your dpkg Perl library version differs.',
 	    EXAMPLE =>
 '# Setting the old environment filter
 $environment_filter = [\'^PATH$\',
@@ -814,10 +810,10 @@ $environment_filter = [\'^PATH$\',
 			\'^SHELL$\'];
 # Appending FOOBAR to the default
 use Dpkg::Build::Info;
-$environment_filter = [Dpkg::Build::Info::get_build_env_whitelist(), \'FOOBAR\'];
+$environment_filter = [Dpkg::Build::Info::get_build_env_allowed(), \'FOOBAR\'];
 # Removing FOOBAR from the default
 use Dpkg::Build::Info;
-$environment_filter = [map /^FOOBAR$/ ? () : $_, Dpkg::Build::Info::get_build_env_whitelist()];
+$environment_filter = [map /^FOOBAR$/ ? () : $_, Dpkg::Build::Info::get_build_env_allowed()];
 '
 	},
 	'BUILD_ENVIRONMENT'			=> {
