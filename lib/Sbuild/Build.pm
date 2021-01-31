@@ -59,6 +59,8 @@ use Sbuild::Sysconfig;
 use Sbuild::Resolver qw(get_resolver);
 use Sbuild::Exception;
 
+use version;
+
 BEGIN {
     use Exporter ();
     our (@ISA, @EXPORT);
@@ -2325,6 +2327,32 @@ sub build {
 	    $self->get_conf('BUILD_ENV_CMND'));
     push (@{$buildcmd}, 'dpkg-buildpackage');
 
+    my $dpkgversion = version->new(0);
+    {
+        # we use pipe_command instead of read_command because we want to
+        # ignore non-zero exit code without printing an error message from
+        # dpkg versions before 1.20 which didn't have --robot
+        my $pipe = $session->pipe_command(
+            {
+                COMMAND   => [ 'dpkg', '--robot', '--version' ],
+                STREAMERR => $devnull
+            }
+        );
+        chomp(
+            my $content = do { local $/; <$pipe> }
+        );
+        close $pipe;
+        if ( $? == 0 and $content =~ /^([0-9.]+)( .*)?$/ ) {
+            # dpkg is new enough for the --robot option
+            $dpkgversion = version->new($1);
+        }
+    }
+    # since dpkg 1.20.0
+    # will reset environment and umask to their vendor specific defaults
+    if ($dpkgversion >= "1.20.0") {
+	push (@{$buildcmd}, '--sanitize-env');
+    }
+
     if ($host_arch ne $build_arch) {
 	push (@{$buildcmd}, '-a' . $host_arch);
     }
@@ -3328,6 +3356,15 @@ sub close_build_log {
 		system('debsign', '--re-sign', "-k$key_id", '--', "$build_dir/$changes");
 	    }
 	    if ($self->get_conf('SOURCE_ONLY_CHANGES')) {
+		# We would like to run debsign with --no-re-sign so that a file
+		# referenced by the normal changes file and was already signed
+		# there does not get changed here by re-signing. Otherwise, the
+		# checksum from the normal changes file might not match
+		# anymore. https://bugs.debian.org/977674
+		#
+		# The problem is, that with --no-re-sign, debsign will see a
+		# signed buildinfo file and skip signing the dsc.
+		# https://bugs.debian.org/981021
 		my $so_changes = $build_dir . '/' . $self->get('Package_SVersion') . "_source.changes";
 		if (-r $so_changes) {
 		    system('debsign', '--re-sign', "-k$key_id", '--', "$so_changes");
