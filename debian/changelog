@@ -1,3 +1,42 @@
+sbuild (0.82.0) unstable; urgency=medium
+
+  [ Johannes Schauer Marin Rodrigues ]
+  * remove etc/99builddsourceslist as it is unused
+  * bin/sbuild-createchroot: avoid allowing execution of arbitrary Perl code
+    via a custom mirror URL (closes: #1001807)
+  * debian/tests/build-procenv: add deb-src repository
+  * debian/tests/unshare-qemuwrapper: use copy:// instead of file://
+  * man/sbuild.1.in: document the --arch-all and --no-arch-all defaults while
+    cross-building
+  * lib/Sbuild/ChrootUnshare.pm: also create /dev/console and /dev/ptmx and
+    mount /dev/pts and /dev/shm
+  * lib/Sbuild/Build.pm: fix error reporting of 'changes.new could not be
+    renamed'
+  * add sbuild-cross-resolver filtering out m-a:foreign and essential:yes
+    packages that are not arch:all and not arch:native during cross-building
+  * bump debhelper-compat to 13
+  * use dh-sequence-python3 instead of --with=python3
+  * run wrap-and-sort
+  * add myself to d/copyright -- better late than never ;)
+  * debian/control: add uidmap to Recommends (closes: #986962)
+  * use debian/*.manpages instead of debian/*.install to install manpages
+  * add UNSHARE_BIND_MOUNTS allowing to bind-mount directories into the chroot
+    in unshare mode (closes: #986694)
+
+  [ Samuel Thibault ]
+  * control: Fix git URLs.
+
+  [ Christian Kastner ]
+  * sbuild.1: Refresh unshare info
+
+  [ Jochen Sprickerhof ]
+  * Don't overwrite BUILD_DIR when compiling in src dir (Closes: #990734)
+
+  [ Vagrant Cascadian ]
+  * lib/Sbuild/Utility.pm: Add support for zstd compression. (Closes: #987655)
+
+ -- Johannes Schauer Marin Rodrigues <josch@debian.org>  Mon, 24 Jan 2022 23:30:27 +0100
+
 sbuild (0.81.2) unstable; urgency=medium
 
   * Package sbuild-qemu should be arch:all, not arch:amd64.

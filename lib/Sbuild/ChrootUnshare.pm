@@ -1,6 +1,6 @@
 #
 # ChrootUnshare.pm: chroot library for sbuild
-# Copyright © 2018      Johannes Schauer <josch@debian.org>
+# Copyright © 2018      Johannes Schauer Marin Rodrigues <josch@debian.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -279,27 +279,42 @@ sub _get_exec_argv {
 	$network_setup = 'ip link set lo up;> "$rootdir/etc/resolv.conf";';
     }
 
+    my @bind_mounts = ();
+    for my $entry (@{$self->get_conf('UNSHARE_BIND_MOUNTS')}) {
+	push @bind_mounts, $entry->{directory}, $entry->{mountpoint};
+    }
+
     return (
 	'env', 'PATH=/usr/sbin:/usr/bin:/sbin:/bin',
 	get_unshare_cmd({UNSHARE_FLAGS => $unshare, FORK => 1, IDMAP => $self->get('Uid Gid Map')}), 'sh', '-c', "
 	rootdir=\"\$1\"; shift;
 	user=\"\$1\"; shift;
 	dir=\"\$1\"; shift;
+	while [ \$# -gt 0 ]; do
+	    if [ \"\$1\" = \"--\" ]; then shift; break; fi;
+	    mount -o bind \"\$1\" \"\$rootdir\$2\";
+	    shift; shift;
+	done;
 	hostname sbuild;
 	$network_setup
 	mkdir -p \"\$rootdir/dev\";
-	for f in null zero full random urandom tty; do
+	for f in null zero full random urandom tty console ptmx; do
 	    touch \"\$rootdir/dev/\$f\";
 	    chmod -rwx \"\$rootdir/dev/\$f\";
 	    mount -o bind \"/dev/\$f\" \"\$rootdir/dev/\$f\";
 	done;
+	ln -sfT /proc/self/fd \"\$rootdir/dev/fd\";
+	mkdir -p \"\$rootdir/dev/pts\";
+	mount -o bind \"/dev/pts\" \"\$rootdir/dev/pts\";
+	mkdir -p \"\$rootdir/dev/shm\";
+	mount -t tmpfs tmpfs \"\$rootdir/dev/shm\";
 	mkdir -p \"\$rootdir/sys\";
 	mount -o rbind /sys \"\$rootdir/sys\";
 	mkdir -p \"\$rootdir/proc\";
 	mount -t proc proc \"\$rootdir/proc\";
 	/usr/sbin/chroot \"\$rootdir\" sh -c \"id -u \\\"\$user\\\">/dev/null 2>&1 || adduser --system --quiet --ingroup sbuild --no-create-home --home /nonexistent --disabled-login --disabled-password \\\"\$user\\\"\";
 	exec /usr/sbin/chroot \"\$rootdir\" /sbin/runuser -u \"\$user\" -- sh -c \"cd \\\"\\\$1\\\" && shift && \\\"\\\$@\\\"\" -- \"\$dir\" \"\$@\";
-	", '--', $self->get('Session ID'), $user, $dir
+	", '--', $self->get('Session ID'), $user, $dir, @bind_mounts, '--'
     );
 }
 
