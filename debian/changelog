@@ -1,3 +1,15 @@
+sbuild (0.82.1) unstable; urgency=medium
+
+  * fix sbuild-cross-resolver
+  * copy solvers from /usr/lib/apt/solvers into chroot if cross-building
+  * add dependency on apt-utils for /usr/lib/apt/solvers/apt
+  * chown /var/lib/sbuild 755 so that the _apt user can read apt.conf inside it
+  * remove maintainer script support for ancient package versions
+  * debian/control: bump Standards-Version (no changes)
+  * debian/source/include-binaries is not needed anymore
+
+ -- Johannes Schauer Marin Rodrigues <josch@debian.org>  Sat, 29 Jan 2022 16:52:05 +0100
+
 sbuild (0.82.0) unstable; urgency=medium
 
   [ Johannes Schauer Marin Rodrigues ]
