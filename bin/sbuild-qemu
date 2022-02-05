@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # SPDX-License-Identifier: GPL-2.0-or-later
 #
-# Copyright © 2020      Christian Kastner <ckk@debian.org>
+# Copyright © 2020-2022 Christian Kastner <ckk@debian.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,39 +22,33 @@
 
 import argparse
 import os
-import platform
-import psutil
+import subprocess
 import sys
 
 
-MACHINE_TO_DEB_ARCH = {
-    'x86_64': 'amd64',
-    'i386': 'i386'
-}
 DEB_ARCH_TO_QEMU = {
-    'amd64': 'qemu-system-x86_64',
-    'i386': 'qemu-system-i386',
+    'amd64': 'x86_64',
+    'arm64': 'aarch64',
+    'armhf': 'arm',
+    'i386': 'i386',
+    'ppc64el': 'ppc64le',
 }
 
+IMAGEDIR = os.environ.get(
+    'IMAGEDIR',
+    os.path.join(os.path.expanduser('~'), '.cache', 'sbuild'),
+)
 
-MACHINE = platform.machine()
-try:
-    ARCH = MACHINE_TO_DEB_ARCH[MACHINE]
-except KeyError as e:
-    print(f"Unsupported machine type {MACHINE}", file=sys.stderr)
-    sys.exit(1)
-# Defaults
-MEM = 2048
-CPUS = psutil.cpu_count(logical=False)
-DIST = 'unstable'
-_DEFAULT_IMAGEDIR = os.path.join(os.path.expanduser('~'), '.cache', 'sbuild')
-IMAGEDIR = os.environ.get('IMAGEDIR', _DEFAULT_IMAGEDIR)
+DEFAULT_ARCH = subprocess.check_output(
+    ['dpkg', '--print-architecture'],
+    text=True,
+).strip()
 
 
 def main():
     # init options
     parser = argparse.ArgumentParser(
-        description="Build Debian packages using sbuild(1) and QEMU images",
+        description="Build Debian packages with sbuild(1) using QEMU images",
         epilog="All other options are passed on through to sbuild(1). "
                "The image will be started in -snapshot mode, so no changes "
                "are saved, and multiple processes can use the same image "
@@ -63,7 +57,7 @@ def main():
     parser.add_argument(
         '--arch',
         action='store',
-        default=ARCH,
+        default=DEFAULT_ARCH,
         help="Architecture to use. Default is the host architecture. "
              "Currently supported architectures are: "
             f"{', '.join(DEB_ARCH_TO_QEMU.keys())}.",
@@ -71,36 +65,32 @@ def main():
     parser.add_argument(
         '-d', '--dist',
         action='store',
-        default=DIST,
-        help=f"Distribution (for the .changes file). Default is '{DIST}'.",
+        default='unstable',
+        help=f"Distribution (for the .changes file). "
+             f"Default: 'unstable'.",
     )
     parser.add_argument(
         '--image',
         action='store',
-        help="VM image to use for building. If not specified, will look for "
-             "an image with the name DIST-autopkgtest-ARCH.img. Will first "
-             "look in the current directory, and if no such file exists "
+        help="QEMU image file to use for building. If not specified, will "
+             "look for an image with the name DIST-autopkgtest-ARCH.img. Will "
+             "first look in the current directory, and if no such file exists "
              "there, then the directory $IMAGEDIR is tried. A suitable image "
              "can be created with qemu-sbuild-create(1).",
     )
     parser.add_argument(
-        '--autopkgtest-debug',
-        action='store_true',
-        help="Enable debug output for the autopkgtest-virt-qemu(1) driver.",
-    )
-    parser.add_argument(
-        '--ram',
+        '--ram-size',
         metavar='MiB',
         action='store',
-        default=MEM,
-        help=f"VM memory size in MB. Default: {MEM}",
+        default=2048,
+        help=f"VM memory size in MB. Default: 2048",
     )
     parser.add_argument(
         '--cpus',
         metavar='CPUs',
         action='store',
-        default=CPUS,
-        help="VM CPU count. Default: Number of physical cores on the host.",
+        default=2,
+        help="VM CPU count. Default: 2",
     )
     parser.add_argument(
         '--overlay-dir',
@@ -114,7 +104,20 @@ def main():
         help="Don't actually do anything. Just print the sbuild(1) command "
              "string that would be executed, and then exit.",
     )
+    parser.add_argument(
+        '--autopkgtest-debug',
+        action='store_true',
+        help="Enable debug output for the autopkgtest-virt-qemu(1) driver.",
+    )
     parsed_args, unparsed_args = parser.parse_known_args()
+
+    try:
+        qemu_arch = DEB_ARCH_TO_QEMU[parsed_args.arch]
+    except KeyError:
+        print(f"Unsupported architecture: {parsed_args.arch}", file=sys.stderr)
+        print("Supported architectures are: ", file=sys.stderr, end="")
+        print(f"{', '.join(DEB_ARCH_TO_QEMU.keys())}", file=sys.stderr)
+        sys.exit(1)
 
     if parsed_args.image:
         if os.path.exists(os.path.abspath(parsed_args.image)):
@@ -122,15 +125,18 @@ def main():
         else:
             image = os.path.join(IMAGEDIR, parsed_args.image)
     else:
-        guessed_name = f'{parsed_args.dist}-autopkgtest-{ARCH}.img'
+        guessed_name = f'{parsed_args.dist}-autopkgtest-{parsed_args.arch}.img'
         if os.path.exists(os.path.abspath(guessed_name)):
             images = os.path.abspath(guessed_name)
         else:
             image = os.path.join(
                 IMAGEDIR,
-                f'{parsed_args.dist}-autopkgtest-{ARCH}.img',
+                f'{parsed_args.dist}-autopkgtest-{parsed_args.arch}.img',
             )
-    qemu = DEB_ARCH_TO_QEMU[ARCH]
+
+    if not os.path.exists(image):
+        print(f"File {image} does not exist.", file=sys.stderr)
+        sys.exit(1)
 
     args = [
             'sbuild',
@@ -141,8 +147,8 @@ def main():
             '--chroot-mode=autopkgtest',
             '--autopkgtest-virt-server=qemu',
             '--autopkgtest-virt-server-opt',    '--overlay-dir=/tmp',
-            '--autopkgtest-virt-server-opt',    f'--qemu-command={qemu}',
-            '--autopkgtest-virt-server-opt',    f'--ram-size={parsed_args.ram}',
+            '--autopkgtest-virt-server-opt',    f'--qemu-architecture={qemu_arch}',
+            '--autopkgtest-virt-server-opt',    f'--ram-size={parsed_args.ram_size}',
             '--autopkgtest-virt-server-opt',    f'--cpus={parsed_args.cpus}',
             '--autopkgtest-virt-server-opt',    image,
             # Worarkound -- dose can hang stuff in a qemu VM
