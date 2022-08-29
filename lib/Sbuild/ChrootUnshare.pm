@@ -272,7 +272,10 @@ sub _get_exec_argv {
     my $user = shift;
     my $disable_network = shift // 0;
 
-    my $network_setup = 'cat /etc/resolv.conf > "$rootdir/etc/resolv.conf";';
+    # On systems with libnss-resolve installed there is no need for a
+    # /etc/resolv.conf. This works around this by adding 127.0.0.53 (default
+    # for systemd-resolved) in that case.
+    my $network_setup = '[ -f /etc/resolv.conf ] && cat /etc/resolv.conf > "$rootdir/etc/resolv.conf" || echo "nameserver 127.0.0.53" > "$rootdir/etc/resolv.conf";';
     my $unshare = CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWUTS | CLONE_NEWIPC;
     if ($disable_network) {
 	$unshare |= CLONE_NEWNET;
@@ -285,7 +288,7 @@ sub _get_exec_argv {
     }
 
     return (
-	'env', 'PATH=/usr/sbin:/usr/bin:/sbin:/bin',
+	'env', 'PATH=' . $self->get_conf('PATH'),
 	get_unshare_cmd({UNSHARE_FLAGS => $unshare, FORK => 1, IDMAP => $self->get('Uid Gid Map')}), 'sh', '-c', "
 	rootdir=\"\$1\"; shift;
 	user=\"\$1\"; shift;
@@ -297,16 +300,21 @@ sub _get_exec_argv {
 	    shift; shift;
 	done;
 	hostname sbuild;
+	echo \"127.0.0.1 localhost\\n127.0.1.1 sbuild\" > \"\$rootdir/etc/hosts\";
 	$network_setup
 	mkdir -p \"\$rootdir/dev\";
-	for f in null zero full random urandom tty console ptmx; do
+	for f in null zero full random urandom tty console; do
 	    touch \"\$rootdir/dev/\$f\";
 	    chmod -rwx \"\$rootdir/dev/\$f\";
 	    mount -o bind \"/dev/\$f\" \"\$rootdir/dev/\$f\";
 	done;
 	ln -sfT /proc/self/fd \"\$rootdir/dev/fd\";
+	ln -sfT /proc/self/fd/0 \"\$rootdir/dev/stdin\";
+	ln -sfT /proc/self/fd/1 \"\$rootdir/dev/stdout\";
+	ln -sfT /proc/self/fd/2 \"\$rootdir/dev/stderr\";
 	mkdir -p \"\$rootdir/dev/pts\";
-	mount -o bind \"/dev/pts\" \"\$rootdir/dev/pts\";
+	mount -o noexec,nosuid,gid=5,mode=620,ptmxmode=666 -t devpts none \"\$rootdir/dev/pts\";
+	ln -sfT /dev/pts/ptmx \"\$rootdir/dev/ptmx\";
 	mkdir -p \"\$rootdir/dev/shm\";
 	mount -t tmpfs tmpfs \"\$rootdir/dev/shm\";
 	mkdir -p \"\$rootdir/sys\";
