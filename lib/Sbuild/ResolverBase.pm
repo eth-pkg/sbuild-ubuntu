@@ -80,6 +80,47 @@ sub new {
     return $self;
 }
 
+sub add_extra_repositories {
+    my $self = shift;
+    my $session = $self->get('Session');
+
+    # Add specified extra repositories into /etc/apt/sources.list.d/.
+    # This has to be done this early so that the early apt
+    # update/upgrade/distupgrade steps also consider the extra repositories.
+    # If this step would be done too late, extra repositories would only be
+    # considered when resolving build dependencies but not for upgrading the
+    # base chroot.
+    if (scalar @{$self->get_conf('EXTRA_REPOSITORIES')} > 0) {
+	my $extra_repositories_archive_list_file = $self->get('Extra repositories archive list file');
+	if ($session->test_regular_file($extra_repositories_archive_list_file)) {
+	    $self->log_error("$extra_repositories_archive_list_file exists - will not write extra repositories to it\n");
+	} else {
+	    my $tmpfilename = $session->mktemp();
+
+	    my $tmpfh = $session->get_write_file_handle($tmpfilename);
+	    if (!$tmpfh) {
+		$self->log_error("Cannot open pipe: $!\n");
+		return 0;
+	    }
+	    for my $repospec (@{$self->get_conf('EXTRA_REPOSITORIES')}) {
+		print $tmpfh "$repospec\n";
+	    }
+	    close $tmpfh;
+	    # List file needs to be moved with root.
+	    if (!$session->chmod($tmpfilename, '0644')) {
+		$self->log("Failed to create apt list file for dummy archive.\n");
+		$session->unlink($tmpfilename);
+		return 0;
+	    }
+	    if (!$session->rename($tmpfilename, $extra_repositories_archive_list_file)) {
+		$self->log("Failed to create apt list file for dummy archive.\n");
+		$session->unlink($tmpfilename);
+		return 0;
+	    }
+	}
+    }
+}
+
 sub setup {
     my $self = shift;
 
@@ -167,41 +208,7 @@ sub setup {
 	    $self->get('APT Conf');
     }
 
-    # Add specified extra repositories into /etc/apt/sources.list.d/.
-    # This has to be done this early so that the early apt
-    # update/upgrade/distupgrade steps also consider the extra repositories.
-    # If this step would be done too late, extra repositories would only be
-    # considered when resolving build dependencies but not for upgrading the
-    # base chroot.
-    if (scalar @{$self->get_conf('EXTRA_REPOSITORIES')} > 0) {
-	my $extra_repositories_archive_list_file = $self->get('Extra repositories archive list file');
-	if ($session->test_regular_file($extra_repositories_archive_list_file)) {
-	    $self->log_error("$extra_repositories_archive_list_file exists - will not write extra repositories to it\n");
-	} else {
-	    my $tmpfilename = $session->mktemp();
-
-	    my $tmpfh = $session->get_write_file_handle($tmpfilename);
-	    if (!$tmpfh) {
-		$self->log_error("Cannot open pipe: $!\n");
-		return 0;
-	    }
-	    for my $repospec (@{$self->get_conf('EXTRA_REPOSITORIES')}) {
-		print $tmpfh "$repospec\n";
-	    }
-	    close $tmpfh;
-	    # List file needs to be moved with root.
-	    if (!$session->chmod($tmpfilename, '0644')) {
-		$self->log("Failed to create apt list file for dummy archive.\n");
-		$session->unlink($tmpfilename);
-		return 0;
-	    }
-	    if (!$session->rename($tmpfilename, $extra_repositories_archive_list_file)) {
-		$self->log("Failed to create apt list file for dummy archive.\n");
-		$session->unlink($tmpfilename);
-		return 0;
-	    }
-	}
-    }
+    $self->add_extra_repositories();
 
     # Create an internal repository for packages given via --extra-package
     # If this step would be done too late, extra packages would only be
@@ -1221,9 +1228,10 @@ EOF
 	}
     }
 
-    #Now build the package:
+    # Now build the package:
+    # NO_PKG_MANGLE=1 disables https://launchpad.net/pkgbinarymangler (only used on Ubuntu)
     $session->run_command(
-	{ COMMAND => ['dpkg-deb', '--build', $dummy_pkg_dir, $dummy_deb],
+	{ COMMAND => ['env', 'NO_PKG_MANGLE=1', 'dpkg-deb', '--build', $dummy_pkg_dir, $dummy_deb],
 	  USER => $self->get_conf('BUILD_USER'),
 	  PRIORITY => 0});
     if ($?) {
@@ -1351,7 +1359,7 @@ sub run_apt_ftparchive {
     my $session = $self->get('Session');
 
     # We create the Packages, Sources and Release file inside the chroot.
-    # We cannot use IO::Compress::Gzip, Digest::MD5, or Digest::SHA because
+    # We cannot use Digest::MD5, or Digest::SHA because
     # they are not available inside a chroot with only Essential:yes and apt
     # installed.
     # We cannot use apt-ftparchive as this is not available inside the chroot.
@@ -1456,28 +1464,17 @@ sub hash_file($$)
     closedir($dh);
 }
 
-system('gzip -c --force Packages > Packages.gz') == 0 or die "gzip failed: $?\n";
-system('gzip -c --force Sources  > Sources.gz' ) == 0 or die "gzip failed: $?\n";
-
 my $packages_md5 = hash_file('Packages', 'md5sum');
 my $sources_md5 = hash_file('Sources', 'md5sum');
-my $packagesgz_md5 = hash_file('Packages.gz', 'md5sum');
-my $sourcesgz_md5 = hash_file('Sources.gz', 'md5sum');
 
 my $packages_sha1 = hash_file('Packages', 'sha1sum');
 my $sources_sha1 = hash_file('Sources', 'sha1sum');
-my $packagesgz_sha1 = hash_file('Packages.gz', 'sha1sum');
-my $sourcesgz_sha1 = hash_file('Sources.gz', 'sha1sum');
 
 my $packages_sha256 = hash_file('Packages', 'sha256sum');
 my $sources_sha256 = hash_file('Sources', 'sha256sum');
-my $packagesgz_sha256 = hash_file('Packages.gz', 'sha256sum');
-my $sourcesgz_sha256 = hash_file('Sources.gz', 'sha256sum');
 
 my $packages_size = -s 'Packages';
 my $sources_size = -s 'Sources';
-my $packagesgz_size = -s 'Packages.gz';
-my $sourcesgz_size = -s 'Sources.gz';
 
 # The timestamp format of release files is documented here:
 #   https://wiki.debian.org/RepositoryFormat#Date.2CValid-Until
@@ -1503,18 +1500,12 @@ Suite: invalid
 MD5Sum:
  $packages_md5 $packages_size Packages
  $sources_md5 $sources_size Sources
- $packagesgz_md5 $packagesgz_size Packages.gz
- $sourcesgz_md5 $sourcesgz_size Sources.gz
 SHA1:
  $packages_sha1 $packages_size Packages
  $sources_sha1 $sources_size Sources
- $packagesgz_sha1 $packagesgz_size Packages.gz
- $sourcesgz_sha1 $sourcesgz_size Sources.gz
 SHA256:
  $packages_sha256 $packages_size Packages
  $sources_sha256 $sources_size Sources
- $packagesgz_sha256 $packagesgz_size Packages.gz
- $sourcesgz_sha256 $sourcesgz_size Sources.gz
 END
 
 close $releasefh;

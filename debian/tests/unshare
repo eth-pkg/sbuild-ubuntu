@@ -13,6 +13,8 @@ if [ -z ${AUTOPKGTEST_TMP+x} ]; then
 	exit 1
 fi
 
+. /etc/os-release
+release=${VERSION_CODENAME:-unstable}
 nativearch=$(dpkg --print-architecture)
 
 mkdir -p "${AUTOPKGTEST_TMP}/gpghome"
@@ -116,8 +118,8 @@ verify_src_changes() {
 }
 
 verify() {
-	for thing in $*; do
-		verify_$thing
+	for thing in "$@"; do
+		"verify_$thing"
 	done
 	# remove verified files, so that we make sure not to accidentally
 	# verify anything from an earlier build
@@ -168,6 +170,9 @@ VZd06jMN
 -----END PGP PRIVATE KEY BLOCK-----
 END
 
+# Ensure umask is consistent with the blobs above; Debian is already 022 but
+# Ubuntu defaults to 002
+umask 022
 mkdir -p "${AUTOPKGTEST_TMP}/test-pkg-1.0/debian/source"
 
 cat << END > "${AUTOPKGTEST_TMP}/test-pkg-1.0/debian/control"
@@ -238,7 +243,7 @@ cat << END > "${AUTOPKGTEST_TMP}/test-pkg-1.0/debian/source/format"
 3.0 (native)
 END
 
-mmdebstrap --mode=unshare --variant=apt unstable "${AUTOPKGTEST_TMP}/chroot.tar"
+mmdebstrap --mode=unshare --variant=apt "$release" "${AUTOPKGTEST_TMP}/chroot.tar"
 
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" dpkg-buildpackage --build=full
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" dpkg-buildpackage --target=clean
@@ -248,6 +253,7 @@ verify orig deb dsc bin_changes
 
 # Test running sbuild from the unpacked source
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" sbuild \
+	--no-source-only-changes --nolog \
 	--chroot="${AUTOPKGTEST_TMP}/chroot.tar" --chroot-mode=unshare \
 	--keyid="sbuild fake uploader <fake-uploader@debian.org>" \
 	--source \
@@ -255,6 +261,7 @@ env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" sbuild \
 verify orig deb dsc bin_changes
 
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" sbuild \
+	--no-source-only-changes --nolog \
 	--chroot="${AUTOPKGTEST_TMP}/chroot.tar" --chroot-mode=unshare \
 	--keyid="sbuild fake uploader <fake-uploader@debian.org>" \
 	--no-run-lintian --no-run-autopkgtest
@@ -263,22 +270,24 @@ verify orig deb bin_changes
 # Test running sbuild on the dsc
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" dpkg-source --build .
 env --chdir="${AUTOPKGTEST_TMP}" sbuild \
+	--no-source-only-changes --nolog \
 	--chroot="${AUTOPKGTEST_TMP}/chroot.tar" --chroot-mode=unshare \
 	--keyid="sbuild fake uploader <fake-uploader@debian.org>" \
 	--source \
-	--no-run-lintian --no-run-autopkgtest -d unstable test-pkg_1.0.dsc
+	--no-run-lintian --no-run-autopkgtest -d "$release" test-pkg_1.0.dsc
 verify orig deb dsc bin_changes
 
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" dpkg-source --build .
 env --chdir="${AUTOPKGTEST_TMP}" sbuild \
+	--no-source-only-changes --nolog \
 	--chroot="${AUTOPKGTEST_TMP}/chroot.tar" --chroot-mode=unshare \
 	--keyid="sbuild fake uploader <fake-uploader@debian.org>" \
-	--no-run-lintian --no-run-autopkgtest -d unstable test-pkg_1.0.dsc
+	--no-run-lintian --no-run-autopkgtest -d "$release" test-pkg_1.0.dsc
 verify orig deb bin_changes
 
 
-rm "${AUTOPKGTEST_TMP}/test-pkg_1.0_${nativearch}"*.build
-rm -r "${AUTOPKGTEST_TMP}/gpghome/"
+gpgconf --kill all || :
+rm -r -- "${AUTOPKGTEST_TMP}/gpghome/"
 rm "${AUTOPKGTEST_TMP}/test-pkg-1.0/debian/changelog" \
  "${AUTOPKGTEST_TMP}/test-pkg-1.0/debian/control" \
  "${AUTOPKGTEST_TMP}/test-pkg-1.0/debian/source/format" \
