@@ -1,6 +1,6 @@
 Tests: build-procenv
 Depends: apt (>= 1.1~exp2), apt-utils, debootstrap, distro-info, lsb-release, @
-Restrictions: needs-root
+Restrictions: needs-root skippable
 
 Tests: unshare-qemuwrapper
 Architecture: amd64
@@ -9,6 +9,7 @@ Depends: grep-dctrl,
          linux-image-cloud-amd64 | linux-image-kvm,
          mmdebstrap,
          openssh-client,
+         python3-apt,
          qemu-system-x86,
          sleepenh
 Restrictions: allow-stderr needs-root

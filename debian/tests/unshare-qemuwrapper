@@ -24,13 +24,17 @@
 
 set -exu
 
-EXTRA_DEPS=gnupg,sbuild,mmdebstrap,build-essential,uidmap,fakeroot,diffoscope,devscripts
+EXTRA_DEPS=gnupg,sbuild,mmdebstrap,build-essential,uidmap,fakeroot,diffoscope,devscripts,python3-apt
 PORT=$(python3 -c 'from socket import socket; s=socket(); s.bind(("", 0)); print(s.getsockname()[1]);' || echo 10022)
 SCRIPT=./debian/tests/unshare
 
-. /etc/os-release
-release=${VERSION_CODENAME:-unstable}
+release=$(./debian/tests/get_default_release.py)
+if [ -z "$release" ]; then
+	echo "cannot get default release" >&2
+	exit 1
+fi
 
+. /etc/os-release
 if [ "$ID" = ubuntu ]; then
 	COMPONENTS=main,universe
 	KERNEL_PACKAGE=linux-image-kvm
@@ -157,6 +161,7 @@ mmdebstrap --variant=apt --mode=$MODE --verbose \
 	--setup-hook="$TMPDIR/setup.sh" \
 	--include=openssh-server,systemd-sysv,e2fsprogs,ifupdown,initramfs-tools,netbase,isc-dhcp-client,udev,policykit-1,$KERNEL_PACKAGE,$EXTRA_DEPS \
 	--customize-hook="$TMPDIR/customize.sh" --components="$COMPONENTS" \
+	--skip=cleanup/apt/lists \
 	"${release}" "$TMPDIR/${ID}-${release}-host.tar" $aptsources
 fi
 

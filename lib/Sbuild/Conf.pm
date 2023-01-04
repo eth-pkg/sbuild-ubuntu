@@ -763,6 +763,14 @@ sub setup ($) {
 	    HELP => 'By default the package is built in a path of the following format /build/packagename-XXXXXX/packagename-version/ where XXXXXX is a random ascii string. This option allows one to specify a custom path where the package is built inside the chroot. The sbuild user in the chroot must have permissions to create the path. Common writable locations are subdirectories of /tmp or /build. Using /tmp might be dangerous, because (depending on the chroot backend) the /tmp inside the chroot might be a world writable location that can be accessed by processes outside the chroot. The directory /build can only be accessed by the sbuild user and group and should be a safe location. The buildpath must be an empty directory because the last component of the path will be removed after the build is finished. Notice that depending on the chroot backend (see CHROOT_MODE), some locations inside the chroot might be bind mounts that are shared with other sbuild instances. You must avoid using these shared locations as the build path or otherwise concurrent runs of sbuild will likely fail. With the default schroot chroot backend, the directory /build is shared between multiple schroot sessions. You can change this behaviour in /etc/schroot/sbuild/fstab. The behaviour of other chroot backends will vary.',
 	    CLI_OPTIONS => ['--build-path']
 	},
+	'DSC_DIR'				=> {
+	    TYPE => 'STRING',
+	    VARNAME => 'dsc_dir',
+	    GROUP => 'Build options',
+	    DEFAULT => undef,
+	    HELP => 'By default the package is built in a path of the following format /build/packagename-XXXXXX/packagename-version/ where packagename-version are replaced by the values in debian/changelog. This option allows one to specify a custom packagename-version path where the package is built inside the chroot. This is useful to specify a static path for different versions for example for ccache.',
+	    CLI_OPTIONS => ['--dsc-dir']
+	},
 	'SBUILD_MODE'				=> {
 	    TYPE => 'STRING',
 	    VARNAME => 'sbuild_mode',
@@ -801,7 +809,7 @@ $individual_stalled_pkg_timeout->{\'kicad-packages3d\'} = 90;'
 	    TYPE => 'ARRAY:STRING',
 	    VARNAME => 'environment_filter',
 	    GROUP => 'Core options',
-	    DEFAULT => [ sort (map "^$_\$", Dpkg::Build::Info::get_build_env_allowed()) ],
+	    DEFAULT => [ sort (map "^$_\$", Dpkg::BuildInfo::get_build_env_allowed()) ],
 #	    GET => sub {
 #		my $conf = shift;
 #		my $entry = shift;
@@ -809,12 +817,12 @@ $individual_stalled_pkg_timeout->{\'kicad-packages3d\'} = 90;'
 #		my $retval = $conf->_get($entry->{'NAME'});
 #
 #		if (!defined($retval)) {
-#		    $retval = [ map "^$_\$", Dpkg::Build::Info::get_build_env_allowed() ];
+#		    $retval = [ map "^$_\$", Dpkg::BuildInfo::get_build_env_allowed() ];
 #		}
 #
 #		return $retval;
 #	    },
-	    HELP => 'Only environment variables matching one of the regular expressions in this arrayref will be passed to dpkg-buildpackage and other programs run by sbuild. The default value for this configuration setting is the list of variable names as returned by Dpkg::Build::Info::get_build_env_allowed() which is also the list of variable names that is whitelisted to be recorded in .buildinfo files. Caution: the default value listed below was retrieved from the dpkg Perl library version available when this man page was generated. It might be different if your dpkg Perl library version differs.',
+	    HELP => 'Only environment variables matching one of the regular expressions in this arrayref will be passed to dpkg-buildpackage and other programs run by sbuild. The default value for this configuration setting is the list of variable names as returned by Dpkg::BuildInfo::get_build_env_allowed() which is also the list of variable names that is whitelisted to be recorded in .buildinfo files. Caution: the default value listed below was retrieved from the dpkg Perl library version available when this man page was generated. It might be different if your dpkg Perl library version differs.',
 	    EXAMPLE =>
 '# Setting the old environment filter
 $environment_filter = [\'^PATH$\',
@@ -827,10 +835,10 @@ $environment_filter = [\'^PATH$\',
 			\'^SHELL$\'];
 # Appending FOOBAR to the default
 use Dpkg::Build::Info;
-$environment_filter = [Dpkg::Build::Info::get_build_env_allowed(), \'FOOBAR\'];
+$environment_filter = [Dpkg::BuildInfo::get_build_env_allowed(), \'FOOBAR\'];
 # Removing FOOBAR from the default
 use Dpkg::Build::Info;
-$environment_filter = [map /^FOOBAR$/ ? () : $_, Dpkg::Build::Info::get_build_env_allowed()];
+$environment_filter = [map /^FOOBAR$/ ? () : $_, Dpkg::BuildInfo::get_build_env_allowed()];
 '
 	},
 	'BUILD_ENVIRONMENT'			=> {

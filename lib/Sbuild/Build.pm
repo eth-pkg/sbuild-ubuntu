@@ -247,7 +247,11 @@ sub set_version {
     $self->set('VersionUpstream', $b_version);
     $self->set('VersionDebian', $b_revision);
     $self->set('DSC File', "${pkg}_${osversion}.dsc");
-    $self->set('DSC Dir', "${pkg}-${b_version}");
+    if (length $self->get_conf('DSC_DIR')) {
+	$self->set('DSC Dir', $self->get_conf('DSC_DIR'));
+    } else {
+	$self->set('DSC Dir', "${pkg}-${b_version}");
+    }
 
     debug("Package = " . $self->get('Package') . "\n");
     debug("Version = " . $self->get('Version') . "\n");
@@ -461,7 +465,7 @@ sub run_chroot_session {
 		failstage => "create-session");
 	}
 
-	if (defined($self->get_conf('BUILD_PATH')) && $self->get_conf('BUILD_PATH')) {
+	if (length $self->get_conf('BUILD_PATH')) {
 	    my $build_path = $self->get_conf('BUILD_PATH');
 	    $self->set('Build Dir', $build_path);
 	    if (!($session->test_directory($build_path))) {
@@ -1171,9 +1175,30 @@ sub fetch_source_files {
             {
                 $found_sources_entry = 1;
             }
-            if (    $createdby eq "Packages"
-                and $identifier eq "Packages"
-                and $targetof eq "deb" )
+            if (    $createdby eq 'Packages'
+                and $identifier eq 'Packages'
+                and $targetof eq 'deb'
+                and length $cdata->{"Repo-URI"} > 0
+                and length $cdata->{"Codename"} > 0
+                and length $cdata->{"Label"} > 0
+                and length $cdata->{"Origin"} > 0
+                and length $cdata->{"Suite"} > 0
+                and $cdata->{"Repo-URI"} =~ /^file:\//
+                and $cdata->{"Codename"} eq 'invalid-sbuild-codename'
+                and $cdata->{'Label'} eq 'sbuild-build-depends-archive'
+                and $cdata->{'Origin'} eq 'sbuild-build-depends-archive'
+                and $cdata->{'Suite'} eq 'invalid-sbuild-suite' )
+            {
+                # do not count the sbuild dummy repository created by any
+                # --extra-package options
+                next;
+            }
+            if (    $createdby eq 'Packages'
+                and $identifier eq 'Packages'
+                and $targetof eq 'deb'
+                and length $cdata->{"Repo-URI"} > 0
+                and length $cdata->{"Codename"} > 0
+                and length $cdata->{"Component"} > 0 )
             {
                 $num_packages_entries += 1;
                 $entry_uri       = $cdata->{"Repo-URI"};
@@ -1189,18 +1214,6 @@ sub fetch_source_files {
             elsif ( $num_packages_entries > 1 ) {
                 $self->log( "Cannot generate deb-src entry "
                       . "with more than one deb entry\n" );
-            }
-            elsif ( !defined $entry_uri ) {
-                $self->log( "Cannot generate deb-src entry "
-                      . "with undefined Repo-URI\n" );
-            }
-            elsif ( !defined $entry_codename ) {
-                $self->log( "Cannot generate deb-src entry "
-                      . "with undefined Codename\n" );
-            }
-            elsif ( !defined $entry_component ) {
-                $self->log( "Cannot generate deb-src entry "
-                      . "with undefined Component\n" );
             }
             else {
                 my $entry =
@@ -2439,9 +2452,9 @@ sub build {
     }
 
     my $buildcmd = [];
-    push (@{$buildcmd}, $self->get_conf('BUILD_ENV_CMND'))
-	if (defined($self->get_conf('BUILD_ENV_CMND')) &&
-	    $self->get_conf('BUILD_ENV_CMND'));
+    if (length $self->get_conf('BUILD_ENV_CMND') ) {
+        push( @{$buildcmd}, $self->get_conf('BUILD_ENV_CMND') );
+    }
     push (@{$buildcmd}, 'dpkg-buildpackage');
 
     my $dpkgversion = version->new(0);
@@ -2474,27 +2487,24 @@ sub build {
 	push (@{$buildcmd}, '-a' . $host_arch);
     }
 
-    if (defined($self->get_conf('BUILD_PROFILES')) &&
-	$self->get_conf('BUILD_PROFILES')) {
+    if (length $self->get_conf('BUILD_PROFILES')) {
 	my $profiles = $self->get_conf('BUILD_PROFILES');
 	$profiles =~ tr/ /,/;
 	push (@{$buildcmd}, '-P' . $profiles);
     }
 
-    if (defined($self->get_conf('PGP_OPTIONS')) &&
-	$self->get_conf('PGP_OPTIONS')) {
+    if (defined $self->get_conf('PGP_OPTIONS')) {
 	if (ref($self->get_conf('PGP_OPTIONS')) eq 'ARRAY') {
 	    push (@{$buildcmd}, @{$self->get_conf('PGP_OPTIONS')});
-        } else {
+        } elsif (length $self->get_conf('PGP_OPTIONS')) {
 	    push (@{$buildcmd}, $self->get_conf('PGP_OPTIONS'));
 	}
     }
 
-    if (defined($self->get_conf('SIGNING_OPTIONS')) &&
-	$self->get_conf('SIGNING_OPTIONS')) {
+    if (defined $self->get_conf('SIGNING_OPTIONS')) {
 	if (ref($self->get_conf('SIGNING_OPTIONS')) eq 'ARRAY') {
 	    push (@{$buildcmd}, @{$self->get_conf('SIGNING_OPTIONS')});
-        } else {
+        } elsif (length $self->get_conf('SIGNING_OPTIONS')) {
 	    push (@{$buildcmd}, $self->get_conf('SIGNING_OPTIONS'));
 	}
     }
@@ -2519,8 +2529,7 @@ sub build {
 	}
     }
 
-    if (defined($self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')) &&
-	$self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')) {
+    if (defined $self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')) {
 	push (@{$buildcmd}, @{$self->get_conf('DPKG_BUILDPACKAGE_USER_OPTIONS')});
     }
 
@@ -2821,11 +2830,10 @@ sub build {
 	    my $so_changes = $self->get('Package_SVersion') . "_source.changes";
 	    $self->log_subsubsection("$so_changes:");
 	    my $genchangescmd = ['dpkg-genchanges', '--build=source'];
-	    if (defined($self->get_conf('SIGNING_OPTIONS')) &&
-		$self->get_conf('SIGNING_OPTIONS')) {
+	    if (defined $self->get_conf('SIGNING_OPTIONS')) {
 		if (ref($self->get_conf('SIGNING_OPTIONS')) eq 'ARRAY') {
 		    push (@{$genchangescmd}, @{$self->get_conf('SIGNING_OPTIONS')});
-		} else {
+		} elsif (length $self->get_conf('SIGNING_OPTIONS')) {
 		    push (@{$genchangescmd}, $self->get_conf('SIGNING_OPTIONS'));
 		}
 	    }
@@ -3461,7 +3469,7 @@ sub close_build_log {
 	       $hours, $minutes, $seconds, $space));
 
     if ($self->get_status() eq "successful") {
-	if (defined($self->get_conf('KEY_ID')) && $self->get_conf('KEY_ID')) {
+	if (length $self->get_conf('KEY_ID')) {
 	    my $key_id = $self->get_conf('KEY_ID');
 	    my $build_dir = $self->get_conf('BUILD_DIR');
 	    my $changes;
@@ -3566,7 +3574,7 @@ sub send_mime_build_log {
 
     # Add the GPG key ID to the mail if present so that it's clear if the log
     # still needs signing or not.
-    if (defined($self->get_conf('KEY_ID')) && $self->get_conf('KEY_ID')) {
+    if (length $self->get_conf('KEY_ID')) {
 	$msg->add('Key-ID', $self->get_conf('KEY_ID'));
     }
 

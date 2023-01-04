@@ -13,8 +13,11 @@ if [ -z ${AUTOPKGTEST_TMP+x} ]; then
 	exit 1
 fi
 
-. /etc/os-release
-release=${VERSION_CODENAME:-unstable}
+release=$(./debian/tests/get_default_release.py)
+if [ -z "$release" ]; then
+	echo "cannot get default release" >&2
+	exit 1
+fi
 nativearch=$(dpkg --print-architecture)
 
 mkdir -p "${AUTOPKGTEST_TMP}/gpghome"
@@ -23,7 +26,7 @@ export GNUPGHOME="${AUTOPKGTEST_TMP}/gpghome"
 
 verify_orig() {
 	echo "verifying test-pkg_1.0.tar.xz" >&2
-cat << END | base64 -d > "${AUTOPKGTEST_TMP}/expected"
+cat << END | base64 -d | xz -cd > "${AUTOPKGTEST_TMP}/expected"
 /Td6WFoAAATm1rRGAgAhARYAAAB0L+Wj4Cf/BBZdADoZSs4dfiUjFYSOxzYxnd+/m6AlVEVOGf2j
 nT6NK0F9XZ7LLydbY3I//WjMOM2RFpGUqZ8R8Q8lLmydB5SLN5ZQSPW3OJjHlzxVQmv2v3KUyPxo
 V5uvr2rp1j0gfmjB4O+m6SMxUWGmCOp3mrA13iUy99dt9OK9tRQagXItob106li/2LWmOsXR3/5M
@@ -45,8 +48,9 @@ hGY9jQZg/RJY+A49vQTPzt87LF8IOdmecD4cNYHyLIOZ8rTlNVWMZ+M7JSu8UhWWGG9jrQ0IVIi9
 HHF+p/1uF4uIAuk/Y8D2ZKB+C3sTI/A47u58/zG6hpHuZbkUJ2qVEIqSBVZhSEuJoaAAAAAAwt/l
 WjS+6mMAAbIIgFAAAOm1wiWxxGf7AgAAAAAEWVo=
 END
-	diffoscope "${AUTOPKGTEST_TMP}/expected" "${AUTOPKGTEST_TMP}/test-pkg_1.0.tar.xz"
-	rm "${AUTOPKGTEST_TMP}/expected"
+	xz -cd < "${AUTOPKGTEST_TMP}/test-pkg_1.0.tar.xz" > "${AUTOPKGTEST_TMP}/test-pkg_1.0.tar"
+	diffoscope "${AUTOPKGTEST_TMP}/expected" "${AUTOPKGTEST_TMP}/test-pkg_1.0.tar"
+	rm "${AUTOPKGTEST_TMP}/expected" "${AUTOPKGTEST_TMP}/test-pkg_1.0.tar"
 }
 
 verify_deb() {
@@ -243,46 +247,37 @@ cat << END > "${AUTOPKGTEST_TMP}/test-pkg-1.0/debian/source/format"
 3.0 (native)
 END
 
-mmdebstrap --mode=unshare --variant=apt "$release" "${AUTOPKGTEST_TMP}/chroot.tar"
+mmdebstrap --mode=unshare --variant=apt --skip=cleanup/apt/lists "$release" "${AUTOPKGTEST_TMP}/chroot.tar"
 
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" dpkg-buildpackage --build=full
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" dpkg-buildpackage --target=clean
 verify orig deb dsc bin_changes
 
-# FIXME use installed sbuild
+run_sbuild() {
+	workingdir=$1; shift
+	env --chdir="${AUTOPKGTEST_TMP}/$workingdir/" sbuild \
+		--no-source-only-changes --nolog \
+		--chroot="${AUTOPKGTEST_TMP}/chroot.tar" --chroot-mode=unshare \
+		--keyid="sbuild fake uploader <fake-uploader@debian.org>" \
+		--no-run-lintian --no-run-autopkgtest \
+		--no-apt-upgrade --no-apt-distupgrade --no-apt-update \
+		"$@"
+}
 
 # Test running sbuild from the unpacked source
-env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" sbuild \
-	--no-source-only-changes --nolog \
-	--chroot="${AUTOPKGTEST_TMP}/chroot.tar" --chroot-mode=unshare \
-	--keyid="sbuild fake uploader <fake-uploader@debian.org>" \
-	--source \
-	--no-run-lintian --no-run-autopkgtest
+run_sbuild test-pkg-1.0 --source
 verify orig deb dsc bin_changes
 
-env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" sbuild \
-	--no-source-only-changes --nolog \
-	--chroot="${AUTOPKGTEST_TMP}/chroot.tar" --chroot-mode=unshare \
-	--keyid="sbuild fake uploader <fake-uploader@debian.org>" \
-	--no-run-lintian --no-run-autopkgtest
+run_sbuild test-pkg-1.0
 verify orig deb bin_changes
 
 # Test running sbuild on the dsc
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" dpkg-source --build .
-env --chdir="${AUTOPKGTEST_TMP}" sbuild \
-	--no-source-only-changes --nolog \
-	--chroot="${AUTOPKGTEST_TMP}/chroot.tar" --chroot-mode=unshare \
-	--keyid="sbuild fake uploader <fake-uploader@debian.org>" \
-	--source \
-	--no-run-lintian --no-run-autopkgtest -d "$release" test-pkg_1.0.dsc
+run_sbuild '' --source -d "$release" test-pkg_1.0.dsc
 verify orig deb dsc bin_changes
 
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" dpkg-source --build .
-env --chdir="${AUTOPKGTEST_TMP}" sbuild \
-	--no-source-only-changes --nolog \
-	--chroot="${AUTOPKGTEST_TMP}/chroot.tar" --chroot-mode=unshare \
-	--keyid="sbuild fake uploader <fake-uploader@debian.org>" \
-	--no-run-lintian --no-run-autopkgtest -d "$release" test-pkg_1.0.dsc
+run_sbuild ''  -d "$release" test-pkg_1.0.dsc
 verify orig deb bin_changes
 
 

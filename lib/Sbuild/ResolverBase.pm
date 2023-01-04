@@ -263,6 +263,7 @@ sub setup {
 			$self->log_warning("$base_deb already exists in $extra_packages_archive_dir inside the chroot. Skipping...\n");
 			next;
 		    }
+		    $self->log("Copying $deb to $session->get('Location')...\n");
 		    $session->copy_to_chroot($deb, $extra_packages_archive_dir);
 		} elsif (-d $deb) {
 		    opendir(D, $deb);
@@ -273,6 +274,7 @@ sub setup {
 			    $self->log_warning("$f already exists in $extra_packages_archive_dir inside the chroot. Skipping...\n");
 			    next;
 			}
+			$self->log("Copying $deb/$f to $session->get('Location')...\n");
 			$session->copy_to_chroot("$deb/$f", $extra_packages_archive_dir);
 		    }
 		    closedir(D);
@@ -1491,12 +1493,12 @@ setlocale(LC_TIME, $old_locale);
 open(my $releasefh, '>', 'Release') or die "cannot open Release for writing: $!";
 
 print $releasefh <<"END";
-Codename: invalid
+Codename: invalid-sbuild-codename
 Date: $datestring
 Description: Sbuild Build Dependency Temporary Archive
 Label: sbuild-build-depends-archive
 Origin: sbuild-build-depends-archive
-Suite: invalid
+Suite: invalid-sbuild-suite
 MD5Sum:
  $packages_md5 $packages_size Packages
  $sources_md5 $sources_size Sources
