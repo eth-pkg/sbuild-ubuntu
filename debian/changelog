@@ -1,3 +1,28 @@
+sbuild (0.85.0ubuntu1) lunar; urgency=medium
+
+  [ Dave Jones ]
+  * Merge from Debian unstable (LP: #2003201). Remaining changes:
+    - Fix autopkgtest `unshare-qemuwrapper` on lunar-proposed
+      - d/t/unshare-qemuwrapper: copy apt preferences into the vm's chroot.
+      - d/t/unshare: use mmdebstrap --verbose to aid debugging.
+  * Removed patches obsoleted/merged by upstream:
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+    - d/t/build-procenv: Make skippable when mknod fails, as in unprivileged
+      container case (as Ubuntu's autopkgtest uses in the armhf case)
+    - debian/tests/unshare: Run the test, but skip it if user namespaces are
+      not supported
+    - unshare test requires isolation-machine to execute
+
+  [ Benjamin Drung ]
+  * d/t/get_default_release.py: Rely on VERSION_CODENAME from /etc/os-release
+    on non-Debian systems if the variable is set.
+  * d/t/check-unshare-support: Add a check for unshare support. If unshare is
+    supported, run the unshare autopkgtest directly. Otherwise run
+    unshare-qemuwrapper.
+
+ -- Dave Jones <dave.jones@canonical.com>  Wed, 18 Jan 2023 13:06:24 +0000
+
 sbuild (0.85.0) unstable; urgency=medium
 
   [ Johannes Schauer Marin Rodrigues ]
@@ -47,6 +72,55 @@ sbuild (0.84.2) unstable; urgency=medium
   * fix autopkgtest LXD mode and sbuild-qemu (closes: #1024619)
 
  -- Johannes Schauer Marin Rodrigues <josch@debian.org>  Thu, 08 Dec 2022 10:20:58 +0100
+
+sbuild (0.84.1ubuntu3) lunar; urgency=medium
+
+  * Fix autopkgtest `unshare-qemuwrapper` on lunar-proposed (LP: #2000015)
+    - d/t/unshare-qemuwrapper: copy apt preferences into the vm's chroot.
+    - d/t/unshare: use mmdebstrap --verbose to aid debugging.
+
+ -- Mauricio Faria de Oliveira <mfo@canonical.com>  Fri, 16 Dec 2022 14:20:13 -0300
+
+sbuild (0.84.1ubuntu2) lunar; urgency=medium
+
+  * d/t/build-procenv: Make skippable when mknod fails, as in unprivileged
+    container case (as Ubuntu's autopkgtest uses in the armhf case)
+    (LP: #1998479)
+
+ -- Dave Jones <dave.jones@canonical.com>  Thu, 08 Dec 2022 16:47:16 +0000
+
+sbuild (0.84.1ubuntu1) lunar; urgency=medium
+
+  * Merge from Debian unstable (LP: #1998479). Remaining changes:
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+    - debian/tests/unshare: Run the test, but skip it if user namespaces are
+      not supported
+    - unshare test requires isolation-machine to execute
+  * Removed patches obsoleted/merged by upstream:
+    - d/t/control: add isolation-machine to the test flags
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - debian/tests/control: Skip unshare-qemuwrapper test where linux-image-
+      amd64 is missing. It is missing in Ubuntu making the test fail.
+    - debian/tests/unshare*: Test with current release
+    - Fix the unshare tests
+      - Make dscverify available by adding devscripts to EXTRA_DEPS
+      - Ensure dscverify tests actually run by re-writing verify()
+      - Remove the release=unstable check (there's no reason we shouldn't
+        check the orig-tarball and deb output)
+      - unshare test requires isolation-machine to execute
+    - Fix build-procenv to work under Ubuntu by removing unstable deb-src
+      reference
+    - Fix the diffoscope tests
+      - Change the expected .deb output to match xz or zstd compression
+      - Use "unstable" as d/changelog release name so the test can remain
+        static across releases
+      - Patch umask differences otherwise diffoscope barfs on differing group
+        modes in the generated orig-tar
+
+ -- Dave Jones <dave.jones@canonical.com>  Fri, 02 Dec 2022 16:09:52 +0000
 
 sbuild (0.84.1) unstable; urgency=medium
 
@@ -135,6 +209,44 @@ sbuild (0.83.2) unstable; urgency=medium
   * Buildd::Mail: also copy the Content-Type: header when forwarding mail
 
  -- Aurelien Jarno <aurel32@debian.org>  Mon, 29 Aug 2022 22:44:02 +0200
+
+sbuild (0.83.1ubuntu1) kinetic; urgency=medium
+
+  * Merge from Debian unstable (LP: #1974177). Remaining changes:
+    - d/t/control: add isolation-machine to the test flags
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+      (LP: #1976257)
+    - debian/tests/control: Skip unshare-qemuwrapper test where linux-image-
+      amd64 is missing. It is missing in Ubuntu making the test fail.
+    - debian/tests/unshare: Run the test, but skip it if user namespaces are
+      not supported
+    - debian/tests/unshare*: Test with current release
+  * Removed obsolete patches/changes:
+    - debian/tests/control: Don't depend on linux-image-amd64 package
+      It does not exist on Ubuntu.
+    - debian/tests/unshare-qemuwrapper: Don't use linux-image-amd64 package in
+      bootrstrapping test on Ubuntu
+    - debian/tests/unshare-qemuwrapper: Drop delta
+  * Fix the unshare tests
+    - Make dscverify available by adding devscripts to EXTRA_DEPS
+    - Ensure dscverify tests actually run by re-writing verify()
+    - Remove the release=unstable check (there's no reason we shouldn't
+      check the orig-tarball and deb output)
+    - unshare test requires isolation-machine to execute
+  * Fix build-procenv to work under Ubuntu by removing unstable deb-src
+    reference
+  * Fix the diffoscope tests
+    - Change the expected .deb output to match xz or zstd compression
+    - Use "unstable" as d/changelog release name so the test can remain
+      static across releases
+    - Patch umask differences otherwise diffoscope barfs on differing group
+      modes in the generated orig-tar
+
+ -- Dave Jones <dave.jones@canonical.com>  Thu, 30 Jun 2022 12:21:07 +0200
 
 sbuild (0.83.1) unstable; urgency=medium
 
@@ -226,6 +338,55 @@ sbuild (0.82.0) unstable; urgency=medium
 
  -- Johannes Schauer Marin Rodrigues <josch@debian.org>  Mon, 24 Jan 2022 23:30:27 +0100
 
+sbuild (0.81.2ubuntu6) jammy; urgency=medium
+
+  * No-change rebuild to update maintainer scripts, see LP: 1959054
+
+ -- Dave Jones <dave.jones@canonical.com>  Wed, 16 Feb 2022 17:32:39 +0000
+
+sbuild (0.81.2ubuntu5) hirsute; urgency=medium
+
+  * debian/tests/control: Skip unshare-qemuwrapper test where linux-image-amd64
+    is missing. It is missing in Ubuntu making the test fail.
+  * debian/tests/unshare: Run the test, but skip it if user namespaces are not
+    supported
+  * debian/tests/unshare-qemuwrapper: Drop delta
+  * debian/tests/unshare*: Test with current release
+
+ -- Balint Reczey <rbalint@ubuntu.com>  Thu, 18 Mar 2021 08:38:02 +0100
+
+sbuild (0.81.2ubuntu4) hirsute; urgency=medium
+
+  * debian/tests/unshare-qemuwrapper: Don't use linux-image-amd64 package in
+    bootrstrapping test on Ubuntu
+
+ -- Balint Reczey <rbalint@ubuntu.com>  Mon, 01 Mar 2021 12:02:26 +0100
+
+sbuild (0.81.2ubuntu3) hirsute; urgency=medium
+
+  * debian/tests/control: Don't depend on linux-image-amd64 package
+    It does not exist on Ubuntu.
+
+ -- Balint Reczey <rbalint@ubuntu.com>  Thu, 25 Feb 2021 18:50:14 +0100
+
+sbuild (0.81.2ubuntu2) hirsute; urgency=medium
+
+  * No change rebuild with fixed ownership.
+
+ -- Dimitri John Ledkov <xnox@ubuntu.com>  Tue, 16 Feb 2021 17:05:37 +0000
+
+sbuild (0.81.2ubuntu1) hirsute; urgency=medium
+
+  * Merge with Debian; remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+    - d/t/control: add isolation-machine to the test flags
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 08 Feb 2021 11:55:35 +0100
+
 sbuild (0.81.2) unstable; urgency=medium
 
   * Package sbuild-qemu should be arch:all, not arch:amd64.
@@ -277,6 +438,18 @@ sbuild (0.80.1) unstable; urgency=medium
 
  -- Johannes 'josch' Schauer <josch@debian.org>  Sat, 05 Dec 2020 17:46:22 +0100
 
+sbuild (0.80.0ubuntu1) groovy; urgency=medium
+
+  * Resynchronize on Debian, remaining changes
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+    - d/t/control: add isolation-machine to the test flags
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Tue, 04 Aug 2020 16:28:23 +0200
+
 sbuild (0.80.0) unstable; urgency=medium
 
   [ Johannes 'josch' Schauer ]
@@ -304,6 +477,24 @@ sbuild (0.80.0) unstable; urgency=medium
 
  -- Johannes 'josch' Schauer <josch@debian.org>  Sat, 01 Aug 2020 14:07:53 +0200
 
+sbuild (0.79.1-1ubuntu3) groovy; urgency=medium
+
+  * Fix autopkg test with dpkg 1.20.x.
+
+ -- Matthias Klose <doko@ubuntu.com>  Tue, 28 Jul 2020 14:51:53 +0200
+
+sbuild (0.79.1-1ubuntu1) groovy; urgency=low
+
+  * Merge from Debian unstable.  Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+    - d/t/control: add isolation-machine to the test flags
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 01 May 2020 15:32:56 -0700
+
 sbuild (0.79.1-1) unstable; urgency=medium
 
   * Team upload.
@@ -315,6 +506,21 @@ sbuild (0.79.1-1) unstable; urgency=medium
   * test build-procenv: replace ADTTMP with AUTOPKGTEST_TMP
 
  -- Ivo De Decker <ivodd@debian.org>  Wed, 22 Apr 2020 22:35:33 +0000
+
+sbuild (0.79.0-1ubuntu1) focal; urgency=low
+
+  * Merge from Debian unstable.  Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+    - d/t/control: add isolation-machine to the test flags
+   * Dropped changes, included in Debian:
+    - d/t/build-procenv: only install the built package if the chroot it was
+      built in matches the release of the host system
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 13 Feb 2020 12:26:35 -0800
 
 sbuild (0.79.0-1) unstable; urgency=medium
 
@@ -332,6 +538,22 @@ sbuild (0.79.0-1) unstable; urgency=medium
   * add option --dpkg-file-suffix
 
  -- Ivo De Decker <ivodd@debian.org>  Wed, 05 Feb 2020 17:41:38 +0100
+
+sbuild (0.78.1-2ubuntu1) eoan; urgency=low
+
+  * Merge from Debian unstable.  Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+    - d/t/control: add isolation-machine to the test flags
+    - d/t/build-procenv: only install the built package if the chroot it was
+      built in matches the release of the host system
+  * Dropped changes, included upstream:
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 02 May 2019 16:24:29 -0700
 
 sbuild (0.78.1-2) unstable; urgency=medium
 
@@ -391,11 +613,43 @@ sbuild (0.78.0-1) unstable; urgency=medium
 
  -- Johannes 'josch' Schauer <josch@debian.org>  Wed, 09 Jan 2019 05:53:49 +0100
 
+sbuild (0.77.1-2ubuntu2) disco; urgency=medium
+
+  * d/t/control: add isolation-machine to the test flags (LP: #1806389)
+  * d/t/build-procenv: only install the built package if the chroot it was
+    built in matches the release of the host system (LP: #1806388)
+
+ -- Andreas Hasenack <andreas@canonical.com>  Mon, 03 Dec 2018 11:47:38 -0200
+
+sbuild (0.77.1-2ubuntu1) disco; urgency=low
+
+  * Merge from Debian unstable.  Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Mon, 26 Nov 2018 06:23:57 +0100
+
 sbuild (0.77.1-2) unstable; urgency=medium
 
   * Add patch allowing to control merged /usr (closes: #913228)
 
  -- Johannes 'josch' Schauer <josch@debian.org>  Tue, 13 Nov 2018 16:07:19 +0100
+
+sbuild (0.77.1-1ubuntu1) cosmic; urgency=low
+
+  * Merge from Debian unstable.  Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Wed, 12 Sep 2018 11:47:20 +0200
 
 sbuild (0.77.1-1) unstable; urgency=medium
 
@@ -406,6 +660,18 @@ sbuild (0.77.1-1) unstable; urgency=medium
 
  -- Johannes 'josch' Schauer <josch@debian.org>  Tue, 11 Sep 2018 00:08:08 +0200
 
+sbuild (0.77.0-4ubuntu1) cosmic; urgency=low
+
+  * Merge from Debian unstable.  Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Mon, 30 Jul 2018 10:11:49 +0200
+
 sbuild (0.77.0-4) unstable; urgency=medium
 
   * Add patch to fix the empty directory check of sbuild-create-chroot
@@ -413,11 +679,35 @@ sbuild (0.77.0-4) unstable; urgency=medium
 
  -- Johannes 'josch' Schauer <josch@debian.org>  Fri, 27 Jul 2018 14:03:10 +0200
 
+sbuild (0.77.0-3ubuntu1) cosmic; urgency=medium
+
+  * Merge from Debian Sid. Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Simon Quigley <tsimonq2@ubuntu.com>  Thu, 12 Jul 2018 22:36:11 -0500
+
 sbuild (0.77.0-3) unstable; urgency=medium
 
   * Patch sbuild-destroychroot with an import of SchrootInfo (closes: #903513)
 
  -- Johannes 'josch' Schauer <josch@debian.org>  Wed, 11 Jul 2018 21:32:04 +0200
+
+sbuild (0.77.0-2ubuntu1) cosmic; urgency=medium
+
+  * Merge from Debian Sid. Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Simon Quigley <tsimonq2@ubuntu.com>  Mon, 09 Jul 2018 17:13:42 -0500
 
 sbuild (0.77.0-2) unstable; urgency=medium
 
@@ -488,11 +778,35 @@ sbuild (0.77.0-1) unstable; urgency=medium
 
  -- Johannes 'josch' Schauer <josch@debian.org>  Fri, 06 Jul 2018 23:11:45 +0200
 
+sbuild (0.76.0-1ubuntu1) cosmic; urgency=low
+
+  * Merge from Debian Sid (LP: #1770317). Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Simon Quigley <tsimonq2@ubuntu.com>  Thu, 10 May 2018 00:13:10 -0500
+
 sbuild (0.76.0-1) unstable; urgency=medium
 
   * Install sbuild-debian-developer-setup-update-all cronjob (closes: #893577)
 
  -- Michael Stapelberg <stapelberg@debian.org>  Mon, 09 Apr 2018 18:58:38 +0200
+
+sbuild (0.75.0-1ubuntu1) bionic; urgency=low
+
+  * Merge from Debian Sid (LP: #1756195). Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Simon Quigley <tsimonq2@ubuntu.com>  Fri, 23 Mar 2018 00:15:11 -0500
 
 sbuild (0.75.0-1) unstable; urgency=medium
 
@@ -502,6 +816,18 @@ sbuild (0.75.0-1) unstable; urgency=medium
   * remove harmful unnecessary lintian binary check (closes: #893226)
 
  -- Michael Stapelberg <stapelberg@debian.org>  Wed, 21 Mar 2018 22:24:01 +0100
+
+sbuild (0.74.0-1ubuntu1) bionic; urgency=medium
+
+  * Merge from Debian Sid (LP: #1756195). Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default.
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Simon Quigley <tsimonq2@ubuntu.com>  Sat, 17 Mar 2018 00:56:58 -0500
 
 sbuild (0.74.0-1) unstable; urgency=medium
 
@@ -522,6 +848,18 @@ sbuild (0.74.0-1) unstable; urgency=medium
 
  -- Michael Stapelberg <stapelberg@debian.org>  Wed, 14 Mar 2018 21:55:42 +0100
 
+sbuild (0.73.0-4ubuntu1) zesty; urgency=medium
+
+  * Merge from Debian unstable.  Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default (LP: #1566590)
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Wed, 01 Feb 2017 16:04:29 +0100
+
 sbuild (0.73.0-4) unstable; urgency=medium
 
   * Retroactively add two entries into debian/NEWS for the Stretch release.
@@ -534,6 +872,23 @@ sbuild (0.73.0-3) unstable; urgency=medium
   * Refresh other patches as "git format-patch" from sbuild git master branch
 
  -- Johannes Schauer <josch@debian.org>  Sun, 22 Jan 2017 15:03:49 +0100
+
+sbuild (0.73.0-2ubuntu1) zesty; urgency=medium
+
+  * Merge from Debian unstable.  Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default (LP: #1566590)
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+  * Drop changes merged in Debian
+    - Set APT::Sandbox::User=root when running apt-get source in the
+      build-procenv autopkgtest, to avoid stderr noise from current apt.
+    - Silence a couple of warnings from sbuild-createchroot which caused some
+      autopkgtest runs to fail.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Thu, 19 Jan 2017 09:27:07 +0100
 
 sbuild (0.73.0-2) unstable; urgency=medium
 
@@ -615,6 +970,22 @@ sbuild (0.73.0-1) unstable; urgency=medium
 
  -- Johannes Schauer <josch@debian.org>  Sat, 24 Dec 2016 02:28:48 +0100
 
+sbuild (0.72.0-2ubuntu1) zesty; urgency=low
+
+  * Merge from Debian unstable.  Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - Set APT::Sandbox::User=root when running apt-get source in the
+      build-procenv autopkgtest, to avoid stderr noise from current apt.
+    - Silence a couple of warnings from sbuild-createchroot which caused some
+      autopkgtest runs to fail.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default (LP: #1566590)
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Tue, 22 Nov 2016 10:02:25 +0100
+
 sbuild (0.72.0-2) unstable; urgency=medium
 
   * Fix regression from 0.72.0 upload: install forward file as .forward and
@@ -657,6 +1028,22 @@ sbuild (0.72.0-1) unstable; urgency=medium
 
  -- Johannes Schauer <josch@debian.org>  Tue, 25 Oct 2016 07:43:07 +0200
 
+sbuild (0.71.0-2ubuntu1) yakkety; urgency=low
+
+  * Merge from Debian unstable.  Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - Set APT::Sandbox::User=root when running apt-get source in the
+      build-procenv autopkgtest, to avoid stderr noise from current apt.
+    - Silence a couple of warnings from sbuild-createchroot which caused some
+      autopkgtest runs to fail.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default (LP: #1566590)
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Mon, 29 Aug 2016 08:22:14 +0200
+
 sbuild (0.71.0-2) unstable; urgency=medium
 
   * add patch to not check for the fakeroot binary on the host. Thanks
@@ -665,6 +1052,32 @@ sbuild (0.71.0-2) unstable; urgency=medium
     inside the chroot.
 
  -- Johannes Schauer <josch@debian.org>  Sat, 27 Aug 2016 11:20:06 +0200
+
+sbuild (0.71.0-1ubuntu2) yakkety; urgency=medium
+
+  * cherry-pick from Debian:
+    - add patch to not check for the fakeroot binary on the host. Thanks
+      Gianfranco Costamagna
+    - Do not recommend fakeroot anymore. It is not needed on the host but only
+      inside the chroot.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Fri, 26 Aug 2016 12:38:10 +0200
+
+sbuild (0.71.0-1ubuntu1) yakkety; urgency=low
+
+  * Merge from Debian unstable.  Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - Set APT::Sandbox::User=root when running apt-get source in the
+      build-procenv autopkgtest, to avoid stderr noise from current apt.
+    - Silence a couple of warnings from sbuild-createchroot which caused some
+      autopkgtest runs to fail.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default (LP: #1566590)
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Fri, 26 Aug 2016 08:22:46 +0200
 
 sbuild (0.71.0-1) unstable; urgency=medium
 
@@ -696,6 +1109,22 @@ sbuild (0.71.0-1) unstable; urgency=medium
     autopkgtest succeed/fail (closes: #833552)
 
  -- Johannes Schauer <josch@debian.org>  Wed, 24 Aug 2016 13:42:26 +0200
+
+sbuild (0.70.0-1ubuntu1) yakkety; urgency=medium
+
+  * Merge from Debian unstable. Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - Set APT::Sandbox::User=root when running apt-get source in the
+      build-procenv autopkgtest, to avoid stderr noise from current apt.
+    - Silence a couple of warnings from sbuild-createchroot which caused some
+      autopkgtest runs to fail.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default (LP: #1566590)
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Wed, 03 Aug 2016 12:33:10 +0200
 
 sbuild (0.70.0-1) unstable; urgency=medium
 
@@ -755,6 +1184,25 @@ sbuild (0.70.0-1) unstable; urgency=medium
     were merged upstream.
 
  -- Johannes Schauer <josch@debian.org>  Wed, 03 Aug 2016 10:58:48 +0200
+
+sbuild (0.69.0-2ubuntu1) yakkety; urgency=low
+
+  * Merge from Debian unstable (LP: #1591674). Remaining changes:
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - Set APT::Sandbox::User=root when running apt-get source in the
+      build-procenv autopkgtest, to avoid stderr noise from current apt.
+    - Silence a couple of warnings from sbuild-createchroot which caused some
+      autopkgtest runs to fail.
+    - utf-8-by-default.patch: Switch to C.UTF-8 by default (LP: #1566590)
+    - abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+      causing symlinks to files not ending in .dsc to no longer be buildable.
+  * Drop patches included/applied in Debian: apt-conf-quotes.patch,
+    copy-dummy-archive.patch, dummy-archive-sha512.patch,
+    fix-quoting-harder.patch
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Sun, 12 Jun 2016 12:48:21 +0200
 
 sbuild (0.69.0-2) unstable; urgency=medium
 
@@ -835,11 +1283,94 @@ sbuild (0.68.0-1) unstable; urgency=medium
 
  -- Johannes Schauer <josch@debian.org>  Fri, 15 Jan 2016 10:18:53 +0100
 
+sbuild (0.67.0-2ubuntu7) xenial; urgency=medium
+
+  * utf-8-by-default.patch: Switch to C.UTF-8 by default (LP: #1566590)
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Tue, 19 Apr 2016 07:51:15 -0600
+
+sbuild (0.67.0-2ubuntu6) xenial; urgency=medium
+
+  * dummy-archive-sha512.patch: Sbuild::ResolverBase: sign dummy archive
+    with SHA-512.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 07 Apr 2016 12:47:54 +0100
+
+sbuild (0.67.0-2ubuntu5) xenial; urgency=medium
+
+  * debian/patches/series: Patches apply much better when referenced here.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Mon, 28 Mar 2016 04:24:17 -0600
+
+sbuild (0.67.0-2ubuntu4) xenial; urgency=medium
+
+  * apt-conf-quotes.patch: Backport upstream commit to fix apt.conf quoting.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Mon, 28 Mar 2016 02:20:16 -0600
+
+sbuild (0.67.0-2ubuntu3) xenial; urgency=medium
+
+  * copy-dummy-archive.patch: Sbuild::ResolverBase: use copy: for dummy
+    archive.  Fixes launchpad-buildd crashes when analysing dep-waits.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 18 Feb 2016 14:32:21 +0000
+
+sbuild (0.67.0-2ubuntu2) xenial; urgency=medium
+
+  * abs-path-revert.patch: Revert upstream commit that breaks lp-buildd by
+    causing symlinks to files not ending in .dsc to no longer be buildable.
+  * fix-quoting-harder.patch: Switch from single to double quotes for args
+    when forking perl: "W: Stripped single quote from command for security"
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Thu, 21 Jan 2016 03:19:26 -0700
+
+sbuild (0.67.0-2ubuntu1) xenial; urgency=low
+
+  * Merge with Debian.  Remaining changes:
+    - do-not-install-debfoster-into-chroots.patch: Do not install debfoster
+      into the chroots because it is in universe and not needed for package
+      building itself.
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+      package.
+    - Set APT::Sandbox::User=root when running apt-get source in the
+      build-procenv autopkgtest, to avoid stderr noise from current apt.
+    - Silence a couple of warnings from sbuild-createchroot which caused some
+      autopkgtest runs to fail.
+
+ -- Iain Lane <iain@orangesquash.org.uk>  Wed, 06 Jan 2016 09:46:08 +0000
+
 sbuild (0.67.0-2) unstable; urgency=medium
 
   * backport patch fix-quoting.patch (closes: #809175)
 
  -- Johannes Schauer <josch@debian.org>  Mon, 28 Dec 2015 03:23:42 +0100
+
+sbuild (0.67.0-1ubuntu3) xenial; urgency=medium
+
+  * Silence a couple of warnings from sbuild-createchroot which caused some
+    autopkgtest runs to fail.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 28 Dec 2015 14:00:28 +0000
+
+sbuild (0.67.0-1ubuntu2) xenial; urgency=medium
+
+  * Set APT::Sandbox::User=root when running apt-get source in the
+    build-procenv autopkgtest, to avoid stderr noise from current apt.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 28 Dec 2015 03:55:12 +0000
+
+sbuild (0.67.0-1ubuntu1) xenial; urgency=medium
+
+  * Resynchronise with Debian.  Remaining changes:
+    - do-not-install-debfoster-into-chroots.patch: Do not install debfoster
+      into the chroots because it is in universe and not needed for package
+      building itself.
+    - no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+      packages, as pkgbinarymangler's dpkg-deb expects to be run from a
+      source package.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 28 Dec 2015 00:09:27 +0000
 
 sbuild (0.67.0-1) unstable; urgency=medium
 
@@ -889,6 +1420,18 @@ sbuild (0.67.0-1) unstable; urgency=medium
   * drop all patches which have now been applied upstream
 
  -- Johannes Schauer <josch@debian.org>  Sat, 26 Dec 2015 15:19:29 +0100
+
+sbuild (0.66.0-5ubuntu1) xenial; urgency=medium
+
+  * Resynchronise with Debian.  Remaining changes:
+    - do-not-install-debfoster-into-chroots.patch: Do not install debfoster
+      into the chroots because it is in universe and not needed for package
+      building itself.
+  * no-pkg-mangle-deps.patch: Set NO_PKG_MANGLE=1 when building dummy
+    packages, as pkgbinarymangler's dpkg-deb expects to be run from a source
+    package.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 03 Nov 2015 13:02:14 +0000
 
 sbuild (0.66.0-5) unstable; urgency=medium
 
@@ -965,6 +1508,24 @@ sbuild (0.66.0-1) unstable; urgency=medium
 
  -- Johannes Schauer <josch@debian.org>  Sun, 04 Oct 2015 09:50:02 +0200
 
+sbuild (0.65.2-1ubuntu2) vivid; urgency=medium
+
+  * Backport from upstream:
+    - sbuild: Fix handling of exceptions while setting up chroot.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 15 Apr 2015 11:30:20 -0500
+
+sbuild (0.65.2-1ubuntu1) vivid; urgency=medium
+
+  * Resynchronise with Debian (LP: #1428656).  Remaining changes:
+    - debian/patches/do-not-install-debfoster-into-chroots.patch: do not
+      install debfoster into the chroots because it is in universe and not
+      needed for package building itself.
+  * Backport from upstream:
+    - sbuild: Don't sign dummy archive if apt_allow_unauthenticated is set.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 14 Apr 2015 10:16:02 -0500
+
 sbuild (0.65.2-1) unstable; urgency=medium
 
   * Team upload.
@@ -997,6 +1558,19 @@ sbuild (0.65.1-1) unstable; urgency=medium
   * Merge most changes from Debian's buildd-0.64 branch.
 
  -- Ansgar Burchardt <ansgar@debian.org>  Tue, 24 Feb 2015 22:53:16 +0100
+
+sbuild (0.65.0-1ubuntu1) vivid; urgency=medium
+
+  * Merge from Debian unstable. Remaining changes:
+    - debian/patches/do-not-install-debfoster-into-chroots.patch: do not
+      install debfoster into the chroots because it is in universe and not
+      needed for package building itself.
+  * Dropped changes (merged into upstream):
+    - debian/patches/run-pre-build-hooks-as-root.patch: run pre-build hooks
+      as root.
+    - Added DEP-8 autopkgtest to build procenv.
+
+ -- Benjamin Drung <bdrung@ubuntu.com>  Sat, 25 Oct 2014 12:09:57 +0200
 
 sbuild (0.65.0-1) unstable; urgency=medium
 
@@ -1083,6 +1657,59 @@ sbuild (0.64.2-1) unstable; urgency=low
 
  -- Luca Falavigna <dktrkranz@debian.org>  Fri, 12 Sep 2014 20:02:46 +0200
 
+sbuild (0.64.1-1ubuntu6) utopic; urgency=medium
+
+  * debian/tests/control: Updated Depends to allow more capable procenv to be
+    built. (LP: #1325896)
+
+ -- James Hunt <james.hunt@ubuntu.com>  Tue, 03 Jun 2014 10:30:03 +0100
+
+sbuild (0.64.1-1ubuntu5) utopic; urgency=medium
+
+  * debian/tests/build_procenv: Ask the host's apt for Acquire::http::Proxy
+    and use that for bootstrapping and the built schroot as well.
+  * debian/tests/build_procenv: Install apt-utils into the generated schroot,
+    to avoid "debconf: delaying package configuration, since apt-utils is not
+    installed" stderr message.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Wed, 04 Jun 2014 08:09:47 +0200
+
+sbuild (0.64.1-1ubuntu4) trusty; urgency=medium
+
+  * debian/source/include-binaries: Add static sbuild signing keys to work
+    around systems with little entropy.
+  * debian/tests/build_procenv: Install sbuild signing keys.
+  * debian/tests/control: Add libnuma1, required by test package that is
+    built (procenv).
+  * debian/tests/sbuild-key.{pub,sec}: Static sbuild signing keys.
+
+ -- James Hunt <james.hunt@ubuntu.com>  Wed, 05 Mar 2014 15:15:02 +0000
+
+sbuild (0.64.1-1ubuntu3) trusty; urgency=medium
+
+  * debian/tests/build_procenv: on Ubuntu, select the correct archive mirror
+    for the build architecture.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 04 Mar 2014 16:18:11 -0800
+
+sbuild (0.64.1-1ubuntu2) trusty; urgency=medium
+
+  * debian/tests/control: Add missing debootstrap test dependency.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Tue, 25 Feb 2014 10:09:33 +0100
+
+sbuild (0.64.1-1ubuntu1) trusty; urgency=low
+
+  * Merge from Debian unstable. Remaining changes:
+    - debian/patches/do-not-install-debfoster-into-chroots.patch: do not
+      install debfoster into the chroots because it is in universe and not
+      needed for package building itself.
+    - debian/patches/run-pre-build-hooks-as-root.patch: run pre-build hooks
+      as root.
+    - Added DEP-8 autopkgtest to build procenv.
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 04 Nov 2013 07:57:40 -0500
+
 sbuild (0.64.1-1) unstable; urgency=low
 
   [ Roger Leigh ]
@@ -1098,6 +1725,25 @@ sbuild (0.64.1-1) unstable; urgency=low
       correctly wih perl 5.18.
 
  -- Roger Leigh <rleigh@debian.org>  Sun, 13 Oct 2013 19:35:57 +0100
+
+sbuild (0.64.0-1ubuntu2) trusty; urgency=low
+
+  * debian/tests/build_procenv: Add component universe for Ubuntu to make
+    procenv buildable (LP: #1247420)
+
+ -- Jean-Baptiste Lallement <jean-baptiste.lallement@canonical.com>  Sat, 02 Nov 2013 22:45:08 +0100
+
+sbuild (0.64.0-1ubuntu1) saucy; urgency=low
+
+  * Merge from Debian unstable. Remaining changes:
+    - debian/patches/do-not-install-debfoster-into-chroots.patch: do not
+      install debfoster into the chroots because it is in universe and not
+      needed for package building itself.
+    - debian/patches/run-pre-build-hooks-as-root.patch: run pre-build hooks
+      as root.
+    - Added DEP-8 autopkgtest to build procenv.
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 03 Sep 2013 09:04:59 -0400
 
 sbuild (0.64.0-1) unstable; urgency=low
 
@@ -1157,12 +1803,46 @@ sbuild (0.64.0-1) unstable; urgency=low
 
  -- Roger Leigh <rleigh@debian.org>  Fri, 17 May 2013 23:06:13 +0100
 
+sbuild (0.63.2-1.1ubuntu2) saucy; urgency=low
+
+  * Added DEP-8 autopkgtest to build procenv.
+
+ -- James Hunt <james.hunt@ubuntu.com>  Mon, 27 May 2013 10:18:26 +0200
+
+sbuild (0.63.2-1.1ubuntu1) raring; urgency=low
+
+  * Merge from Debian unstable. Remaining changes:
+    - Convert package back to source format 3.0 (quilt) so the patches get
+      applied.
+    - debian/patches/do-not-install-debfoster-into-chroots.patch: do not
+      install debfoster into the chroots because it is in universe and not
+      needed for package building itself.
+    - debian/patches/run-pre-build-hooks-as-root.patch: run pre-build hooks
+      as root.
+    - debian/patches/fix-rev-0.patch: convert inline change from 0.63.2-1.1
+      into patch.
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Thu, 17 Jan 2013 08:59:27 -0500
+
 sbuild (0.63.2-1.1) unstable; urgency=low
 
   * Non-maintainer upload.
   * Fix building packages with revision "0" (Closes: #687396)
 
  -- Roland Stigge <stigge@antcom.de>  Wed, 05 Dec 2012 14:44:45 +0100
+
+sbuild (0.63.2-1ubuntu1) raring; urgency=low
+
+  * Merge from Debian unstable. Remaining changes:
+    - debian/patches/do-not-install-debfoster-into-chroots.patch: do not
+      install debfoster into the chroots because it is in universe and not
+      needed for package building itself.
+    - debian/patches/run-pre-build-hooks-as-root.patch: run pre-build hooks
+      as root.
+    - Convert package back to source format 3.0 (quilt) so the patches get
+      applied.
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 28 Nov 2012 07:44:25 -0500
 
 sbuild (0.63.2-1) unstable; urgency=low
 
@@ -1203,6 +1883,26 @@ sbuild (0.63.2-1) unstable; urgency=low
       by the user (Closes: #673676).
 
  -- Roger Leigh <rleigh@debian.org>  Sat, 18 Aug 2012 13:46:45 +0100
+
+sbuild (0.63.1-1ubuntu2) quantal; urgency=low
+
+  * Convert package back to source format 3.0 (quilt) so the patches get
+    applied.
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 14 Aug 2012 12:42:58 -0400
+
+sbuild (0.63.1-1ubuntu1) quantal; urgency=low
+
+  * Resynchronize with Debian testing. Remaining changes:
+    - debian/patches/do-not-install-debfoster-into-chroots.patch:
+      do not install debfoster into the chroots because it is in universe and
+      not needed for package building itself.
+    - debian/patches/run-pre-build-hooks-as-root.patch:
+      run pre-build hooks as root
+  * Drop run-lintian-inside-chroot.patch: It hasn't been picked up
+    by Debian and doesn't work quite right (LP: #940410)
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Sat, 23 Jun 2012 22:27:58 -0400
 
 sbuild (0.63.1-1) unstable; urgency=low
 

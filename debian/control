@@ -1,7 +1,8 @@
 Source: sbuild
 Section: devel
 Priority: optional
-Maintainer: sbuild maintainers <sbuild@packages.debian.org>
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: sbuild maintainers <sbuild@packages.debian.org>
 Uploaders: Johannes Schauer Marin Rodrigues <josch@debian.org>,
            Michael Banck <mbanck@debian.org>,
            Francesco Paolo Lovergine <frankie@debian.org>,

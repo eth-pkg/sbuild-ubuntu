@@ -13,6 +13,8 @@ if [ -z ${AUTOPKGTEST_TMP+x} ]; then
 	exit 1
 fi
 
+debian/tests/check-unshare-support
+
 release=$(./debian/tests/get_default_release.py)
 if [ -z "$release" ]; then
 	echo "cannot get default release" >&2
@@ -247,7 +249,8 @@ cat << END > "${AUTOPKGTEST_TMP}/test-pkg-1.0/debian/source/format"
 3.0 (native)
 END
 
-mmdebstrap --mode=unshare --variant=apt --skip=cleanup/apt/lists "$release" "${AUTOPKGTEST_TMP}/chroot.tar"
+mmdebstrap --mode=unshare --variant=apt --verbose --skip=cleanup/apt/lists \
+    "$release" "${AUTOPKGTEST_TMP}/chroot.tar"
 
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" dpkg-buildpackage --build=full
 env --chdir="${AUTOPKGTEST_TMP}/test-pkg-1.0/" dpkg-buildpackage --target=clean

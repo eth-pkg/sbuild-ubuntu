@@ -28,6 +28,11 @@ EXTRA_DEPS=gnupg,sbuild,mmdebstrap,build-essential,uidmap,fakeroot,diffoscope,de
 PORT=$(python3 -c 'from socket import socket; s=socket(); s.bind(("", 0)); print(s.getsockname()[1]);' || echo 10022)
 SCRIPT=./debian/tests/unshare
 
+if debian/tests/check-unshare-support; then
+	echo "Skipping test, because the unshare test can be executed directly." >&2
+	exit 77
+fi
+
 release=$(./debian/tests/get_default_release.py)
 if [ -z "$release" ]; then
 	echo "cannot get default release" >&2
@@ -53,6 +58,8 @@ if [ -z ${AUTOPKGTEST_TMP+x} ]; then
 	# executed under autopkgtest
 	TMPDIR=$(mktemp --directory --tmpdir sbuild.XXXXXXXXXX)
 	aptsources=
+	unset aptpreferences
+	unset aptpreferencesd
 	MODE=auto
 else
 	# since AUTOPKGTEST_TMP is set, we assume that this script is executed
@@ -73,6 +80,21 @@ else
 		sed -i 's/ file:\/\// copy:\/\//' "$f"
 		cat "$f"
 		aptsources="$aptsources $f"
+	done
+	# we need to install the chroot using the same apt preferences as used by
+	# the autopkgtest chroot so that the versions to be tested are
+	# installed
+	unset aptpreferences
+	if [ -e /etc/apt/preferences ]; then
+		aptpreferences="/etc/apt/preferences"
+	fi
+	unset aptpreferencesd
+	if [ -d /etc/apt/preferences.d/ ]; then
+		aptpreferencesd="/etc/apt/preferences.d/"
+	fi
+	for f in /etc/apt/preferences /etc/apt/preferences.d/*; do
+		[ -e "$f" ] || continue
+		cat "$f"
 	done
 	MODE=root
 fi
@@ -159,6 +181,8 @@ if [ ! -e "$TMPDIR/${ID}-${release}-host.tar" ]; then
 # shellcheck disable=SC2086
 mmdebstrap --variant=apt --mode=$MODE --verbose \
 	--setup-hook="$TMPDIR/setup.sh" \
+	${aptpreferences+--setup-hook="sync-in $aptpreferences $aptpreferences"} \
+	${aptpreferencesd+--setup-hook="sync-in $aptpreferencesd $aptpreferencesd"} \
 	--include=openssh-server,systemd-sysv,e2fsprogs,ifupdown,initramfs-tools,netbase,isc-dhcp-client,udev,policykit-1,$KERNEL_PACKAGE,$EXTRA_DEPS \
 	--customize-hook="$TMPDIR/customize.sh" --components="$COMPONENTS" \
 	--skip=cleanup/apt/lists \

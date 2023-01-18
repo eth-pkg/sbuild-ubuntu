@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+
+# Stripped down unshare support check from mmdebstrap
+
+require "syscall.ph";    ## no critic (Modules::RequireBarewordIncludes)
+
+# from sched.h
+# use typeglob constants because "use constant" has several drawback as
+# explained in the documentation for the Readonly CPAN module
+*CLONE_NEWNS                 = \0x20000;       # mount namespace
+*CLONE_NEWUSER               = \0x10000000;    # user
+
+my $ret = syscall(&SYS_unshare, $CLONE_NEWNS | $CLONE_NEWUSER);
+if ($ret != 0) {
+    print STDERR "unshare syscall failed: $!\n";
+    exit 77;
+}
