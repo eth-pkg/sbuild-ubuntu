@@ -165,14 +165,22 @@ def main():
         metavar='MiB',
         action='store',
         default=2048,
-        help=f"VM memory size in MB. Default: 2",
+        help=f"VM memory size in MB. Default: 2048",
     )
     parser.add_argument(
         '--cpus',
         metavar='CPUs',
         action='store',
         default=2,
-        help="VM CPU count. Default on this host: {DEFAULT_CPUS}.",
+        help="VM CPU count. Default: 2",
+    )
+    parser.add_argument(
+        '--ssh-port',
+        metavar='PORT',
+        action='store',
+        help="Forward local port PORT to port 22 within the guest. Package "
+             "'openssh-server' must be installed within the guest for this "
+             "to be useful.",
     )
     parser.add_argument(
         '--noexec',
@@ -195,6 +203,10 @@ def main():
         print("Image does not exist", file=sys.stderr)
         sys.exit(1)
 
+    nic = 'user,model=virtio'
+    if parsed_args.ssh_port:
+        nic += f',hostfwd=tcp:127.0.0.1:{parsed_args.ssh_port}-:22'
+
     args = get_qemu_base_args(parsed_args.image, parsed_args.arch)
     if not args:
         sys.exit(1)
@@ -203,16 +215,27 @@ def main():
             '-object', 'rng-random,filename=/dev/urandom,id=rng0',
             '-device', 'virtio-rng-pci,rng=rng0,id=rng-device0',
             '-device', 'virtio-serial',
-            '-nic',    'user,model=virtio',
+            '-nic',    nic,
             '-m',      str(parsed_args.ram_size),
             '-smp',    str(parsed_args.cpus),
             '-nographic',
     ])
+
     if parsed_args.shared_dir:
         args.extend([
             '-virtfs', f'local,path={parsed_args.shared_dir},id=sbuild-qemu,'
                         'mount_tag=sbuild-qemu,security_model=none',
         ])
+
+    # Pass on host terminal rows/columns to guest
+    # FIXME: qemu-system-pp64le doesn't support fw_cfg?
+    if args[0] not in ['qemu-system-ppc64le']:
+        termsize = os.get_terminal_size()
+        args.extend([
+            '-fw_cfg', f'name=opt/sbuild-qemu/tty-rows,string={termsize.lines}',
+            '-fw_cfg', f'name=opt/sbuild-qemu/tty-cols,string={termsize.columns}',
+            ])
+
     args.append(image)
 
     print(' '.join(str(a) for a in args))
