@@ -1,3 +1,15 @@
+sbuild (0.85.0ubuntu2) lunar; urgency=medium
+
+  * d/t/unshare: Updated test-pkg_1.0_all.deb content for zstd to match
+    output from zstd 1.5.4
+  * d/t/control: Fix obsolete dependency on lsb-release (should now be
+    lsb-release-minimal)
+  * d/control: Fix obsolete dependency on lsb-base (should now be
+    sysvinit-utils)
+  * Bump standards version to 4.6.2
+
+ -- Dave Jones <dave.jones@canonical.com>  Wed, 29 Mar 2023 15:18:02 +0100
+
 sbuild (0.85.0ubuntu1) lunar; urgency=medium
 
   [ Dave Jones ]
