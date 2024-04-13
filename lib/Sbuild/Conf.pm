@@ -30,7 +30,7 @@ use POSIX qw(getgroups getgid);
 use Sbuild qw(isin);
 use Sbuild::ConfBase;
 use Sbuild::Sysconfig;
-use Dpkg::Build::Info;
+use Sbuild::BuildInfo;
 
 BEGIN {
     use Exporter ();
@@ -809,7 +809,7 @@ $individual_stalled_pkg_timeout->{\'kicad-packages3d\'} = 90;'
 	    TYPE => 'ARRAY:STRING',
 	    VARNAME => 'environment_filter',
 	    GROUP => 'Core options',
-	    DEFAULT => [ sort (map "^$_\$", Dpkg::BuildInfo::get_build_env_allowed()) ],
+	    DEFAULT => [ sort (map "^$_\$", Sbuild::BuildInfo::get_build_env_allowed()) ],
 #	    GET => sub {
 #		my $conf = shift;
 #		my $entry = shift;
