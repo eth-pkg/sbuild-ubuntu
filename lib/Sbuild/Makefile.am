@@ -26,6 +26,7 @@ perlmodsbuilddir = $(perlmoddir)/Sbuild
 MODULES =			\
 	Base.pm			\
 	Build.pm		\
+	BuildInfo.pm		\
 	Chroot.pm		\
 	ChrootPlain.pm		\
 	ChrootRoot.pm		\

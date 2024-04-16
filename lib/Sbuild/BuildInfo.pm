@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# forked and rewritten from https://code.launchpad.net/ubuntu/+source/dpkg
+
 package Sbuild::BuildInfo;
 
 use strict;
