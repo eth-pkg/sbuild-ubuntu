@@ -1,0 +1,34 @@
+name: Build Debian Package
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        path: sbuild-outer/sbuild
+      
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential debhelper dh-make dh-python
+        
+    - name: Build package
+      run: |
+        cd sbuild-outer/sbuild
+        ls -al
+        dpkg-buildpackage -us -uc
+        pwd
+        
+    - name: Upload package artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: debian-package
+        path: $(HOME)/sbuild-outer/*.deb  # adjust path to the Debian package
