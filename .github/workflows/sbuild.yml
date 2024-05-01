@@ -3,7 +3,7 @@ name: Build Debian Package
 on:
   push:
     branches:
-      - main
+      - ubuntu/devel
 
 jobs:
   build:
