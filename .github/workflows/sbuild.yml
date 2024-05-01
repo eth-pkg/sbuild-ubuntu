@@ -32,4 +32,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: debian-package
-        path: $(HOME)/sbuild-outer/*.deb  # adjust path to the Debian package
+        path: /home/runner/work/sbuild-ubuntu/sbuild-ubuntu/sbuild-outer/sbuild-outer/*.deb  # adjust path to the Debian package
