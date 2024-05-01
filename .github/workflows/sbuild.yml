@@ -19,6 +19,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential debhelper dh-make dh-python
+        sudo apt-get install -y libexception-class-perl libfilesys-df-perl libmime-lite-perl libyaml-tiny-perl python3-all
         
     - name: Build package
       run: |
